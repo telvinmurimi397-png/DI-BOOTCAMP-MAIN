@@ -123,24 +123,17 @@ minutes_lived("1995-08-15")
 
 # Exercise 7: Faker Module
 
-try:
-    from faker import Faker
-except ModuleNotFoundError:
-    print("Install faker before running Exercise 7: pip install faker")
-else:
-    fake = Faker()
-    users = []
-
-    def add_fake_users(count):
-        for _ in range(count):
-            user = {
-                "name": fake.name(),
-                "address": fake.address(),
-                "language_code": fake.language_code()
-            }
-            users.append(user)
-
-    add_fake_users(5)
-
-    for u in users:
-        print(u)
+from faker import Faker
+fake = Faker()
+users = []
+def add_users(count):
+    for _ in range(count):
+        user = {
+            'name': fake.name(),
+            'address': fake.address(),
+            'language_code': fake.language_code()
+        }
+        users.append(user)
+add_users(3)
+for u in users:
+    print(u)
