@@ -1,17 +1,21 @@
 function printWordsInStars(userInput) {
-    const input = userInput ?? (typeof prompt === "function"
-        ? prompt("Enter several words separated by commas:")
-        : "");
+    if (!userInput || !userInput.trim()) {
+        console.log('Usage: node "Daily Challenges Words in the stars.js" "hello, world, coding"');
+        return;
+    }
 
-    if (!input) return;
-
-    const words = input
+    // Split string into an array and trim extra spaces from each word
+    const words = userInput
         .split(",")
         .map(word => word.trim())
-        .filter(word => word.length > 0);
+        .filter(Boolean);
 
-    if (words.length === 0) return;
+    if (words.length === 0) {
+        console.log('Usage: node "Daily Challenges Words in the stars.js" "hello, world, coding"');
+        return;
+    }
 
+    // Find the length of the longest word
     let maxLength = 0;
     for (const word of words) {
         if (word.length > maxLength) {
@@ -19,8 +23,10 @@ function printWordsInStars(userInput) {
         }
     }
 
+    // Create top and bottom borders
     const border = "*".repeat(maxLength + 4);
 
+    // Console.log the framed output
     console.log(border);
     for (const word of words) {
         const paddedWord = word.padEnd(maxLength, " ");
@@ -29,14 +35,13 @@ function printWordsInStars(userInput) {
     console.log(border);
 }
 
-if (typeof process !== "undefined" && process.versions && process.versions.node) {
-    const terminalInput = process.argv.slice(2).join(" ");
+const defaultInput = "hello, world, coding";
+const cliInput = process.argv.slice(2).join(" ") || defaultInput;
 
-    if (terminalInput) {
-        printWordsInStars(terminalInput);
-    } else {
-        console.log("Usage: node \"Daily Challenges Words in the stars.js\" \"hello, world, coding\"");
-    }
+if (cliInput) {
+    printWordsInStars(cliInput);
+} else if (typeof prompt === "function") {
+    printWordsInStars(prompt("Enter several words separated by commas:"));
 } else {
-    printWordsInStars();
+    printWordsInStars(defaultInput);
 }
