@@ -1,0 +1,11 @@
+#navbar {
+  padding: 10px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#output {
+  padding: 20px;
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Challenge: Groceries</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <h1>Daily Challenge: Groceries</h1>
+  <div id="output" class="console-box"></div>
+
+  <script>
+    let client = "John";
+
+    const groceries = {
+        fruits : ["pear", "apple", "banana"],
+        vegetables: ["tomatoes", "cucumber", "salad"],
+        totalPrice : "20$",
+        other : {
+            paid : true,
+            meansOfPayment : ["cash", "creditCard"]
+        }
+    };
+
+    const output = document.getElementById("output");
+
+    const displayGroceries = () => {
+        const fruitsList = groceries.fruits.map((fruit) => `- ${fruit}`).join("\n");
+        output.textContent += "--- Fruits List ---\n" + fruitsList + "\n\n";
+    };
+
+    const cloneGroceries = () => {
+        let user = client;
+        client = "Betty";
+
+        let shopping = groceries;
+        groceries.totalPrice = "35$";
+        groceries.other.paid = false;
+
+        output.textContent += "--- Clone Groceries Executed ---\n";
+        output.textContent += `user variable: ${user}\n`;
+        output.textContent += `client variable: ${client}\n`;
+        output.textContent += `shopping.totalPrice: ${shopping.totalPrice}\n`;
+        output.textContent += `shopping.other.paid: ${shopping.other.paid}\n`;
+    };
+
+    displayGroceries();
+    cloneGroceries();
+  </script>
+
+</body>
+</html>
