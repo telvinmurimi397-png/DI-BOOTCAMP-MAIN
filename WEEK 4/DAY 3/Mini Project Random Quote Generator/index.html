@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Quote Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; line-height: 1.6; }
+    section { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9; }
+    form { margin-bottom: 20px; }
+    div { margin-top: 10px; }
+    button { margin-right: 5px; margin-top: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <h1>Random Quote Generator</h1>
+
+  <!-- Part 1: Section to display quote & Generate button -->
+  <section id="quote-display">
+    <p id="quote-text">Click the button below to generate a quote!</p>
+    <p id="quote-author"></p>
+    <p id="quote-likes"></p>
+  </section>
+
+  <button id="generate-btn">Generate Quote</button>
+
+  <!-- Part 2: Buttons under quote display -->
+  <div id="stats-buttons">
+    <button id="btn-char-with-space">Count Characters (with spaces)</button>
+    <button id="btn-char-no-space">Count Characters (no spaces)</button>
+    <button id="btn-word-count">Count Words</button>
+    <button id="btn-like">Like ❤️</button>
+  </div>
+  <p id="stats-output"></p>
+
+  <hr>
+
+  <!-- Part 2: Form to add a new quote -->
+  <h3>Add a New Quote</h3>
+  <form id="add-quote-form">
+    <input type="text" id="new-quote" placeholder="Enter Quote" required style="width: 300px;">
+    <input type="text" id="new-author" placeholder="Enter Author" required>
+    <button type="submit">Add Quote</button>
+  </form>
+
+  <hr>
+
+  <!-- Part 3: Filter form and navigation -->
+  <h3>Filter Quotes by Author</h3>
+  <form id="filter-author-form">
+    <input type="text" id="filter-author-input" placeholder="Author name" required>
+    <button type="submit">Filter Author</button>
+  </form>
+
+  <section id="filter-display" style="display: none;">
+    <p id="filtered-quote-text"></p>
+    <p id="filtered-quote-author"></p>
+    <button id="btn-prev">Previous</button>
+    <button id="btn-next">Next</button>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

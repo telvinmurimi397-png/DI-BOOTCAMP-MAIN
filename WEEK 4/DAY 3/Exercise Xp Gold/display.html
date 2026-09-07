@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Display Data</title>
+</head>
+<body>
+
+  <section id="results"></section>
+
+  <script>
+    // Extract query parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const firstName = urlParams.get('name');
+    const lastName = urlParams.get('lastname');
+
+    // Display sent data using the DOM
+    const section = document.getElementById('results');
+    if (firstName && lastName) {
+      section.textContent = `Submitted Name: ${firstName} ${lastName}`;
+    } else {
+      section.textContent = 'No form data submitted.';
+    }
+  </script>
+
+</body>
+</html>

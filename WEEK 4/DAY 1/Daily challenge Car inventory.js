@@ -21,4 +21,4 @@ function sortCarInventoryByYear(carInventory) {
   return carInventory.sort((a, b) => a.car_year - b.car_year);
 }
 
-console.log(sortCarInventoryByYear(inventory));
+console.log(sortCarInventoryByYear(inventory));  

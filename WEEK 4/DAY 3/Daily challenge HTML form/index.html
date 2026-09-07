@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Challenge: HTML Form to JSON</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    form { margin-bottom: 15px; }
+    input { margin-right: 5px; padding: 5px; }
+    #output { font-family: monospace; }
+  </style>
+</head>
+<body>
+
+  <form id="user-form">
+    <input type="text" id="firstname" placeholder="First Name" required>
+    <input type="text" id="lastname" placeholder="Last Name" required>
+    <button type="submit">Send</button>
+  </form>
+
+  <p id="output"></p>
+
+  <script src="script.js"></script>
+</body>
+</html>
