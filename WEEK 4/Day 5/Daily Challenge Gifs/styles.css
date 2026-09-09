@@ -1,0 +1,26 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+form,
+.controls {
+  margin-bottom: 20px;
+}
+
+#gif-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.gif-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gif-item img {
+  max-width: 200px;
+  border-radius: 4px;
+}

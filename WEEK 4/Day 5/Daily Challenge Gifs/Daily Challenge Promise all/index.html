@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sunrise Finder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Compare Sunrise Times</h1>
+
+  <form id="sunrise-form">
+    <div class="city-group">
+      <h3>City 1 (e.g. Paris)</h3>
+      <label for="lat1">Latitude:</label>
+      <input type="number" step="any" id="lat1" placeholder="48.864716" required>
+      <label for="lng1">Longitude:</label>
+      <input type="number" step="any" id="lng1" placeholder="2.349014" required>
+    </div>
+
+    <div class="city-group">
+      <h3>City 2 (e.g. New York)</h3>
+      <label for="lat2">Latitude:</label>
+      <input type="number" step="any" id="lat2" placeholder="40.730610" required>
+      <label for="lng2">Longitude:</label>
+      <input type="number" step="any" id="lng2" placeholder="-73.935242" required>
+    </div>
+
+    <button type="submit">Get Sunrise Times</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
