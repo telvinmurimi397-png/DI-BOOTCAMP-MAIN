@@ -1,4 +1,4 @@
-const BASE_URL = 'https://api.frankfurter.app';
+const BASE_URL = 'https://open.er-api.com/v6';
 
 // DOM Elements
 const fromSelect = document.getElementById('from-currency');
@@ -7,6 +7,7 @@ const amountInput = document.getElementById('amount');
 const convertBtn = document.getElementById('convert-btn');
 const switchBtn = document.getElementById('switch-btn');
 const resultDiv = document.getElementById('result');
+let exchangeRates = null;
 
 // Initialize application
 init();
@@ -19,15 +20,24 @@ async function init() {
 // 1. Fetch supported currencies and populate dropdowns
 async function fetchSupportedCurrencies() {
   try {
-    const response = await fetch(`${BASE_URL}/currencies`);
+    const response = await fetch(`${BASE_URL}/latest/USD`);
     if (!response.ok) throw new Error('Failed to fetch currency list');
 
     const data = await response.json();
-    const codes = Object.entries(data);
 
-    codes.forEach(([code, name]) => {
-      const optionFrom = new Option(`${code} - ${name}`, code);
-      const optionTo = new Option(`${code} - ${name}`, code);
+    if (data.result !== 'success') {
+      throw new Error('Currency data unavailable');
+    }
+
+    exchangeRates = data.rates;
+    const codes = ['USD', ...Object.keys(exchangeRates).sort()];
+
+    fromSelect.innerHTML = '';
+    toSelect.innerHTML = '';
+
+    codes.forEach((code) => {
+      const optionFrom = new Option(code, code);
+      const optionTo = new Option(code, code);
       fromSelect.add(optionFrom);
       toSelect.add(optionTo);
     });
@@ -53,18 +63,24 @@ async function convertCurrency() {
     return;
   }
 
+  if (!exchangeRates) {
+    resultDiv.style.color = 'red';
+    resultDiv.textContent = 'Currencies are still loading. Please try again in a moment.';
+    return;
+  }
+
   resultDiv.style.color = '#333';
   resultDiv.textContent = 'Converting...';
 
   try {
-    const response = await fetch(
-      `${BASE_URL}/latest?amount=${amount}&from=${fromCode}&to=${toCode}`
-    );
+    const fromRate = fromCode === 'USD' ? 1 : exchangeRates[fromCode];
+    const toRate = toCode === 'USD' ? 1 : exchangeRates[toCode];
 
-    if (!response.ok) throw new Error('Conversion request failed');
+    if (fromRate == null || toRate == null) {
+      throw new Error('One of the selected currencies is unavailable');
+    }
 
-    const data = await response.json();
-    const convertedAmount = data.rates[toCode];
+    const convertedAmount = (amount * toRate) / fromRate;
 
     resultDiv.style.color = '#28a745';
     resultDiv.textContent = `${amount} ${fromCode} = ${convertedAmount.toFixed(2)} ${toCode}`;
