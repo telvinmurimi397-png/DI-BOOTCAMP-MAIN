@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mtaafix — Report it. Track it. Get it fixed.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav>
+  <div class="container nav-inner">
+    <a class="logo" href="#home"><span class="logo-mark">🔧</span>Mtaafix</a>
+    <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+    <div class="nav-links" id="navLinks">
+      <a href="#home">Home</a>
+      <a href="#how">How it works</a>
+      <a href="#dashboard">Issues</a>
+      <a href="#track">Track a report</a>
+      <a href="#report" class="btn btn-primary">Report an Issue</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="home">
+  <div class="container hero-content">
+    <span class="tag">Community-powered civic reporting</span>
+    <h1>See a problem on your street?<br><span>Report it. Track it. Get it fixed.</span></h1>
+    <p>Mtaafix connects residents with the organizations responsible for fixing public issues — potholes, water leaks, broken streetlights, garbage and more. No more phone calls that go nowhere.</p>
+    <div class="hero-btns">
+      <a href="#report" class="btn btn-primary" style="background:#fff;color:var(--green-dark)">Report an Issue →</a>
+      <a href="#dashboard" class="btn btn-ghost">Browse Community Reports</a>
+    </div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="container stats-grid">
+    <div class="stat"><b id="statTotal">0</b><span>Issues Reported</span></div>
+    <div class="stat"><b id="statResolved">0</b><span>Resolved</span></div>
+    <div class="stat"><b id="statActive">0</b><span>Being Worked On</span></div>
+    <div class="stat"><b id="statCategories">0</b><span>Issue Categories</span></div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">How it works</div>
+      <h2>From complaint to fix, in three steps</h2>
+      <p>Mtaafix makes it easy to speak up — and hard for issues to be ignored.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h3>Report the issue</h3><p>Take a photo, drop a location, and describe the problem in under a minute. Works on any phone.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>We route it to the right office</h3><p>Every report is categorized and forwarded to the organization responsible — county, water, power, or roads.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Track it publicly</h3><p>Follow your report's status in real time. Organizations respond publicly, so everyone sees progress.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="report" style="background:linear-gradient(180deg,#f0fdf4, var(--bg))">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Report an issue</div>
+      <h2>What's happening on your mtaa?</h2>
+      <p>Fill in the details below. You'll get a tracking ID to follow up with.</p>
+    </div>
+    <form class="form-wrap" id="reportForm">
+      <div class="field">
+        <label>Issue category *</label>
+        <div class="cat-pills" id="catPills"></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="ward">Ward / Estate *</label>
+          <input id="ward" required placeholder="e.g. Kasarani, Kwa Maji Estate">
+        </div>
+        <div class="field">
+          <label for="landmark">Nearest landmark <small>(optional)</small></label>
+          <input id="landmark" placeholder="e.g. Near Sunview Shopping Centre">
+        </div>
+      </div>
+      <div class="field">
+        <label for="desc">Describe the problem *</label>
+        <textarea id="desc" required placeholder="e.g. Large pothole on the main road, been there for 3 weeks. Two boda accidents reported."></textarea>
+      </div>
+      <div class="field">
+        <label for="photo">Photo <small>(optional — a picture gets faster action)</small></label>
+        <input id="photo" type="file" accept="image/*">
+        <div class="photo-preview" id="photoPreview"><img id="photoPreviewImg" alt="Preview"></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="name">Your name *</label>
+          <input id="name" required placeholder="Full name">
+        </div>
+        <div class="field">
+          <label for="phone">Phone or email *</label>
+          <input id="phone" required placeholder="e.g. 0712 345 678">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%">Submit Report →</button>
+      <p style="font-size:12.5px;color:var(--slate-3);margin-top:12px;text-align:center">Reports appear on the public dashboard. Your contact details stay private.</p>
+    </form>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Public dashboard</div>
+      <h2>Issues your community has reported</h2>
+      <p>Every report is public. Visibility creates accountability.</p>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="report-grid" id="reportGrid"></div>
+  </div>
+</section>
+
+<section id="track">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Track a report</div>
+      <h2>Check the status of your report</h2>
+      <p>Enter the tracking ID you received when you submitted (e.g. MTF-2026-4X8K).</p>
+    </div>
+    <div class="track-wrap">
+      <form class="track-form" id="trackForm">
+        <input id="trackInput" placeholder="Enter tracking ID…" required>
+        <button class="btn btn-primary" type="submit">Track</button>
+      </form>
+      <div id="trackResult"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <a class="logo" href="#home"><span class="logo-mark">🔧</span>Mtaafix</a>
+    <p>Built for the community. Report it. Track it. Get it fixed.</p>
+    <p>© 2026 Mtaafix</p>
+  </div>
+</footer>
+
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="check">✓</div>
+    <h3>Report submitted!</h3>
+    <p>Your issue has been logged and routed. Save this tracking ID to follow its progress:</p>
+    <div class="id-box" id="modalId"></div>
+    <div class="row">
+      <button class="btn btn-outline" id="copyIdBtn" type="button">Copy ID</button>
+      <button class="btn btn-primary" id="closeModalBtn" type="button">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
