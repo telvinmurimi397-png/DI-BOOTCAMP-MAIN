@@ -22,7 +22,21 @@ const routes = require('./src/routes');
 const seed = require('./src/seed');
 
 const PORT = process.env.PORT || 4000;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+
+function parseAllowedOrigins(value) {
+  if (!value || value.trim() === '*') {
+    return [
+      'http://127.0.0.1:3000',
+      'http://localhost:3000',
+      'http://127.0.0.1:5500',
+      'http://localhost:5500'
+    ];
+  }
+
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.CORS_ORIGIN);
 
 // Build the fully-wired Express app (used by server startup and tests).
 async function createApp() {
@@ -31,7 +45,26 @@ async function createApp() {
 
   const app = express();
 
-  app.use(cors({ origin: CORS_ORIGIN === '*' ? true : CORS_ORIGIN.split(',').map(s => s.trim()) }));
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+    next();
+  });
+
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-Admin-Token']
+  }));
+
   app.use(express.json({ limit: '8mb' }));            // base64 photos can be large
   app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 
@@ -60,14 +93,15 @@ async function createApp() {
 }
 
 async function main() {
+  if (!process.env.ADMIN_TOKEN || process.env.ADMIN_TOKEN.trim() === '') {
+    throw new Error('ADMIN_TOKEN must be set in the environment before starting the server.');
+  }
+
   const app = await createApp();
   app.listen(PORT, '127.0.0.1', () => {
     console.log(`Mtaafix API running at http://127.0.0.1:${PORT}`);
     console.log(`  Demo frontend: http://127.0.0.1:${PORT}/`);
     console.log(`  Health check:  http://127.0.0.1:${PORT}/api/health`);
-    if (!process.env.ADMIN_TOKEN) {
-      console.warn('  ⚠  ADMIN_TOKEN is not set — status-update endpoint is disabled until you set it.');
-    }
   });
 }
 
