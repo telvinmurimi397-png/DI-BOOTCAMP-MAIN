@@ -22,6 +22,25 @@
   .btn-ghost{background:transparent;color:var(--slate-2);border:2px solid var(--border)}
   .btn-ghost:hover{border-color:var(--slate-3)}
 
+  /* AUTH PAGE */
+  .auth-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#e0f2fe 0%,#ecfdf5 100%)}
+  .auth-shell{width:min(100%, 440px)}
+  .auth-card{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:0 18px 50px rgba(15,23,42,.12);padding:32px 26px}
+  .auth-brand{display:flex;align-items:center;justify-content:center;gap:10px;font-size:24px;font-weight:800;color:var(--green-dark)}
+  .auth-tag{margin-top:18px;text-align:center;color:var(--green);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  .auth-card h1{margin:10px 0 20px;text-align:center;font-size:32px;line-height:1.2;letter-spacing:-.03em;color:var(--slate)}
+  .auth-form{display:flex;flex-direction:column;gap:16px}
+  .auth-form .field{margin-bottom:0}
+  .auth-form .field input{background:#f8fafc}
+  .auth-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .auth-actions .btn{width:100%;text-align:center}
+  .auth-message{min-height:22px;margin-top:12px;text-align:center;font-size:13px;font-weight:600}
+  .auth-message.error{color:var(--red)}
+  .auth-message.success{color:var(--green-dark)}
+  .auth-meta{margin-top:16px;text-align:center;font-size:13px;color:var(--slate-3)}
+  .auth-hint{margin-top:18px;text-align:center;font-size:13px;color:var(--slate-3)}
+  .auth-hint a{color:var(--green);font-weight:600;text-decoration:none}
+
   /* NAV */
   nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
   .nav-inner{display:flex;align-items:center;justify-content:space-between;height:64px}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mtaafix | Sign In</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-brand"><span class="logo-mark">🔧</span>Mtaafix</div>
+      <div class="auth-tag">Admin access</div>
+      <h1>Sign in</h1>
+
+      <form class="auth-form" id="loginForm">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" placeholder="Enter username" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Enter password" required />
+        </div>
+
+        <div class="auth-actions">
+          <button type="submit" class="btn btn-primary">Sign in</button>
+          <a href="index.html" class="btn btn-ghost">Back to home</a>
+        </div>
+      </form>
+
+      <div id="authMessage" class="auth-message" aria-live="polite"></div>
+      <div class="auth-meta">Demo credentials: admin / admin123</div>
+      <div class="auth-hint"><a href="index.html">Go to public dashboard</a></div>
+    </div>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>
