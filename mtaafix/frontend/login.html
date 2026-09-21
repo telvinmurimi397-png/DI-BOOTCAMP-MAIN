@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MtaaFix - Login</title>
+  <link rel="stylesheet" href="/frontend/css/styles.css" />
+</head>
+<body>
+  <div class="container auth-panel">
+    <h1>MtaaFix</h1>
+    <p>Report issues in your neighborhood.</p>
+
+    <div class="tab-group">
+      <button class="tab active" data-role="resident">Resident</button>
+      <button class="tab" data-role="ruler">Ruler</button>
+    </div>
+
+    <form id="login-form">
+      <div id="resident-fields" class="form-group">
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="tel" placeholder="+254700000001" required />
+      </div>
+      <div id="ruler-fields" class="form-group hidden">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" placeholder="admin" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Password" required />
+      </div>
+      <button type="submit" class="primary">Login</button>
+    </form>
+
+    <div class="demo-box">
+      <strong>Demo</strong>
+      <p>Resident phone: +254700000001</p>
+      <p>Ruler username: admin / password: admin123</p>
+    </div>
+  </div>
+
+  <script src="/frontend/js/api.js"></script>
+  <script src="/frontend/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mtaafix — Area Ruler Console</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="dot"></span> Mtaafix <span class="badge">Ruler console</span></div>
+  <nav class="nav">
+    <span class="badge" id="whoami"></span>
+    <a class="btn ghost" href="index.html">Resident view</a>
+    <button class="btn hide" id="logoutBtn">Sign out</button>
+  </nav>
+</header>
+
+<div class="container">
+  <!-- login -->
+  <div id="loginView" class="center">
+    <div class="panel">
+      <h2 style="margin-top:0">Area ruler sign-in</h2>
+      <p class="desc">Area rulers are the only accounts allowed to post reports.
+        Posting a report automatically sends an AI-written SMS alert to residents.</p>
+      <form id="loginForm">
+        <label for="username">Username</label>
+        <input id="username" autocomplete="username" placeholder="e.g. kasarani-ruler" required>
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+        <div class="row" style="margin-top:16px">
+          <button class="btn primary" type="submit">Sign in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- dashboard -->
+  <div id="dashView" class="hide">
+    <div class="panel">
+      <h2 style="margin-top:0">Post a new report</h2>
+      <div class="row">
+        <div style="flex:1;min-width:160px">
+          <label>Category</label>
+          <select id="pCat"></select>
+        </div>
+        <div style="flex:1;min-width:160px">
+          <label>Area</label>
+          <select id="pArea"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div style="flex:1;min-width:160px">
+          <label>Ward</label>
+          <input id="pWard" placeholder="e.g. Kasarani">
+        </div>
+        <div style="flex:1;min-width:160px">
+          <label>Landmark (optional)</label>
+          <input id="pLandmark" placeholder="e.g. Near the market">
+        </div>
+      </div>
+      <label>Description</label>
+      <textarea id="pDesc" placeholder="What are you telling residents?"></textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="postBtn">Post &amp; notify residents</button>
+        <span class="rate-info" id="postHint"></span>
+      </div>
+    </div>
+
+    <div class="panel" id="adminPanel" style="display:none">
+      <h3 style="margin-top:0">Add an area ruler <span class="badge">super-admin</span></h3>
+      <div class="row">
+        <div style="flex:1;min-width:140px"><label>Username</label><input id="nrUser"></div>
+        <div style="flex:1;min-width:140px"><label>Name</label><input id="nrName"></div>
+      </div>
+      <div class="row">
+        <div style="flex:1;min-width:140px"><label>Password</label><input id="nrPass" type="password"></div>
+        <div style="flex:1;min-width:140px"><label>Area</label><select id="nrArea"></select></div>
+      </div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="addRulerBtn">Create ruler</button></div>
+    </div>
+
+    <div class="row" style="justify-content:space-between;align-items:center;margin:8px 0">
+      <h2 style="margin:0">Reports in your scope</h2>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+    <div id="feed" class="grid"></div>
+    <div id="empty" class="empty hide">No reports yet &mdash; post the first one above.</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/ruler.js"></script>
+</body>
+</html>

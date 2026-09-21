@@ -1,0 +1,6 @@
+# The Mtaafix backend is intentionally dependency-free — it runs on the Python
+# standard library only (http.server + sqlite3 + hashlib.scrypt). No pip install
+# is required. Tested with CPython 3.10+ (developed on 3.12).
+#
+# Optional: to send REAL SMS instead of the built-in mock gateway, install your
+# provider's SDK (e.g. 'twilio' or 'africastalking') and wire it into sms.py.

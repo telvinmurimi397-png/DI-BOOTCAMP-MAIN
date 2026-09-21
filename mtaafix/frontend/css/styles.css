@@ -1,0 +1,144 @@
+:root {
+  --bg: #f4f7fb;
+  --panel: #ffffff;
+  --primary: #1f6feb;
+  --primary-dark: #154ea8;
+  --text: #1d2a39;
+  --muted: #67758c;
+  --border: #dfe7f1;
+  --success: #1a9d6f;
+  --warning: #f39c12;
+  --danger: #d64545;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+.container {
+  max-width: 1000px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.auth-panel {
+  max-width: 420px;
+  margin: 80px auto;
+  background: var(--panel);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(13, 28, 53, 0.06);
+}
+.tab-group {
+  display: flex;
+  margin-bottom: 16px;
+}
+.tab {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: #eef4ff;
+  padding: 10px;
+  cursor: pointer;
+}
+.tab.active {
+  background: var(--primary);
+  color: white;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 14px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+label {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-weight: 600;
+}
+input, select, textarea, button {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  font-size: 1rem;
+}
+input, select, textarea {
+  background: #fff;
+}
+button {
+  cursor: pointer;
+  font-weight: 600;
+}
+.primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+}
+.primary:hover { background: var(--primary-dark); }
+.secondary {
+  background: white;
+  color: var(--text);
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.report-list {
+  display: grid;
+  gap: 16px;
+}
+.report-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  background: #fbfdff;
+}
+.report-card .meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eaf3ff;
+  color: var(--primary-dark);
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+.hidden { display: none !important; }
+.demo-box {
+  margin-top: 18px;
+  background: #f8fafc;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+@media (max-width: 640px) {
+  .topbar { padding: 12px 16px; }
+}
