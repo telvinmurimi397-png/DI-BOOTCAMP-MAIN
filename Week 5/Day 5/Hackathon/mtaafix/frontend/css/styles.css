@@ -17,6 +17,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:16p
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:20px;letter-spacing:.3px}
 .brand .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 0 14px var(--brand)}
 .nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.menu-toggle{display:none;align-items:center;justify-content:center;width:42px;height:42px;padding:0;font-size:24px;line-height:1}
 .badge{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
 .btn{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);
   padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;transition:.15s}
@@ -66,3 +67,10 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand)}
 .notif{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#0c1730;font-size:13px}
 .notif.confirmed{opacity:.6}
 footer{color:var(--muted);text-align:center;padding:24px;font-size:12px}
+@media (max-width:640px){
+  header.top{align-items:flex-start;flex-wrap:wrap}
+  .menu-toggle{display:inline-flex;margin-left:auto}
+  .nav{display:none;width:100%;flex-direction:column;align-items:stretch;padding-top:8px}
+  .nav.menu-open{display:flex}
+  .nav .badge,.nav .btn,.nav a{width:100%;text-align:center}
+}

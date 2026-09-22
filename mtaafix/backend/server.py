@@ -73,7 +73,11 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         body = self._read_body()
-        payload = json.loads(body) if body else {}
+        try:
+            payload = json.loads(body) if body else {}
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            json_response(self, 400, {"error": "Request body must be valid JSON"})
+            return
 
         if path == "/api/residents/register":
             result, status = resident_register(payload)
@@ -100,7 +104,11 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         body = self._read_body()
-        payload = json.loads(body) if body else {}
+        try:
+            payload = json.loads(body) if body else {}
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            json_response(self, 400, {"error": "Request body must be valid JSON"})
+            return
 
         if path.startswith("/api/reports/"):
             report_id = int(path.split("/")[-1])
