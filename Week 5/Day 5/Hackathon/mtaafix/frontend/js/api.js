@@ -3,11 +3,38 @@
 (function (global) {
   'use strict';
 
-  var BASE = ''; // same origin as the server that serves this page
+  // Use same-origin requests in production. Keep the localhost fallback for
+  // developing the frontend through Live Server.
+  var isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  var BASE = isLocalhost && window.location.port !== '4000' ? 'http://localhost:4000' : '';
+
+  // Token persistence, most-durable first. localStorage survives restarts;
+  // sessionStorage survives the login->dashboard navigation within the tab
+  // even when localStorage is blocked (private mode); the in-memory map is a
+  // last resort for the current page. Without a working fallback a blocked
+  // localStorage write left the token unsaved, so the dashboard saw no token
+  // and bounced straight back to the login page.
+  var memTokens = {};
 
   function tokenKey(kind) { return 'mtaafix.' + kind + '.token'; }
-  function getToken(kind) { try { return localStorage.getItem(tokenKey(kind)); } catch (e) { return null; } }
-  function setToken(kind, t) { try { t ? localStorage.setItem(tokenKey(kind), t) : localStorage.removeItem(tokenKey(kind)); } catch (e) {} }
+  function _read(store, key) { try { return store ? store.getItem(key) : null; } catch (e) { return null; } }
+  function _write(store, key, val) {
+    try { if (!store) return; val ? store.setItem(key, val) : store.removeItem(key); } catch (e) {}
+  }
+  function getToken(kind) {
+    var key = tokenKey(kind);
+    var v = _read(window.localStorage, key);
+    if (v != null) return v;
+    v = _read(window.sessionStorage, key);
+    if (v != null) return v;
+    return memTokens[kind] || null;
+  }
+  function setToken(kind, t) {
+    var key = tokenKey(kind);
+    if (t) { memTokens[kind] = t; } else { delete memTokens[kind]; }
+    _write(window.localStorage, key, t);
+    _write(window.sessionStorage, key, t);
+  }
 
   function request(method, path, body, kind) {
     var headers = { 'Content-Type': 'application/json' };
@@ -19,7 +46,17 @@
       body: body != null ? JSON.stringify(body) : undefined
     }).then(function (res) {
       return res.text().then(function (txt) {
-        var data = txt ? JSON.parse(txt) : null;
+        var data = null;
+        if (txt) {
+          try {
+            data = JSON.parse(txt);
+          } catch (parseError) {
+            var responseError = new Error('Server returned an invalid response (HTTP ' + res.status + ')');
+            responseError.status = res.status;
+            responseError.data = txt;
+            throw responseError;
+          }
+        }
         if (!res.ok) {
           var msg = (data && (data.error || (data.errors && data.errors.join(', ')))) || ('HTTP ' + res.status);
           var err = new Error(msg); err.status = res.status; err.data = data; throw err;
@@ -38,9 +75,13 @@
 
     // resident session
     residentToken: function () { return getToken('resident'); },
-    residentLogin: function (phone, name, area) {
-      return request('POST', '/api/residents/login', { phone: phone, name: name, area: area })
+    residentLogin: function (phone, name, area, subscribe) {
+      return request('POST', '/api/residents/login',
+          { phone: phone, name: name, area: area, subscribe: subscribe !== false })
         .then(function (s) { setToken('resident', s.token); return s; });
+    },
+    setSubscription: function (subscribe) {
+      return request('POST', '/api/residents/subscription', { subscribe: subscribe !== false }, 'resident');
     },
     residentLogout: function () {
       return request('POST', '/api/residents/logout', {}, 'resident')

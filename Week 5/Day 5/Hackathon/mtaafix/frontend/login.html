@@ -9,8 +9,9 @@
 <body>
 <header class="top">
   <div class="brand"><span class="dot"></span> Mtaafix</div>
+  <button class="btn ghost menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
   <nav class="nav">
-    <span class="badge">Resident sign-in</span>
+    <a class="btn ghost" href="login.html" aria-current="page">Resident sign-in</a>
     <a class="btn ghost" href="ruler.html">Area ruler &rarr;</a>
   </nav>
 </header>
@@ -28,4 +29,34 @@
         <input id="phone" name="phone" inputmode="tel" placeholder="e.g. 0712 345 678" autocomplete="tel" required>
 
         <label for="name">Name <span style="opacity:.6">(optional)</span></label>
-        <input id="name" name="name" pla
+        <input id="name" name="name" placeholder="Your name" autocomplete="name">
+
+        <label for="area">Area <span style="opacity:.6">(optional &mdash; leave blank for all areas)</span></label>
+        <select id="area" name="area"><option value="">All areas</option></select>
+
+        <label class="check" for="subscribe" style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-weight:normal;cursor:pointer">
+          <input id="subscribe" name="subscribe" type="checkbox" checked style="width:auto;margin-top:3px">
+          <span>Receive SMS alerts &mdash; text me whenever my area ruler posts a
+            new report so I can confirm and rate it.</span>
+        </label>
+
+        <div class="row" style="margin-top:16px">
+          <button class="btn primary" type="submit" id="submitBtn">Sign in</button>
+        </div>
+      </form>
+
+      <div class="notice">
+        Demo note: sign-in here is by phone number only. In production this step
+        should be verified with a one-time SMS code before a session is granted.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/login.js"></script>
+<script src="js/menu.js"></script>
+</body>
+</html>

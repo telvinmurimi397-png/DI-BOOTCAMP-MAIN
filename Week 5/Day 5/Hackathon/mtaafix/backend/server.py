@@ -45,6 +45,7 @@ from constants import CATEGORIES, STATUSES, AREAS
 from validate import validate_report, validate_status, validate_stars
 
 PORT = int(os.environ.get("PORT", "4000"))
+HOST = os.environ.get("HOST", "0.0.0.0")
 FRONTEND_DIR = os.path.join(_HERE, "..", "frontend")
 
 
@@ -138,9 +139,11 @@ def api_routes(req):
     if p == "/api/residents/login" and m == "POST":
         body = req.json
         session, err = residents_mod.register_or_login(
-            body.get("phone"), body.get("name"), body.get("area"))
+            body.get("phone"), body.get("name"), body.get("area"),
+            body.get("subscribe", True))
         if err:
             return 400, {"error": err}
+        session["smsSent"] = sms.notify_resident_login(session["user"])
         return 200, session
     if p == "/api/residents/logout" and m == "POST":
         require_resident(req)
@@ -407,7 +410,7 @@ class Handler(BaseHTTPRequestHandler):
         self._dispatch("DELETE")
 
 
-def create_server(port=PORT, host="127.0.0.1"):
+def create_server(port=PORT, host=HOST):
     db.init()
     seed.ensure_seed()
     return ThreadingHTTPServer((host, port), Handler)

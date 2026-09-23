@@ -38,11 +38,11 @@ def ensure_seed():
         auth.create_ruler(admin_user, admin_pass, "Chief Administrator", role="admin", area=None)
         print(f'Created super-admin ruler "{admin_user}".')
         if not os.environ.get("ADMIN_PASSWORD"):
-            print('  ⚠  Using default admin password "admin123" — set ADMIN_PASSWORD and change it!')
+            print('  WARNING: Using default admin password "admin123" - set ADMIN_PASSWORD and change it!')
         for r in RULERS:
             auth.create_ruler(r["username"], f"{r['area']}123", r["name"], role="ruler", area=r["area"])
             print(f'Created area ruler "{r["username"]}".')
-        print('  ⚠  Area ruler demo passwords are "<areaId>123" — change them in production!')
+        print('  WARNING: Area ruler demo passwords are "<areaId>123" - change them in production!')
 
     if residents.count() == 0:
         residents.register_or_login("0712345678", name="Jane Resident", area="kasarani")

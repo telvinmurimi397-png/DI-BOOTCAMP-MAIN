@@ -45,12 +45,13 @@ def init(db_file=None):
         );
 
         CREATE TABLE IF NOT EXISTS residents (
-          id       INTEGER PRIMARY KEY AUTOINCREMENT,
-          phone    TEXT    NOT NULL UNIQUE,
-          name     TEXT,
-          area     TEXT,          -- preferred area, or null = all areas
-          verified INTEGER NOT NULL DEFAULT 0,
-          created  TEXT    NOT NULL
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          phone      TEXT    NOT NULL UNIQUE,
+          name       TEXT,
+          area       TEXT,          -- preferred area, or null = all areas
+          verified   INTEGER NOT NULL DEFAULT 0,
+          subscribed INTEGER NOT NULL DEFAULT 1,   -- opted in to SMS alerts
+          created    TEXT    NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS sessions (
@@ -107,8 +108,20 @@ def init(db_file=None):
         );
         """
     )
+    _migrate(_conn)
     _conn.commit()
     return _conn
+
+
+def _migrate(conn):
+    """Lightweight, idempotent migrations for databases created before a
+    column was added. CREATE TABLE IF NOT EXISTS never alters an existing
+    table, so new columns must be added explicitly here."""
+    cols = {r["name"] for r in [dict(x) for x in conn.execute("PRAGMA table_info(residents)")]}
+    if "subscribed" not in cols:
+        # Existing residents keep receiving alerts (default 1) to avoid a
+        # silent opt-out on upgrade.
+        conn.execute("ALTER TABLE residents ADD COLUMN subscribed INTEGER NOT NULL DEFAULT 1")
 
 
 def _require():

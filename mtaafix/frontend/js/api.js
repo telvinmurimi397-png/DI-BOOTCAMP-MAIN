@@ -15,7 +15,17 @@ const API = {
       body: options && options.body ? options.body : null
     }).then(function (response) {
       return response.text().then(function (text) {
-        const data = text ? JSON.parse(text) : {};
+        let data = {};
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseError) {
+            const error = new Error("Server returned an invalid response (HTTP " + response.status + ")");
+            error.status = response.status;
+            error.data = text;
+            throw error;
+          }
+        }
         if (!response.ok) {
           throw new Error(data.error || "Request failed");
         }
