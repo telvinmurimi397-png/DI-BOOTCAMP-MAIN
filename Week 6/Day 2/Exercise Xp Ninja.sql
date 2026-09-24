@@ -17,12 +17,8 @@ WHERE customer_id = (
 SELECT * 
 FROM customers 
 WHERE first_name = 'Scott' AND last_name = 'Scott';
--- Explanation: Yes, Scott still exists in the customers table. 
--- Deleting rows from the `purchases` table only removes purchase records referencing his ID; 
--- it does not delete his profile row from the `customers` table.
 
--- 4. Find all purchases joining with customers so Scott's purchase appears with empty/blank customer info
--- (Use a LEFT JOIN from purchases to customers)
+
 SELECT 
     purchases.id,
     purchases.item_id,
@@ -31,9 +27,7 @@ SELECT
     COALESCE(customers.last_name, '') AS last_name
 FROM purchases
 LEFT JOIN customers ON purchases.customer_id = customers.id;
--- Explanation: A LEFT JOIN includes all records from the `purchases` table regardless 
--- of whether a matching record exists in `customers`. If Scott were deleted from `customers` 
--- but his purchase remained, his name fields would return NULL (or empty string via COALESCE).
+
 
 -- 5. Find all purchases joining with customers so Scott's purchase (or non-matching orders) will NOT appear
 -- (Use an INNER JOIN)
@@ -45,6 +39,3 @@ SELECT
     customers.last_name
 FROM purchases
 INNER JOIN customers ON purchases.customer_id = customers.id;
--- Explanation: An INNER JOIN returns only records where there is a matching ID in both 
--- `purchases` and `customers`. If a purchase has no matching customer in `customers`, 
--- it is excluded from the result set.
