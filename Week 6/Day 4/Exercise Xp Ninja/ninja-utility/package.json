@@ -1,0 +1,13 @@
+{
+  "name": "ninja-utility",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.1"
+  }
+}

@@ -39,3 +39,4 @@ SELECT
     customers.last_name
 FROM purchases
 INNER JOIN customers ON purchases.customer_id = customers.id;
+   
