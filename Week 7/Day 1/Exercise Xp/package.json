@@ -1,0 +1,13 @@
+{
+  "name": "week-7-day-1-exercise-xp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Express Router exercises: pages, to-do CRUD, and book CRUD",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

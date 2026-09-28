@@ -1,0 +1,14 @@
+{
+  "name": "week-7-day-1-trivia-quiz-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Express Router trivia quiz with session-based scoring",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-session": "^1.18.2"
+  }
+}
