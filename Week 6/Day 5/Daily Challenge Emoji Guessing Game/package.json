@@ -1,0 +1,14 @@
+{
+  "name": "emoji-guessing-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A multiplayer-session emoji guessing game built with Express",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-session": "^1.18.2"
+  }
+}

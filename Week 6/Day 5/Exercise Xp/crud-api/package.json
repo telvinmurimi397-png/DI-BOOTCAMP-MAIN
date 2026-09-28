@@ -1,0 +1,14 @@
+{
+  "name": "crud-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "An Express API that proxies JSONPlaceholder posts",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "express": "^5.2.1"
+  }
+}
