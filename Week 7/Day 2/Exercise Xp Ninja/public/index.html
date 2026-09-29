@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f5ed">
+    <title>Quickfire | General Knowledge Quiz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="wordmark" href="/" aria-label="Quickfire home">
+          <span class="brand-mark" aria-hidden="true">Q</span>
+          <span>QUICKFIRE</span>
+        </a>
+        <div class="edition">GENERAL KNOWLEDGE <span> / </span> VOL. 01</div>
+        <div class="score-chip" aria-live="polite">SCORE <strong id="score">0</strong></div>
+      </header>
+
+      <main>
+        <section id="loading" class="status-view" aria-live="polite">
+          <span class="loader" aria-hidden="true"></span>
+          <p>Loading the questions</p>
+        </section>
+
+        <section id="errorView" class="status-view" hidden>
+          <p class="eyebrow">CONNECTION NEEDED</p>
+          <h1>We couldn't load the quiz.</h1>
+          <p id="errorMessage">Check the server and database, then try again.</p>
+          <button id="retryButton" class="button button-dark" type="button">Try again</button>
+        </section>
+
+        <section id="quizView" hidden>
+          <div class="quiz-heading">
+            <div>
+              <p class="eyebrow"><span class="live-dot"></span> FIVE QUESTIONS · NO HURRY</p>
+              <h1>A little bit of everything.</h1>
+            </div>
+            <div class="question-count" aria-live="polite"><span id="questionNumber">01</span><span class="count-divider">/</span><span id="questionTotal">05</span></div>
+          </div>
+
+          <div class="progress-track" role="progressbar" aria-label="Quiz progress" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
+            <span id="progressFill"></span>
+          </div>
+
+          <article id="questionPanel" class="question-panel">
+            <div class="question-index" aria-hidden="true"><span id="indexNumber">01</span><span class="index-rule"></span></div>
+            <div class="question-content">
+              <p class="eyebrow">YOUR QUESTION</p>
+              <h2 id="questionText"></h2>
+              <div id="options" class="options-list" role="group" aria-label="Answer options"></div>
+              <div class="question-actions">
+                <p id="feedback" class="feedback" aria-live="polite"></p>
+                <button id="submitButton" class="button button-dark" type="button" disabled>Lock in answer</button>
+                <button id="nextButton" class="button button-accent" type="button" hidden>Next question</button>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section id="finishView" class="finish-view" hidden>
+          <p class="eyebrow"><span class="live-dot"></span> THAT'S A WRAP</p>
+          <p class="final-score"><span id="finalScore">0</span><span class="score-out-of">/ <span id="finalTotal">5</span></span></p>
+          <h1 id="finishMessage">Nicely done.</h1>
+          <p class="finish-note">Your score is in. Another round?</p>
+          <button id="restartButton" class="button button-dark" type="button">Play again</button>
+        </section>
+      </main>
+
+      <footer class="page-footer"><span>QUICKFIRE QUIZ</span><span>TRUST YOUR FIRST INSTINCT.</span></footer>
+    </div>
+  </body>
+</html>
