@@ -4,15 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mtaafix — Area Ruler Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="dot"></span> Mtaafix <span class="badge">Ruler console</span></div>
+  <a class="brand" href="home.html"><span class="dot"></span> Mtaafix <span class="badge">Ruler console</span></a>
   <button class="btn ghost menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-expanded="false">&#9776;</button>
   <nav class="nav">
     <span class="badge" id="whoami"></span>
+    <a class="btn ghost" href="home.html">Home</a>
     <a class="btn ghost" href="index.html">Resident view</a>
+    <button class="btn ghost hide" id="loginNavBtn" type="button">Login</button>
     <button class="btn hide" id="logoutBtn">Sign out</button>
   </nav>
 </header>
@@ -23,7 +28,8 @@
     <div class="panel">
       <h2 style="margin-top:0">Area ruler sign-in</h2>
       <p class="desc">Area rulers are the only accounts allowed to post reports.
-        Posting a report automatically sends an AI-written SMS alert to residents.</p>
+        Sign-in requests need administrator approval. Posting a report automatically
+        sends an AI-written SMS alert to residents.</p>
       <form id="loginForm">
         <label for="username">Username</label>
         <input id="username" autocomplete="username" placeholder="e.g. kasarani-ruler" required>
@@ -33,6 +39,9 @@
           <button class="btn primary" type="submit">Sign in</button>
         </div>
       </form>
+      <div class="notice hide" id="loginPending" role="status" aria-live="polite">
+        Login request sent to the administrator. This page will update when it is approved or denied.
+      </div>
     </div>
   </div>
 
@@ -79,6 +88,14 @@
         <div style="flex:1;min-width:140px"><label>Area</label><select id="nrArea"></select></div>
       </div>
       <div class="row" style="margin-top:12px"><button class="btn" id="addRulerBtn">Create ruler</button></div>
+    </div>
+
+    <div class="panel" id="loginApprovalPanel" style="display:none">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h3 style="margin-top:0">Pending area ruler logins</h3>
+        <button class="btn" id="refreshLoginRequests" type="button">Refresh</button>
+      </div>
+      <div id="loginRequests"></div>
     </div>
 
     <div class="row" style="justify-content:space-between;align-items:center;margin:8px 0">

@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 import db
 
 SESSION_TTL = timedelta(hours=8)
+LOGIN_APPROVAL_TTL = timedelta(minutes=10)
 _SCRYPT = dict(n=16384, r=8, p=1, dklen=64, maxmem=64 * 1024 * 1024)
 
 
@@ -106,7 +107,51 @@ def ruler_login(username, password):
     acc = find_ruler(username)
     if not acc or not verify_password(password, acc["password"]):
         return None
+    if acc["role"] != "admin":
+        request_token = secrets.token_urlsafe(32)
+        # Store only a hash so a database read cannot be used to poll a login request.
+        token_hash = hashlib.sha256(request_token.encode()).hexdigest()
+        now = datetime.now(timezone.utc)
+        expires = (now + LOGIN_APPROVAL_TTL).isoformat()
+        db.create_ruler_login_request(token_hash, acc["id"], now.isoformat(), expires)
+        return {"approval_required": True, "request_id": request_token, "expires": expires}
+    return _ruler_session(acc)
+
+
+def _ruler_session(acc):
     token, expires = _open_session("ruler", acc["id"])
     return {"token": token, "expires": expires,
             "user": {"id": acc["id"], "username": acc["username"], "name": acc["name"],
                      "role": acc["role"], "area": acc["area"]}}
+
+
+def ruler_login_request_status(request_token):
+    if not request_token:
+        return {"status": "not_found"}
+    token_hash = hashlib.sha256(request_token.encode()).hexdigest()
+    request = db.get_ruler_login_request(token_hash)
+    if not request:
+        return {"status": "not_found"}
+
+    now = datetime.now(timezone.utc)
+    if request["status"] in ("pending", "approved") and datetime.fromisoformat(request["expires"]) <= now:
+        db.expire_ruler_login_request(token_hash)
+        return {"status": "expired"}
+    if request["status"] != "approved":
+        return {"status": request["status"]}
+
+    # The database consumes approval and creates its session atomically, only once.
+    session_token = secrets.token_hex(32)
+    session_expires = (now + SESSION_TTL).isoformat()
+    ruler = db.consume_approved_ruler_login_request(
+        token_hash, now.isoformat(), session_token, session_expires,
+    )
+    if not ruler:
+        latest = db.get_ruler_login_request(token_hash)
+        return {"status": latest["status"] if latest else "not_found"}
+    return {
+        "status": "approved",
+        "token": session_token,
+        "expires": session_expires,
+        "user": {key: ruler[key] for key in ("id", "username", "name", "role", "area")},
+    }

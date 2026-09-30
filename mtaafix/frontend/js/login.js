@@ -8,6 +8,8 @@ function setRole(role) {
 
   residentFields.classList.toggle('hidden', role !== 'resident');
   rulerFields.classList.toggle('hidden', role !== 'ruler');
+  document.getElementById('phone').required = role === 'resident';
+  document.getElementById('username').required = role === 'ruler';
 
   tabs.forEach(function (tab) {
     tab.classList.toggle('active', tab.dataset.role === role);
@@ -47,4 +49,4 @@ document.querySelectorAll('.tab').forEach(function (tab) {
 });
 
 document.getElementById('login-form').addEventListener('submit', handleLogin);
-setRole('resident');
+setRole(new URLSearchParams(window.location.search).get('role') === 'ruler' ? 'ruler' : 'resident');

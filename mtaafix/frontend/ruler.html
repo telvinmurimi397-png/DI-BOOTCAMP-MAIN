@@ -6,16 +6,19 @@
   <title>MtaaFix - Ruler Console</title>
   <link rel="stylesheet" href="/frontend/css/styles.css" />
 </head>
-<body>
-  <header class="topbar">
-    <div class="brand">MtaaFix Admin</div>
-    <nav>
+<body class="ruler-page">
+  <header class="topbar site-header">
+    <a class="brand" href="/frontend/home.html"><span class="brand-mark" aria-hidden="true">M</span>MtaaFix <span class="brand-context">Local team</span></a>
+    <nav aria-label="Local team navigation">
+      <a class="nav-link" href="/frontend/home.html">Home</a>
+      <a class="nav-link active" href="#open-issues">Open issues</a>
+      <a class="nav-link" href="/frontend/index.html">Resident space</a>
       <button id="logout-btn" class="secondary">Logout</button>
     </nav>
   </header>
 
   <main class="container">
-    <section class="panel">
+    <section class="panel" id="open-issues">
       <h2>Open issues</h2>
       <div id="ruler-report-list" class="report-list"></div>
     </section>

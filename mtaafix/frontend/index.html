@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MtaaFix - Resident</title>
+  <title>MtaaFix - Resident space</title>
   <link rel="stylesheet" href="/frontend/css/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">MtaaFix</div>
-    <nav>
+  <header class="topbar site-header">
+    <a class="brand" href="/frontend/home.html"><span class="brand-mark" aria-hidden="true">M</span>MtaaFix</a>
+    <nav aria-label="Resident navigation">
+      <a class="nav-link" href="/frontend/home.html">Home</a>
+      <a class="nav-link active" href="#submit-issue">Report an issue</a>
+      <a class="nav-link" href="#your-reports">My reports</a>
       <button id="logout-btn" class="secondary">Logout</button>
     </nav>
   </header>
 
   <main class="container">
-    <section class="panel">
+    <section class="panel" id="submit-issue">
       <h2>Submit issue</h2>
       <form id="report-form">
         <div class="form-grid">
@@ -42,7 +45,7 @@
       </form>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="your-reports">
       <h2>Your reports</h2>
       <div id="report-list" class="report-list"></div>
     </section>

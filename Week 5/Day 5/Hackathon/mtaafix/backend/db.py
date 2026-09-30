@@ -62,6 +62,19 @@ def init(db_file=None):
           expires      TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS ruler_login_requests (
+          id                INTEGER PRIMARY KEY AUTOINCREMENT,
+          request_hash      TEXT NOT NULL UNIQUE,
+          ruler_id          INTEGER NOT NULL,
+          status            TEXT NOT NULL DEFAULT 'pending',
+          created           TEXT NOT NULL,
+          expires           TEXT NOT NULL,
+          reviewed_at       TEXT,
+          reviewed_by       INTEGER,
+          FOREIGN KEY(ruler_id) REFERENCES rulers(id),
+          FOREIGN KEY(reviewed_by) REFERENCES rulers(id)
+        );
+
         CREATE TABLE IF NOT EXISTS reports (
           id          TEXT PRIMARY KEY,
           cat         TEXT    NOT NULL,
@@ -152,3 +165,84 @@ def run(sql, params=()):
         last = cur.lastrowid
         cur.close()
     return last
+
+
+def create_ruler_login_request(request_hash, ruler_id, created, expires):
+    return run(
+        "INSERT INTO ruler_login_requests (request_hash, ruler_id, created, expires) "
+        "VALUES (?, ?, ?, ?)",
+        (request_hash, ruler_id, created, expires),
+    )
+
+
+def get_ruler_login_request(request_hash):
+    return get(
+        "SELECT status, expires FROM ruler_login_requests WHERE request_hash = ?",
+        (request_hash,),
+    )
+
+
+def list_pending_ruler_login_requests(now):
+    return all(
+        "SELECT req.id, req.created, req.expires, ruler.username, ruler.name, ruler.area "
+        "FROM ruler_login_requests AS req "
+        "JOIN rulers AS ruler ON ruler.id = req.ruler_id "
+        "WHERE req.status = 'pending' AND req.expires > ? "
+        "ORDER BY req.created ASC",
+        (now,),
+    )
+
+
+def decide_ruler_login_request(request_id, reviewer_id, decision, now):
+    conn = _require()
+    with _lock:
+        # The conditional update prevents a second admin from deciding an expired or reviewed request.
+        cursor = conn.execute(
+            "UPDATE ruler_login_requests SET status = ?, reviewed_at = ?, reviewed_by = ? "
+            "WHERE id = ? AND status = 'pending' AND expires > ?",
+            (decision, now, reviewer_id, request_id, now),
+        )
+        conn.commit()
+        updated = cursor.rowcount == 1
+        cursor.close()
+    return updated
+
+
+def expire_ruler_login_request(request_hash):
+    run(
+        "UPDATE ruler_login_requests SET status = 'expired' "
+        "WHERE request_hash = ? AND status IN ('pending', 'approved')",
+        (request_hash,),
+    )
+
+
+def consume_approved_ruler_login_request(request_hash, now, session_token, session_expires):
+    conn = _require()
+    with _lock:
+        # Serialize approval consumption so concurrent polls cannot create multiple sessions.
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT ruler.id, ruler.username, ruler.name, ruler.role, ruler.area "
+            "FROM ruler_login_requests AS req "
+            "JOIN rulers AS ruler ON ruler.id = req.ruler_id "
+            "WHERE req.request_hash = ? AND req.status = 'approved' AND req.expires > ?",
+            (request_hash, now),
+        ).fetchone()
+        if not row:
+            conn.commit()
+            return None
+        updated = conn.execute(
+            "UPDATE ruler_login_requests SET status = 'consumed' "
+            "WHERE request_hash = ? AND status = 'approved'",
+            (request_hash,),
+        )
+        if updated.rowcount != 1:
+            conn.rollback()
+            return None
+        conn.execute(
+            "INSERT INTO sessions (token, subject_type, subject_id, created, expires) "
+            "VALUES (?, 'ruler', ?, ?, ?)",
+            (session_token, row["id"], now, session_expires),
+        )
+        conn.commit()
+        return dict(row)

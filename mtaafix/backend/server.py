@@ -187,7 +187,7 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
 
     def _serve_static_file(self, path):
         if path in ("/", ""):
-            path = "/frontend/login.html"
+            path = "/frontend/home.html"
         if path.startswith("/frontend/"):
             rel = path.lstrip("/")
             file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", rel))

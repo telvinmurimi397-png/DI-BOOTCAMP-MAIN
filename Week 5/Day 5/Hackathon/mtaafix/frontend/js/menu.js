@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   var toggle = document.getElementById('menuToggle');
-  var nav = document.querySelector('.nav');
+  var nav = document.querySelector('.nav, .home-nav');
   if (!toggle || !nav) return;
 
   toggle.addEventListener('click', function () {

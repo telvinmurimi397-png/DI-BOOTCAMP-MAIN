@@ -211,13 +211,36 @@ def ruler_routes(req):
         session = auth.ruler_login(str(body["username"]), str(body["password"]))
         if not session:
             return 401, {"error": "Invalid username or password"}
+        if session.get("approval_required"):
+            return 202, session
         return 200, session
+    if p == "/api/ruler/login-requests/status" and m == "GET":
+        return 200, auth.ruler_login_request_status(req.q("request_id"))
     if p == "/api/ruler/logout" and m == "POST":
         require_ruler(req)
         auth.logout(req.token)
         return 200, {"ok": True}
     if p == "/api/ruler/me" and m == "GET":
         return 200, {"user": require_ruler(req)}
+    if p == "/api/ruler/login-requests" and m == "GET":
+        # Only a super-admin may view pending ruler sign-ins.
+        user = require_ruler(req)
+        require_admin(user)
+        now = datetime.now(timezone.utc).isoformat()
+        return 200, db.list_pending_ruler_login_requests(now)
+    match = re.match(r"^/api/ruler/login-requests/(\d+)$", p)
+    if match and m == "PATCH":
+        # Require admin privileges before accepting either approval decision.
+        user = require_ruler(req)
+        require_admin(user)
+        decision = req.json.get("decision")
+        if decision not in ("approved", "denied"):
+            return 400, {"error": "decision must be approved or denied"}
+        now = datetime.now(timezone.utc).isoformat()
+        updated = db.decide_ruler_login_request(int(match.group(1)), user["id"], decision, now)
+        if not updated:
+            return 409, {"error": "Login request is no longer pending"}
+        return 200, {"ok": True, "status": decision}
 
     # --- post a report (RULERS ONLY) + fan out AI SMS ---------------------
     if p == "/api/ruler/reports" and m == "POST":
@@ -371,7 +394,7 @@ class Handler(BaseHTTPRequestHandler):
     def _serve_static(self, path):
         if not os.path.isdir(FRONTEND_DIR):
             return self._send_json(404, {"error": "Not found"})
-        rel = "index.html" if path in ("/", "") else path
+        rel = "home.html" if path in ("/", "") else path
         target = _safe_join(FRONTEND_DIR, rel)
         if target and os.path.isdir(target):
             target = os.path.join(target, "index.html")

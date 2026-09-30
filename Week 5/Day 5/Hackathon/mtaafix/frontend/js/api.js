@@ -105,7 +105,18 @@
     rulerToken: function () { return getToken('ruler'); },
     rulerLogin: function (username, password) {
       return request('POST', '/api/ruler/login', { username: username, password: password })
-        .then(function (s) { setToken('ruler', s.token); return s; });
+        .then(function (s) { if (s.token) setToken('ruler', s.token); return s; });
+    },
+    // The pending request ID is exchanged for a ruler session only after admin approval.
+    rulerLoginRequestStatus: function (requestId) {
+      return request('GET', '/api/ruler/login-requests/status?request_id=' + encodeURIComponent(requestId))
+        .then(function (s) { if (s.token) setToken('ruler', s.token); return s; });
+    },
+    rulerLoginRequests: function () {
+      return request('GET', '/api/ruler/login-requests', null, 'ruler');
+    },
+    decideRulerLoginRequest: function (requestId, decision) {
+      return request('PATCH', '/api/ruler/login-requests/' + requestId, { decision: decision }, 'ruler');
     },
     rulerLogout: function () {
       return request('POST', '/api/ruler/logout', {}, 'ruler')

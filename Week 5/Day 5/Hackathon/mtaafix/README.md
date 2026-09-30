@@ -9,7 +9,7 @@ MtaaFix is a small neighborhood issue-reporting platform for residents and local
 
 ## API overview
 
-Base URL: http://localhost:8000
+Base URL: http://localhost:4000
 
 ### Resident endpoints
 - POST /api/residents/register
@@ -26,6 +26,9 @@ Base URL: http://localhost:8000
 - GET /api/rulers/dashboard
 - POST /api/rulers/reports/:id/status
 - POST /api/rulers/reports/:id/message
+- GET /api/ruler/login-requests (super-admin only)
+- PATCH /api/ruler/login-requests/:id (super-admin only)
+- GET /api/ruler/login-requests/status?request_id=... (login approval polling)
 
 ### System endpoints
 - GET /health
@@ -61,7 +64,7 @@ credentials in the hosting platform's environment settings. Do not commit
 
 ```bash
 cd mtaafix/backend
-python -m unittest test_smoke.py
+python -m unittest discover -v
 ```
 
 ## Demo credentials
@@ -71,6 +74,13 @@ python -m unittest test_smoke.py
   - password: admin123
 - Resident demo:
   - phone: +254700000001
+
+Area-ruler sign-ins require administrator approval. After entering valid area-ruler
+credentials at `/ruler.html`, keep the page open while an administrator reviews the
+request from the **Pending area ruler logins** panel. Requests expire after 10 minutes.
+The seeded demo rulers use usernames such as `kasarani-ruler` and demo passwords in
+the form `<areaId>123` (for example, `kasarani123`). The admin can still sign in
+directly and can approve or deny requests from the console.
 
 ## Security notes
 
