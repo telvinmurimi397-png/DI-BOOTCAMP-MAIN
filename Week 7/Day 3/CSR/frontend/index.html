@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f5f1">
+    <title>MtaaClean | Community operations</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/main.js" defer></script>
+    <script src="/js/report.js" defer></script>
+    <script src="/js/cleanup.js" defer></script>
+    <script src="/js/csr.js" defer></script>
+    <script src="/js/dashboard.js" defer></script>
+  </head>
+  <body>
+    <div id="app-shell" class="app-shell" hidden>
+      <aside class="sidebar">
+        <a class="brand" href="#overview"><span class="brand-mark">m.</span><span>MtaaClean</span></a>
+        <div class="community-switch"><span class="community-kicker">COMMUNITY</span><span class="community-name">Githogoro <span>⌄</span></span><span class="community-zone"><i class="live-dot"></i> NAIROBI, KENYA</span></div>
+        <nav id="primary-nav" class="primary-nav" aria-label="Main navigation">
+          <span class="nav-label">WORKSPACE</span>
+          <a href="#overview" data-view="overview" class="nav-link active"><span class="nav-icon">▦</span> Overview</a>
+          <a href="#reports" data-view="reports" class="nav-link"><span class="nav-icon">⌁</span> Reports <span id="nav-report-count" class="nav-count"></span></a>
+          <a href="#cleanup" data-view="cleanup" class="nav-link"><span class="nav-icon">✳</span> Cleanups</a>
+          <span class="nav-label nav-label-spaced">PARTNERSHIPS</span>
+          <a href="#csr" data-view="csr" class="nav-link"><span class="nav-icon">◇</span> CSR projects</a>
+          <a href="#impact" data-view="impact" class="nav-link sponsor-only"><span class="nav-icon">◷</span> Impact</a>
+          <span class="nav-label nav-label-spaced">ACCOUNT</span>
+          <a href="#profile" data-view="profile" class="nav-link"><span class="nav-icon">◉</span> My profile</a>
+        </nav>
+        <div class="sidebar-bottom"><div class="support-card"><span class="support-mark">↗</span><p>Cleaner lanes.<br>Safer rainy seasons.</p></div><div class="sidebar-user"><span id="sidebar-avatar" class="avatar">W</span><span class="sidebar-user-copy"><strong id="sidebar-name">Resident</strong><small id="sidebar-role">RESIDENT</small></span><button id="logout-button" class="icon-button logout-button" title="Sign out" aria-label="Sign out">↗</button></div></div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar"><div class="breadcrumb"><span>GITHOGORO</span><span class="crumb-divider">/</span><strong id="breadcrumb-view">OVERVIEW</strong></div><div class="topbar-actions"><span class="topbar-status"><i class="live-dot"></i> COMMUNITY NETWORK</span><button id="mobile-nav-toggle" class="icon-button mobile-menu" aria-label="Open navigation">☰</button><button id="top-report-button" class="button button-primary resident-only" data-open-view="report-create"><span>＋</span> New report</button></div></header>
+        <div class="page-content">
+          <section id="view-overview" class="view-panel" data-view-panel="overview"></section>
+          <section id="view-reports" class="view-panel" data-view-panel="reports" hidden></section>
+          <section id="view-report-create" class="view-panel" data-view-panel="report-create" hidden></section>
+          <section id="view-report-detail" class="view-panel" data-view-panel="report-detail" hidden></section>
+          <section id="view-cleanup" class="view-panel" data-view-panel="cleanup" hidden></section>
+          <section id="view-csr" class="view-panel" data-view-panel="csr" hidden></section>
+          <section id="view-impact" class="view-panel" data-view-panel="impact" hidden></section>
+          <section id="view-profile" class="view-panel" data-view-panel="profile" hidden></section>
+        </div>
+        <footer class="main-footer"><span>MTAA CLEAN / COMMUNITY OPERATIONS</span><span>BUILT FOR GITHOGORO <span class="footer-dot">●</span></span></footer>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <dialog id="modal" class="modal"><form method="dialog" class="modal-close-wrap"><button class="icon-button modal-close" aria-label="Close">×</button></form><div id="modal-content"></div></dialog>
+  </body>
+</html>

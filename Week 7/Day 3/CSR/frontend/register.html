@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f3f5f1">
+    <title>Join MtaaClean</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/auth.js" defer></script>
+  </head>
+  <body class="auth-body">
+    <header class="auth-topbar"><a class="brand" href="/"><span class="brand-mark">m.</span><span>MtaaClean</span></a><a href="/login.html" class="text-link">Sign in <span>↗</span></a></header>
+    <main class="auth-layout register-layout"><section class="auth-story"><p class="eyebrow"><i class="live-dot"></i> EVERY REPORT MOVES US FORWARD</p><h1>Your street.<br><span>Your say.</span></h1><p>Help your neighbours turn waste and drainage problems into visible, trackable action.</p><div class="story-stats"><span><strong>01</strong> REPORT TO ACTION</span><span class="stat-rule"></span><span><strong>04</strong> COMMUNITY ROLES</span></div></section><section class="auth-panel register-panel"><p class="eyebrow">RESIDENT SIGN-UP <span>02 / 02</span></p><h2>Join the network.</h2><p class="auth-intro">Create an account to report issues and join cleanups.</p><form id="register-form"><label for="name">Full name</label><input id="name" name="name" autocomplete="name" minlength="2" maxlength="80" placeholder="Your name" required><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><label for="phone">Phone <span class="optional-label">OPTIONAL</span></label><input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+254 7xx xxx xxx"><label for="location">Neighbourhood / zone</label><input id="location" name="location" minlength="2" placeholder="Githogoro, Zone A" required><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required><p id="auth-message" class="form-message" role="status" aria-live="polite"></p><button class="button button-primary auth-submit" type="submit" disabled><span>Create resident account</span><span>↗</span></button></form><p class="auth-switch">ALREADY REGISTERED? <a href="/login.html">SIGN IN</a></p></section></main>
+    <footer class="auth-footer"><span>MTAA CLEAN · WASTE & DRAINAGE</span><span>GITHOGORO, NAIROBI</span></footer>
+  </body>
+</html>
