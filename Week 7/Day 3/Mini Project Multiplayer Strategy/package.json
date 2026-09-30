@@ -1,0 +1,14 @@
+{
+  "name": "week-7-day-3-multiplayer-strategy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turn-based multiplayer strategy game using Express REST APIs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

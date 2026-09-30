@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f2f4ef">
+    <title>Create Account | Fieldnotes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./forms.js" defer></script>
+  </head>
+  <body class="auth-page register-page">
+    <header class="topbar">
+      <a class="brand" href="./login.html"><span class="brand-icon">f.</span> fieldnotes</a>
+      <span class="topbar-caption">A SMALL PLACE FOR BIG IDEAS</span>
+      <a class="topbar-link" href="./login.html">Sign in <span aria-hidden="true">↗</span></a>
+    </header>
+    <main class="auth-layout register-layout">
+      <section class="story-panel">
+        <p class="eyebrow"><span class="status-dot"></span> BEGIN YOUR PERSONAL ARCHIVE</p>
+        <h1>Make room<br>for the things<br><span>worth keeping.</span></h1>
+        <p class="story-copy">A quiet corner for all the ideas, lists and little details you want to remember.</p>
+        <div class="story-index"><span>02</span><span class="index-line"></span><span>START WITH YOUR NAME</span></div>
+      </section>
+      <section class="form-panel register-form-panel" aria-labelledby="form-title">
+        <div class="panel-overline"><span>CREATE YOUR ACCOUNT</span><span>02 / 02</span></div>
+        <h2 id="form-title">A fresh page.</h2>
+        <p class="form-intro">A few details, then it’s yours.</p>
+        <form id="register-form" data-endpoint="/register">
+          <div class="name-fields">
+            <div><label for="name">Name</label><input id="name" name="name" autocomplete="given-name" maxlength="60" placeholder="First name" required></div>
+            <div><label for="lastName">Last name</label><input id="lastName" name="lastName" autocomplete="family-name" maxlength="60" placeholder="Last name" required></div>
+          </div>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required>
+          <label for="username">Username</label>
+          <input id="username" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_.\-]{3,24}" placeholder="Choose a username" required>
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" placeholder="At least 8 characters" required>
+          <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+          <button class="submit-button" type="submit" disabled><span>Create account</span><span aria-hidden="true">↗</span></button>
+        </form>
+        <p class="form-foot">ALREADY HAVE AN ACCOUNT? <a href="./login.html">SIGN IN</a></p>
+      </section>
+    </main>
+    <footer class="page-footer"><span>FIELDNOTES / PERSONAL ARCHIVE</span><span>TAKE YOUR TIME.</span></footer>
+  </body>
+</html>

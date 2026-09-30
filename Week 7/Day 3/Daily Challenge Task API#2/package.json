@@ -1,0 +1,17 @@
+{
+  "name": "week-7-day-3-daily-challenge-user-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "User registration and login API with bcrypt and JSON file storage",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "express": "^5.2.1"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
+  }
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18221f">
+    <title>Outpost | Turn-based strategy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="auth-screen" id="auth-screen">
+      <header class="auth-brand"><span class="brand-symbol">O</span><span>OUTPOST</span><span class="brand-divider">/</span><span class="brand-caption">TACTICAL GRID</span></header>
+      <section class="auth-layout">
+        <div class="auth-intro">
+          <p class="eyebrow"><span class="signal-dot"></span> COMMAND NETWORK ONLINE</p>
+          <h1>Read the board.<br><span>Take the outpost.</span></h1>
+          <p class="intro-copy">A game of ground gained one square at a time. Find an opponent, claim the center, and make the final push.</p>
+          <div class="intro-coordinate"><span>FIELD</span> 10 × 10 <span class="coordinate-line"></span><span>TURN-BASED</span></div>
+        </div>
+        <form id="auth-form" class="auth-panel">
+          <div class="auth-tabs" role="tablist" aria-label="Account access">
+            <button type="button" class="auth-tab active" data-mode="login" role="tab" aria-selected="true">Sign in</button>
+            <button type="button" class="auth-tab" data-mode="register" role="tab" aria-selected="false">Create account</button>
+          </div>
+          <p class="eyebrow form-eyebrow">PLAYER IDENTIFICATION</p>
+          <h2 id="auth-title">Welcome back.</h2>
+          <label for="auth-username">Call sign</label>
+          <input id="auth-username" name="username" autocomplete="username" minlength="3" maxlength="18" placeholder="e.g. scout_7" required>
+          <label for="auth-password">Passphrase</label>
+          <input id="auth-password" name="password" type="password" autocomplete="current-password" minlength="8" maxlength="128" placeholder="8 characters minimum" required>
+          <p id="auth-error" class="error-message" role="alert"></p>
+          <button id="auth-submit" class="button button-primary" type="submit">SIGN IN <span aria-hidden="true">↗</span></button>
+          <p class="auth-footnote"><span class="signal-dot"></span> YOUR NEXT MOVE STARTS HERE</p>
+        </form>
+      </section>
+      <footer class="auth-footer"><span>OUTPOST STRATEGY SIMULATOR</span><span>EST. 10 × 10</span></footer>
+    </main>
+
+    <main class="command-center" id="command-center" hidden>
+      <header class="topbar">
+        <a class="game-brand" href="#" aria-label="Outpost"><span class="brand-symbol">O</span><span>OUTPOST</span></a>
+        <div class="topbar-status"><span class="signal-dot"></span> FIELD LINK ACTIVE</div>
+        <div class="topbar-player"><span id="player-call-sign">SCOUT</span><button id="logout-button" class="text-button" type="button">SIGN OUT <span aria-hidden="true">↗</span></button></div>
+      </header>
+
+      <section class="lobby" id="lobby">
+        <div class="section-heading"><div><p class="eyebrow">OPERATIONS DESK / 01</p><h1>Choose your ground.</h1></div><div class="heading-mark">FIELD<br>COMMAND</div></div>
+        <div class="operation-options">
+          <form id="create-game-form" class="operation-card create-card">
+            <div class="card-topline"><span class="operation-index">01</span><span class="card-state"><span class="signal-dot"></span> NEW OPERATION</span></div>
+            <div class="operation-icon create-icon" aria-hidden="true">+</div>
+            <h2>Open a new field</h2>
+            <p>Take the first position. Your opponent can join with your six-character field code.</p>
+            <button class="button button-primary" type="submit">CREATE GAME <span aria-hidden="true">↗</span></button>
+          </form>
+          <form id="join-game-form" class="operation-card join-card">
+            <div class="card-topline"><span class="operation-index">02</span><span class="card-state muted-state">JOIN OPERATION</span></div>
+            <div class="operation-icon join-icon" aria-hidden="true">↘</div>
+            <h2>Join a field</h2>
+            <p>Enter the field code shared by the player who opened the game.</p>
+            <label for="game-code">FIELD CODE</label>
+            <div class="code-entry"><input id="game-code" maxlength="6" minlength="6" placeholder="A1B2C3" autocomplete="off" required><button class="button button-outline" type="submit">JOIN <span aria-hidden="true">↗</span></button></div>
+          </form>
+        </div>
+        <p id="lobby-message" class="lobby-message" role="status"></p>
+      </section>
+
+      <section class="game-screen" id="game-screen" hidden>
+        <div class="game-topline"><button id="back-to-lobby" class="back-button" type="button"><span aria-hidden="true">←</span> OPERATIONS</button><div class="field-code-label">FIELD CODE <strong id="active-game-code"></strong><button id="copy-code" class="copy-button" type="button" title="Copy field code" aria-label="Copy field code">▣</button></div><span id="game-status" class="game-status">WAITING</span></div>
+        <div class="game-layout">
+          <section class="board-column" aria-label="Game board">
+            <div class="board-heading"><div><p class="eyebrow">TACTICAL MAP / GRID 10</p><h1 id="board-title">Waiting on second player</h1></div><span id="turn-chip" class="turn-chip"><span class="signal-dot"></span> WAITING</span></div>
+            <div class="board-wrap"><div id="game-board" class="game-board" role="grid" aria-label="10 by 10 game board"></div></div>
+            <div class="board-key"><span><i class="key-swatch base-one-swatch"></i> YOUR BASE</span><span><i class="key-swatch base-two-swatch"></i> OPPONENT BASE</span><span><i class="key-swatch obstacle-swatch"></i> OBSTACLE</span></div>
+          </section>
+          <aside class="game-aside">
+            <div class="players-card">
+              <div class="aside-heading"><p class="eyebrow">FIELD POSITIONS</p><span id="turn-number" class="turn-number">TURN --</span></div>
+              <div id="player-one-card" class="player-card player-one-card"><span class="player-emblem">01</span><div class="player-details"><strong id="player-one-name">PLAYER ONE</strong><span id="player-one-coordinates">BASE 01 / 01</span></div><span class="player-indicator"></span></div>
+              <div class="versus-line"><span></span> VERSUS <span></span></div>
+              <div id="player-two-card" class="player-card player-two-card"><span class="player-emblem">02</span><div class="player-details"><strong id="player-two-name">AWAITING PLAYER</strong><span id="player-two-coordinates">BASE 10 / 10</span></div><span class="player-indicator"></span></div>
+            </div>
+            <div id="waiting-card" class="waiting-card"><span class="waiting-icon">⌁</span><div><strong>Hold your position.</strong><p>Send the field code to your opponent. The game begins when they join.</p></div></div>
+            <div id="move-card" class="move-card" hidden>
+              <div class="aside-heading"><p class="eyebrow">YOUR NEXT MOVE</p><span class="move-limit">1 TILE</span></div>
+              <div class="direction-pad" aria-label="Choose move direction">
+                <span></span><button class="direction-button" data-direction="up" type="button" aria-label="Move up">↑</button><span></span>
+                <button class="direction-button" data-direction="left" type="button" aria-label="Move left">←</button><button class="direction-button center-button" type="button" disabled aria-label="One step per turn">·</button><button class="direction-button" data-direction="right" type="button" aria-label="Move right">→</button>
+                <span></span><button class="direction-button" data-direction="down" type="button" aria-label="Move down">↓</button><span></span>
+              </div>
+              <button id="attack-button" class="button attack-button" type="button" hidden>ATTACK THE BASE <span aria-hidden="true">↗</span></button>
+              <p class="control-hint">Or select a highlighted adjacent tile.</p>
+            </div>
+            <div class="history-card"><div class="aside-heading"><p class="eyebrow">FIELD LOG</p><span class="log-live"><span class="signal-dot"></span> LIVE</span></div><ol id="game-history" class="game-history"></ol></div>
+            <button id="share-code" class="share-button" type="button"><span>▣</span> COPY FIELD CODE</button>
+          </aside>
+        </div>
+      </section>
+      <footer class="command-footer"><span>OUTPOST / TACTICAL GRID</span><span>SERVER-AUTHORITATIVE · REST API</span></footer>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

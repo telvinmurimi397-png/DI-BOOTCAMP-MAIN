@@ -1,0 +1,14 @@
+{
+  "name": "week-7-day-3-notes-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Terminal notes application using Node.js and JSON file storage",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "yargs": "^17.7.2"
+  }
+}
