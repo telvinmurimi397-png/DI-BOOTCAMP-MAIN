@@ -1,0 +1,29 @@
+body {
+  min-width: 320px;
+  background-color: #f8f9fa;
+}
+
+.celebrity-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.celebrity-card {
+  max-width: calc(100vw - 7rem);
+}
+
+.celebrity-card .card-img-top {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.planets-section {
+  max-width: 32rem;
+  margin: 0 auto 3rem;
+}
+
+.planets-list {
+  padding-left: 0;
+}

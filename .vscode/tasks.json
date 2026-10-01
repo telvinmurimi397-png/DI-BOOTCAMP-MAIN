@@ -1,24 +1,203 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Run Week 5 Exercise",
-      "type": "shell",
-      "command": "npm.cmd run start:xp",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Run MtaaFix",
-      "type": "shell",
-      "command": "${env:LOCALAPPDATA}\\Programs\\Python\\Python312\\python.exe",
-      "args": ["backend/server.py"],
-      "options": {
-        "cwd": "${workspaceFolder}/Week 5/Day 5/Hackathon/mtaafix"
-      },
-      "problemMatcher": []
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Week 5 Exercise",
+			"type": "shell",
+			"command": "npm.cmd run start:xp",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run MtaaFix",
+			"type": "shell",
+			"command": "${env:LOCALAPPDATA}\\Programs\\Python\\Python312\\python.exe",
+			"args": [
+				"backend/server.py"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}/Week 5/Day 5/Hackathon/mtaafix"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Exercise XP dependencies",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp",
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Exercise XP",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Exercise XP",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp",
+				"run",
+				"dev",
+				"--",
+				"--host",
+				"127.0.0.1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Exercise XP Gold dependencies",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp Gold",
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Exercise XP Gold",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp Gold",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Exercise XP Gold",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp Gold",
+				"run",
+				"dev",
+				"--",
+				"--host",
+				"127.0.0.1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Rebuild Exercise XP Gold",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Exercise Xp Gold",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Landing Page dependencies",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Mini Project Landing Page Using React",
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Landing Page",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Mini Project Landing Page Using React",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Landing Page",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Mini Project Landing Page Using React",
+				"run",
+				"dev",
+				"--",
+				"--host",
+				"127.0.0.1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install Carousel dependencies",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Daily Challenge React Carousel",
+				"install"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build React Carousel",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Daily Challenge React Carousel",
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start React Carousel",
+			"type": "shell",
+			"command": "npm.cmd",
+			"args": [
+				"--prefix",
+				"Week 7/Day 4/Daily Challenge React Carousel",
+				"run",
+				"dev",
+				"--",
+				"--host",
+				"127.0.0.1"
+			],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
 }

@@ -1,0 +1,42 @@
+.para {
+  background-color: #282c34;
+  color: white;
+  padding: 40px;
+  font-family: Arial;
+  text-align: center;
+}
+
+.exercise-content {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+
+.exercise-content h1,
+.exercise-content p,
+.exercise-content ul {
+  margin: 0;
+}
+
+.exercise-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-form input {
+  min-width: 0;
+  padding: 8px;
+}
+
+.exercise-form button {
+  padding: 8px 12px;
+}
+
+.exercise-image {
+  display: block;
+  width: min(100%, 360px);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
