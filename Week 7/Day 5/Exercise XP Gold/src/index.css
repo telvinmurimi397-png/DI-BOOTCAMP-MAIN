@@ -1,0 +1,69 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #17212b;
+  background: #f4f7f8;
+  font-family: Arial, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.page {
+  width: min(100% - 32px, 880px);
+  margin: 32px auto;
+}
+
+.exercise-content {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+
+.exercise-content h2,
+.exercise-content p {
+  margin: 0;
+}
+
+.exercise-form,
+.exercise-form label,
+.form-section,
+.form-section label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-form label,
+.form-section label {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.exercise-form input,
+.form-section textarea,
+.form-section select {
+  padding: 8px;
+}
+
+.error-message {
+  color: #b42318;
+}
+
+.form-section {
+  flex-direction: column;
+  align-items: flex-start;
+}

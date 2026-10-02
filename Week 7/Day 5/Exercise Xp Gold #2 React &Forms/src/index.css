@@ -1,0 +1,74 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #17212b;
+  background: #f4f7f8;
+  font-family: Arial, sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  width: fit-content;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+
+.page {
+  width: min(100% - 32px, 760px);
+  margin: 32px auto;
+}
+
+.lesson-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #cbd5db;
+}
+
+.lesson-section h2 {
+  margin: 0 0 18px;
+}
+
+.form-exercise,
+.form-grid,
+.submitted-user {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 360px);
+}
+
+.form-grid input,
+.form-grid select {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #98a7b1;
+  border-radius: 4px;
+  background: white;
+}
+
+.success-message {
+  color: #175b35;
+}
+
+.success-message p,
+.submitted-user h3,
+.submitted-user p {
+  margin: 0;
+}
+
+.success-message pre {
+  color: #17212b;
+  white-space: pre-wrap;
+}

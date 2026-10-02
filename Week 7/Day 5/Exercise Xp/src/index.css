@@ -1,0 +1,57 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #17212b;
+  background: #f4f7f8;
+  font-family: Arial, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.page {
+  width: min(100% - 32px, 880px);
+  margin: 32px auto;
+}
+
+.lesson-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #cbd5db;
+}
+
+.lesson-section h2 {
+  margin: 0 0 16px;
+}
+
+.exercise-content {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.exercise-content p,
+.exercise-content h3 {
+  margin: 0;
+}
+
+.exercise-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.exercise-form input {
+  min-width: 0;
+  padding: 8px;
+}
