@@ -1,0 +1,44 @@
+body {
+  min-width: 320px;
+  color: #242a31;
+}
+
+.column {
+  padding: 0;
+}
+
+.column-left {
+  min-height: calc(100vh - 56px);
+  background-color: #f7f7f7;
+  border-right: 1px solid #ececec;
+}
+
+.images img {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.image-credit {
+  margin-bottom: 0.5rem;
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.error-details {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.error-details pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  .column-left {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid #ececec;
+  }
+}
