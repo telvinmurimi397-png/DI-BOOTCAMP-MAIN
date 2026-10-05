@@ -1,0 +1,20 @@
+<% if (error) { %>
+  <div class="alert alert-warning" role="alert"><%= error %></div>
+<% } else if (posts.length === 0) { %>
+  <p class="text-secondary py-4"><%= typeof emptyMessage === 'string' ? emptyMessage : 'No facts to display.' %></p>
+<% } else { %>
+  <div class="posts" aria-live="polite">
+  <% posts.forEach((post) => { %>
+    <% const categories = post.categories || post.category || []; %>
+    <article class="post">
+      <h2><a href="<%= post.link %>" target="_blank" rel="noopener noreferrer"><%= post.title || 'Untitled fact' %></a></h2>
+      <p class="post-meta mb-2">
+        <%= post.pubDate ? new Date(post.pubDate).toLocaleDateString() : 'Date unavailable' %>
+        · <%= post.creator || post.author || 'Unknown creator' %>
+        · <%= (Array.isArray(categories) ? categories : [categories]).filter(Boolean).join(', ') || 'Uncategorized' %>
+      </p>
+      <p class="mb-0"><%= post.contentSnippet || post.summary || post.content || 'No preview available.' %></p>
+    </article>
+  <% }) %>
+  </div>
+<% } %>

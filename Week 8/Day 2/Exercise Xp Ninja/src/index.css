@@ -1,0 +1,41 @@
+:root {
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  color: #1c3031;
+  background: #f2f4f1;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #1c3031;
+  --muted: #64736e;
+  --line: #d8e0dc;
+  --green: #21675a;
+  --coral: #c75d3c;
+}
+
+* { box-sizing: border-box; }
+body { min-width: 320px; margin: 0; background: #f2f4f1; color: var(--ink); }
+.page-shell { max-width: 1080px; padding-top: 54px; padding-bottom: 32px; }
+.page-header { max-width: 760px; margin-bottom: 30px; }
+.page-header h1 { margin: 0 0 10px; font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 760; }
+.page-header > p:last-child { margin: 0; color: var(--muted); line-height: 1.6; }
+.eyebrow { margin: 0 0 8px; color: var(--coral); font-size: .73rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.api-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.api-panel { min-width: 0; padding: 22px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.panel-heading { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.panel-heading h2 { margin: 0; font-size: 1.55rem; font-weight: 720; }
+.endpoint { color: var(--muted); font: .75rem/1.4 ui-monospace, Consolas, monospace; text-align: right; }
+.result-list { margin: 0; padding: 0; list-style: none; }
+.user-row, .customer-row { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: center; padding: 13px 4px; border-bottom: 1px solid #e8ece9; }
+.user-row:last-child, .customer-row:last-child { border-bottom: 0; }
+.record-id { color: #9aa9a2; font-size: .8rem; font-weight: 750; }
+.user-row > span:last-child, .customer-row > span:last-child { overflow-wrap: anywhere; font-weight: 650; }
+.loading-message, .error-message { margin: 0; padding: 14px; border-radius: 4px; background: #f3f6f3; color: var(--muted); }
+.error-message { background: #fff2ee; color: #98442c; }
+.page-footer { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+
+@media (max-width: 700px) {
+  .page-shell { padding-top: 32px; }
+  .api-grid { grid-template-columns: 1fr; }
+  .api-panel { padding: 18px; }
+  .panel-heading { align-items: start; flex-direction: column; }
+  .endpoint { text-align: left; }
+}

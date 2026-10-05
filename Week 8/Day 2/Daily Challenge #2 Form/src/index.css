@@ -1,0 +1,35 @@
+:root {
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  color: #203033;
+  background: #f2f3ed;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #203033;
+  --muted: #63716f;
+  --line: #d9dfd8;
+  --green: #22665a;
+  --orange: #c55c3b;
+}
+
+* { box-sizing: border-box; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background: #f2f3ed; color: var(--ink); }
+.page-shell { width: min(100% - 40px, 760px); margin: 0 auto; padding: 80px 0 30px; }
+.page-header { margin-bottom: 28px; }
+.eyebrow { margin: 0 0 9px; color: var(--orange); font-size: .73rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.page-header h1 { margin: 0 0 10px; font-size: clamp(2.5rem, 7vw, 4.4rem); font-weight: 760; }
+.page-header > p:last-child { max-width: 540px; margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.6; }
+.search-panel { padding: 24px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.autocomplete { position: relative; }
+.search-label { display: block; margin-bottom: 8px; font-weight: 700; }
+.search-input { width: 100%; padding: 13px 14px; border: 1px solid #c7d0ca; border-radius: 4px; color: var(--ink); font: inherit; }
+.search-input:focus { border-color: var(--green); outline: 3px solid rgb(34 102 90 / 15%); }
+.suggestions { position: absolute; z-index: 1; top: calc(100% + 4px); right: 0; left: 0; max-height: 280px; margin: 0; padding: 5px; overflow-y: auto; border: 1px solid var(--line); border-radius: 4px; background: #fff; box-shadow: 0 12px 24px rgb(28 48 44 / 12%); list-style: none; }
+.suggestions li + li { border-top: 1px solid #edf0ed; }
+.suggestions button { width: 100%; padding: 9px 10px; border: 0; border-radius: 3px; background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.suggestions button:hover, .suggestions button:focus-visible { outline: none; background: #edf4ef; color: var(--green); }
+.page-footer { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .84rem; }
+
+@media (max-width: 560px) {
+  .page-shell { padding-top: 48px; }
+  .search-panel { padding: 18px; }
+}

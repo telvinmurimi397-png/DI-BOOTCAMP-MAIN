@@ -1,0 +1,101 @@
+:root {
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  color: #1c302e;
+  background: #f3f5f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #1c302e;
+  --muted: #61716b;
+  --paper: #f3f5f2;
+  --line: #d9e1dc;
+  --green: #21675a;
+  --coral: #d56246;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.site-nav { background: var(--ink); }
+.site-nav .navbar-brand { color: #fff; font-weight: 750; }
+.site-nav .nav-link { color: #d7e2dc; }
+.site-nav .nav-link:hover,
+.site-nav .nav-link.active { color: #ffc2a9; }
+
+.lesson-page {
+  max-width: 980px;
+  padding-top: 48px;
+  padding-bottom: 60px;
+}
+
+.page-intro { padding: 10px 0 28px; }
+.page-intro h1,
+.route-page h1 { margin: 0 0 12px; font-size: clamp(2.3rem, 6vw, 4rem); font-weight: 750; }
+.page-intro > p:last-child,
+.lesson-section > p:not(.eyebrow),
+.route-page > p:not(.eyebrow) { max-width: 680px; color: var(--muted); line-height: 1.65; }
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--coral);
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.lesson-section {
+  margin-top: 16px;
+  padding: 24px 0;
+  border-top: 1px solid var(--line);
+}
+
+.lesson-section h2 { margin: 0 0 16px; font-size: 1.6rem; font-weight: 700; }
+.post-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.post-entry,
+.data-example {
+  height: 100%;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+}
+.post-entry h3,
+.data-example h3 { margin: 0 0 10px; font-size: 1.2rem; font-weight: 700; }
+.post-entry p:last-child { margin-bottom: 0; color: var(--muted); line-height: 1.55; }
+.data-example { margin-bottom: 12px; }
+.data-example h4 { margin: 0 0 8px; font-size: 1rem; font-weight: 700; }
+.link-list,
+.skill-list { margin: 0; padding-left: 18px; color: var(--muted); }
+.link-list a,
+.experience-entry a { color: var(--green); }
+.skill-group + .skill-group { margin-top: 16px; }
+.skill-list li { padding: 2px 0; }
+.skill-highlight { margin-left: 8px; color: var(--coral); font-size: .7rem; font-weight: 750; text-transform: uppercase; }
+.experience-list { display: grid; gap: 18px; }
+.experience-entry { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; }
+.experience-entry img { border-radius: 4px; object-fit: contain; }
+.experience-entry h4 { margin-bottom: 8px; }
+.role-entry p { margin: 0 0 5px; color: var(--muted); }
+.role-entry .date-range { font-size: .85rem; }
+.webhook-form { max-width: 720px; }
+.btn-primary { --bs-btn-bg: var(--green); --bs-btn-border-color: var(--green); --bs-btn-hover-bg: #174f45; --bs-btn-hover-border-color: #174f45; }
+.request-message { margin: 12px 0 0; color: var(--green); }
+.boundary-fallback { max-width: 980px; margin: 56px auto; padding: 24px; border-left: 4px solid var(--coral); background: #fff; }
+.boundary-fallback h2 { margin-bottom: 8px; }
+.boundary-fallback p:last-child { margin-bottom: 0; color: var(--muted); }
+.site-footer { padding-top: 18px; padding-bottom: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+
+@media (max-width: 575px) {
+  .lesson-page { padding-top: 32px; }
+  .post-list { grid-template-columns: 1fr; }
+  .site-nav .navbar-brand { margin-right: .5rem; }
+  .site-nav .nav-link { padding-right: .5rem; padding-left: .5rem; font-size: .9rem; }
+  .webhook-form .input-group { display: grid; gap: 8px; }
+  .webhook-form .input-group > * { width: 100%; border-radius: 4px !important; }
+}

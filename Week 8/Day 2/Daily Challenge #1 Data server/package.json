@@ -1,0 +1,15 @@
+{
+  "name": "daily-challenge-data-server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "client": "npm --prefix client run dev",
+    "server": "node server/server.js",
+    "dev": "concurrently -k -n CLIENT,SERVER \"npm:client\" \"npm:server\""
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "express": "^5.2.1"
+  }
+}

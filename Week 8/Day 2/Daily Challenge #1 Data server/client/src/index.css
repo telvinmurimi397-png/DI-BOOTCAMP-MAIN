@@ -1,0 +1,42 @@
+:root {
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  color: #202f33;
+  background: #f3f4ef;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #202f33;
+  --muted: #63716f;
+  --line: #d8dfd9;
+  --teal: #1f695f;
+  --orange: #c45c39;
+}
+
+* { box-sizing: border-box; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background: #f3f4ef; color: var(--ink); }
+.page-shell { width: min(100% - 40px, 850px); margin: 0 auto; padding: 72px 0 30px; }
+.page-header { margin-bottom: 34px; }
+.eyebrow { margin: 0 0 9px; color: var(--orange); font-size: .73rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.page-header h1 { margin: 0 0 12px; font-size: clamp(2.2rem, 6vw, 3.8rem); font-weight: 760; }
+.page-header > p:last-child { max-width: 600px; margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.6; }
+.message-panel { padding: 26px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.panel-heading { margin-bottom: 23px; }
+.panel-heading h2 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.form-label { margin-bottom: 8px; font-weight: 700; }
+.input-row { display: flex; gap: 10px; }
+.message-input { min-width: 0; flex: 1; padding: 12px 14px; border: 1px solid #c6d0ca; border-radius: 4px; color: var(--ink); font: inherit; }
+.message-input:focus { border-color: var(--teal); outline: 3px solid rgb(31 105 95 / 15%); }
+.send-button { padding: 11px 18px; border: 0; border-radius: 4px; background: var(--teal); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.send-button:hover:not(:disabled) { background: #16554d; }
+.send-button:disabled { opacity: .55; cursor: not-allowed; }
+.server-response, .error-message { margin: 18px 0 0; padding: 13px 15px; border-left: 3px solid var(--teal); background: #eff6f1; color: #24554c; line-height: 1.5; overflow-wrap: anywhere; }
+.error-message { border-color: var(--orange); background: #fbf0eb; color: #8b3c25; }
+.page-footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--line); color: var(--muted); font-size: .83rem; }
+.page-footer code { color: var(--ink); }
+
+@media (max-width: 560px) {
+  .page-shell { padding-top: 42px; }
+  .message-panel { padding: 20px; }
+  .input-row { align-items: stretch; flex-direction: column; }
+  .send-button { width: 100%; }
+  .page-footer { flex-direction: column; }
+}

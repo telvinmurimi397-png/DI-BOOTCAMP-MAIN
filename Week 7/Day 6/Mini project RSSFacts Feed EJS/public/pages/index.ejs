@@ -1,0 +1,9 @@
+<%- include('../partials/head', { pageTitle: feedTitle }) %>
+<%- include('../partials/header') %>
+<main class="container page-shell py-5">
+  <p class="eyebrow mb-2">Curiosity, delivered</p>
+  <h1 class="page-title mb-2"><%= feedTitle %></h1>
+  <p class="text-secondary mb-5">Browse the latest facts from the RSS feed.</p>
+  <%- include('../partials/posts', { posts, error, emptyMessage: 'The feed has no posts right now.' }) %>
+</main>
+<%- include('../partials/footer') %>
