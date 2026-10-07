@@ -1,0 +1,33 @@
+:root {
+  font-family: Inter, "Segoe UI", sans-serif;
+  color: #1e3a32;
+  background: #f7faf6;
+}
+
+* { box-sizing: border-box }
+
+body { margin: 0 }
+
+.app-shell { min-height: 100vh; padding: 36px 14px }
+.page { max-width: 760px; margin: 0 auto }
+
+.page-header { margin-bottom: 18px }
+.eyebrow { color: #2f9f7a; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 8px }
+h1 { margin: 0 0 8px }
+.intro { margin: 0 0 12px; color: #6c7b75 }
+
+.exercise-card { padding: 18px; border-radius: 12px; background: #fff; border: 1px solid #e2e8e0 }
+
+.todo-form { display: flex; gap: 10px; margin-bottom: 12px }
+.todo-form input { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #dfe7e0 }
+.todo-form button { padding: 10px 14px; border: 0; background: #2f9f7a; color: #fff; border-radius: 8px; cursor: pointer }
+
+.todo-list { list-style: none; padding: 0; margin: 0 }
+.todo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-radius: 8px; border: 1px solid #eef3ee; margin-bottom: 8px; background: #fbfdfb }
+.todo-text { color: #17332b }
+.remove { background: transparent; border: 0; color: #c44; cursor: pointer }
+.empty { color: #6c7b75 }
+
+.page-footer { margin-top: 18px; color: #6c7b75; font-size: .9rem }
+
+.visually-hidden { position: absolute !important; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap }

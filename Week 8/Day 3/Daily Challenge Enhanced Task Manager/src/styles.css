@@ -1,0 +1,318 @@
+:root {
+  font-family: Inter, "Segoe UI", sans-serif;
+  color: #243148;
+  background: #f5f7fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 56px 20px;
+}
+
+.page {
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: #5269c7;
+  font-size: 0.76rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2.3rem, 7vw, 3.5rem);
+  letter-spacing: -0.045em;
+}
+
+.intro {
+  max-width: 560px;
+  margin: 0;
+  color: #69758a;
+  line-height: 1.65;
+}
+
+.task-panel {
+  padding: 28px;
+  border: 1px solid #e3e8f1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgb(39 57 95 / 7%);
+}
+
+.task-form > label {
+  display: block;
+  margin-bottom: 9px;
+  font-weight: 700;
+}
+
+.form-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.form-controls input,
+.edit-input {
+  min-width: 0;
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid #dce2ec;
+  border-radius: 9px;
+  color: #243148;
+}
+
+.form-controls input:focus-visible,
+.edit-input:focus-visible,
+.task-label input:focus-visible,
+button:focus-visible {
+  outline: 3px solid #99a9f3;
+  outline-offset: 2px;
+}
+
+.add-button {
+  padding: 0 18px;
+  border: 0;
+  border-radius: 9px;
+  background: #5269c7;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.task-list-section {
+  margin-top: 30px;
+}
+
+.list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.list-heading h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.task-summary {
+  margin: 4px 0 0;
+  color: #8490a2;
+  font-size: 0.82rem;
+}
+
+.filters {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 9px;
+  background: #f2f4f8;
+}
+
+.filter-button {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #6c788b;
+  font-size: 0.83rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.filter-button.selected {
+  background: #fff;
+  color: #3f5ebc;
+  box-shadow: 0 1px 4px rgb(39 57 95 / 12%);
+}
+
+.empty-state {
+  margin: 0;
+  padding: 18px;
+  border: 1px dashed #dce2ec;
+  border-radius: 10px;
+  color: #69758a;
+  text-align: center;
+}
+
+.task-list {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.task-item {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: 1px solid #e8ebf2;
+  border-radius: 10px;
+  background: #fcfdff;
+}
+
+.task-label {
+  display: flex;
+  flex: none;
+  align-items: center;
+  cursor: pointer;
+}
+
+.task-label input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #5269c7;
+}
+
+.task-text {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.completed .task-text {
+  color: #8993a4;
+  text-decoration: line-through;
+}
+
+.task-actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.action-button {
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.edit-button,
+.save-button {
+  color: #4565c0;
+}
+
+.edit-button:hover,
+.save-button:hover {
+  background: #eef2ff;
+}
+
+.remove-button {
+  color: #b74350;
+}
+
+.remove-button:hover {
+  background: #fff0f1;
+}
+
+.edit-form {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 5px;
+}
+
+.edit-input {
+  padding: 8px 10px;
+}
+
+.cancel-button {
+  color: #69758a;
+}
+
+.cancel-button:hover {
+  background: #f0f2f6;
+}
+
+.page-note {
+  margin: 18px 0 0;
+  color: #8a95a7;
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .app-shell {
+    padding: 38px 14px;
+  }
+
+  .task-panel {
+    padding: 20px;
+  }
+
+  .list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .task-item {
+    flex-wrap: wrap;
+  }
+
+  .edit-form {
+    flex-basis: calc(100% - 28px);
+    flex-wrap: wrap;
+  }
+
+  .edit-input {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .form-controls {
+    flex-direction: column;
+  }
+
+  .add-button {
+    min-height: 44px;
+  }
+
+  .filters {
+    width: 100%;
+  }
+
+  .filter-button {
+    flex: 1;
+  }
+}
