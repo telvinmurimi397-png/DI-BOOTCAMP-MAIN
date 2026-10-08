@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  font-weight: 400;
+  color: #302d2a;
+  background: #f8e8dc;
+  font-optical-sizing: auto;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+.page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 40px 20px;
+  background: var(--page-background);
+  transition: background-color 350ms ease;
+}
+
+.page-content {
+  width: min(100%, 760px);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 20px;
+  color: #706963;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.quote-card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(48px, 9vw, 88px) clamp(24px, 9vw, 88px) 54px;
+  border: 1px solid rgb(70 55 45 / 8%);
+  border-radius: 8px;
+  background: #fffefa;
+  box-shadow: 0 24px 80px rgb(68 49 37 / 12%);
+}
+
+.quote-mark {
+  display: block;
+  height: 62px;
+  color: var(--page-background);
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 8rem;
+  line-height: 1;
+  transition: color 350ms ease;
+}
+
+.quote {
+  margin: 18px 0 26px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 5vw, 3.35rem);
+  font-weight: 500;
+  line-height: 1.28;
+  transition: color 350ms ease;
+}
+
+.author {
+  margin: 0 0 38px;
+  color: #77706b;
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+}
+
+.generate-button {
+  min-width: 166px;
+  padding: 15px 22px;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 350ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.generate-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgb(40 30 20 / 16%);
+}
+
+.generate-button:active {
+  transform: translateY(0);
+}
+
+.generate-button:focus-visible {
+  outline: 3px solid #302d2a;
+  outline-offset: 4px;
+}
+
+.hint {
+  margin: 22px 0 0;
+  color: #706963;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 28px 16px;
+  }
+
+  .eyebrow {
+    margin-bottom: 16px;
+    font-size: 0.68rem;
+  }
+
+  .quote-card {
+    padding-top: 52px;
+    padding-bottom: 42px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
