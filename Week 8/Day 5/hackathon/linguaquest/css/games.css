@@ -1,0 +1,2 @@
+.game-panel { animation: enter-game .2s ease-out; }
+@keyframes enter-game { from { opacity: .5; transform: scale(.99); } }

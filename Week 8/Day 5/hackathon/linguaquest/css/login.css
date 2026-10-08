@@ -1,0 +1,2 @@
+.auth-card { animation: enter-card .24s ease-out; }
+@keyframes enter-card { from { opacity: 0; transform: translateY(8px); } }

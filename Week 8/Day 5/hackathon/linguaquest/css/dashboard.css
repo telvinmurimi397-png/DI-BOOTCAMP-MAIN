@@ -1,0 +1,2 @@
+.welcome-copy, .continue-card, .dashboard-grid { animation: enter-dashboard .24s ease-out; }
+@keyframes enter-dashboard { from { opacity: 0; transform: translateY(5px); } }

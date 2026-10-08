@@ -1,0 +1,34 @@
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS learning_progress (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  language TEXT NOT NULL DEFAULT 'French',
+  level TEXT NOT NULL DEFAULT 'Beginner',
+  daily_goal_minutes INTEGER NOT NULL DEFAULT 10,
+  xp INTEGER NOT NULL DEFAULT 0,
+  lives INTEGER NOT NULL DEFAULT 5,
+  streak_days INTEGER NOT NULL DEFAULT 0,
+  last_activity_date TEXT
+);
+
+CREATE TABLE IF NOT EXISTS lesson_completions (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  lesson_key TEXT NOT NULL,
+  completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, lesson_key)
+);
+
+CREATE TABLE IF NOT EXISTS achievements (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  achievement_key TEXT NOT NULL,
+  unlocked_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, achievement_key)
+);
