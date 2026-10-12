@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+
+<h1><%= product ? 'Edit Product' : 'Add Product' %></h1>
+<% if (error) { %><div class="error"><%= error %></div><% } %>
+
+<form method="post" action="<%= product ? '/admin/products/' + product.id : '/admin/products' %>" class="form-card wide">
+  <label>Name <input type="text" name="name" value="<%= product ? product.name : '' %>" required></label>
+  <label>Category
+    <select name="category" required>
+      <% categories.forEach((c) => { %>
+        <option value="<%= c %>" <%= product && product.category === c ? 'selected' : '' %>><%= c %></option>
+      <% }) %>
+    </select>
+  </label>
+  <div class="form-row">
+    <label>Price ($) <input type="number" name="price" step="0.01" min="0" value="<%= product ? product.price : '' %>" required></label>
+    <label>Stock <input type="number" name="stock" min="0" value="<%= product ? product.stock : '' %>" required></label>
+    <label>Emoji <input type="text" name="emoji" maxlength="4" value="<%= product ? product.emoji : '🍳' %>"></label>
+  </div>
+  <label>Description <textarea name="description" rows="4"><%= product ? product.description : '' %></textarea></label>
+  <div class="cart-actions">
+    <a class="btn btn-outline" href="/admin/products">Cancel</a>
+    <button class="btn" type="submit"><%= product ? 'Save Changes' : 'Add Product' %></button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

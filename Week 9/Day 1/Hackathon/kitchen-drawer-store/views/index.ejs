@@ -1,0 +1,42 @@
+<%- include('partials/header') %>
+
+<section class="hero">
+  <h1>Quality tools for every kitchen</h1>
+  <p>Durable, honest utensils — no gimmicks, no clutter.</p>
+</section>
+
+<form class="search-bar" method="get" action="/">
+  <input type="text" name="q" placeholder="Search utensils…" value="<%= q %>">
+  <button class="btn" type="submit">Search</button>
+</form>
+
+<div class="chips">
+  <a class="chip <%= activeCategory === '' ? 'active' : '' %>" href="/">All</a>
+  <% categories.forEach((c) => { %>
+    <a class="chip <%= activeCategory === c ? 'active' : '' %>" href="/?category=<%= encodeURIComponent(c) %>"><%= c %></a>
+  <% }) %>
+</div>
+
+<div class="product-grid">
+  <% products.forEach((p) => { %>
+    <div class="product-card <%= p.stock === 0 ? 'out' : '' %>">
+      <a href="/product/<%= p.id %>">
+        <div class="product-emoji"><%= p.emoji %></div>
+        <div class="product-info">
+          <span class="product-category"><%= p.category %></span>
+          <h3><%= p.name %></h3>
+          <p class="price">$<%= p.price.toFixed(2) %></p>
+          <% if (p.stock === 0) { %>
+            <span class="stock out">Out of stock</span>
+          <% } else if (p.stock < 10) { %>
+            <span class="stock low">Only <%= p.stock %> left</span>
+          <% } %>
+        </div>
+      </a>
+    </div>
+  <% }) %>
+</div>
+
+<% if (!products.length) { %><p class="empty">No products found. Try a different search.</p><% } %>
+
+<%- include('partials/footer') %>

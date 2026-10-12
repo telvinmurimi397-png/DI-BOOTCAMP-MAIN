@@ -1,0 +1,27 @@
+<%- include('partials/header') %>
+
+<div class="product-detail">
+  <div class="detail-emoji"><%= product.emoji %></div>
+  <div class="detail-info">
+    <span class="product-category"><%= product.category %></span>
+    <h1><%= product.name %></h1>
+    <p class="price big">$<%= product.price.toFixed(2) %></p>
+    <p class="description"><%= product.description %></p>
+
+    <% if (product.stock === 0) { %>
+      <p class="stock out">Out of stock</p>
+    <% } else { %>
+      <% if (product.stock < 10) { %><p class="stock low">Only <%= product.stock %> left in stock</p><% } %>
+      <form method="post" action="/cart/add" class="buy-form">
+        <input type="hidden" name="id" value="<%= product.id %>">
+        <label>Qty
+          <input type="number" name="qty" value="1" min="1" max="<%= product.stock %>">
+        </label>
+        <button class="btn" type="submit">Add to Cart</button>
+      </form>
+    <% } %>
+    <a href="/" class="back-link">&larr; Back to shop</a>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

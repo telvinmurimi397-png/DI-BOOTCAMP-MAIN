@@ -1,0 +1,38 @@
+<%- include('../partials/header') %>
+
+<h1>Admin Dashboard</h1>
+
+<div class="stats-grid">
+  <div class="stat-card"><span class="stat-num"><%= stats.products %></span><span class="stat-label">Products</span></div>
+  <div class="stat-card"><span class="stat-num"><%= stats.orders %></span><span class="stat-label">Orders</span></div>
+  <div class="stat-card"><span class="stat-num">$<%= stats.revenue.toFixed(2) %></span><span class="stat-label">Revenue</span></div>
+  <div class="stat-card"><span class="stat-num"><%= stats.pending %></span><span class="stat-label">Pending</span></div>
+</div>
+
+<p class="admin-links">
+  <a class="btn btn-outline" href="/admin/products">Manage Products</a>
+  <a class="btn btn-outline" href="/admin/orders">Manage Orders</a>
+  <a class="btn" href="/admin/products/new">+ Add Product</a>
+</p>
+
+<h2>Recent Orders</h2>
+<% if (!recent.length) { %>
+  <p class="empty">No orders yet.</p>
+<% } else { %>
+  <table class="cart-table">
+    <thead><tr><th>#</th><th>Customer</th><th>Date</th><th>Status</th><th>Total</th></tr></thead>
+    <tbody>
+      <% recent.forEach((o) => { %>
+        <tr>
+          <td><a href="/admin/orders">#<%= o.id %></a></td>
+          <td><%= o.email %></td>
+          <td><%= o.created_at %></td>
+          <td><span class="status <%= o.status %>"><%= o.status %></span></td>
+          <td>$<%= o.total.toFixed(2) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>
+
+<%- include('../partials/footer') %>

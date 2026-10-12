@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+
+<div class="auth-box">
+  <h1>Login</h1>
+  <% if (error) { %><div class="error"><%= error %></div><% } %>
+  <form method="post" action="/auth/login" class="form-card">
+    <label>Email <input type="email" name="email" required></label>
+    <label>Password <input type="password" name="password" required></label>
+    <button class="btn btn-full" type="submit">Login</button>
+  </form>
+  <p>No account? <a href="/auth/register">Sign up</a></p>
+  <p class="hint">Demo — customer@store.com / customer123 · admin@store.com / admin123</p>
+</div>
+
+<%- include('../partials/footer') %>

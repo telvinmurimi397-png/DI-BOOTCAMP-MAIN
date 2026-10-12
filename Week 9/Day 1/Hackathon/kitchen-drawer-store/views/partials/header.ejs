@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> · The Kitchen Drawer</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="container nav">
+    <a href="/" class="logo">🍳 The Kitchen Drawer</a>
+    <nav class="nav-links">
+      <a href="/">Shop</a>
+      <a href="/cart">Cart <% if (cartCount > 0) { %><span class="badge"><%= cartCount %></span><% } %></a>
+      <% if (currentUser) { %>
+        <a href="/auth/account"><%= currentUser.name %></a>
+        <% if (currentUser.role === 'admin') { %><a href="/admin">Admin</a><% } %>
+        <a href="/auth/logout">Logout</a>
+      <% } else { %>
+        <a href="/auth/login">Login</a>
+        <a href="/auth/register" class="btn btn-small">Sign Up</a>
+      <% } %>
+    </nav>
+  </div>
+</header>
+<% if (message) { %>
+  <div class="container"><div class="flash"><%= message %></div></div>
+<% } %>
+<main class="container">

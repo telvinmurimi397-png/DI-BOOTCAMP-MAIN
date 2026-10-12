@@ -1,0 +1,38 @@
+<%- include('partials/header') %>
+
+<h1>Checkout</h1>
+
+<% if (error) { %><div class="error"><%= error %></div><% } %>
+
+<div class="checkout-grid">
+  <form method="post" action="/checkout" class="form-card">
+    <h2>Shipping Details</h2>
+    <label>Full name <input type="text" name="name" required></label>
+    <label>Address <input type="text" name="address" required></label>
+    <label>City <input type="text" name="city" required></label>
+    <label>Phone <input type="tel" name="phone" required></label>
+    <label>Payment method
+      <select name="payment_method" disabled>
+        <option>Cash on Delivery (demo)</option>
+      </select>
+    </label>
+    <button class="btn btn-full" type="submit">Place Order</button>
+  </form>
+
+  <div class="form-card">
+    <h2>Order Summary</h2>
+    <% cart.forEach((item) => { %>
+      <div class="summary-row">
+        <span><%= item.emoji %> <%= item.name %> × <%= item.qty %></span>
+        <span>$<%= (item.price * item.qty).toFixed(2) %></span>
+      </div>
+    <% }) %>
+    <hr>
+    <div class="summary-row total">
+      <strong>Total</strong>
+      <strong>$<%= total.toFixed(2) %></strong>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
