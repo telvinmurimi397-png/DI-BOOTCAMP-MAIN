@@ -46,9 +46,59 @@
   function renderHome() {
     app.innerHTML = `
       <div class="landing">
-        <header class="landing-nav"><a class="logo" href="#"><span class="logo-mark">L</span><span>LinguaQuest</span></a><div><button class="btn outline" data-action="open-login">Log in</button><button class="btn" data-action="open-register">Get started</button></div></header>
-        <main class="landing-main"><section class="landing-copy"><span class="tag">A little practice. A lot of progress.</span><h1>Make every word count.</h1><p>Build a daily language habit with bite-sized lessons, playful games, and a community cheering you on.</p><div class="landing-actions"><button class="btn" data-action="open-register">Start learning — it’s free <span>→</span></button><button class="btn outline" data-action="open-login">I already have an account</button></div><div class="landing-proof"><span>Earn XP as you learn</span><span>Build a daily streak</span></div></section><div class="landing-art"><div class="bubble bubble-one">Bonjour!</div><div class="bubble bubble-two">¡Hola!</div><div class="art-orbit"><div class="art-globe">WORLD</div></div><div class="bubble bubble-three">こんにちは</div><div class="landing-note">Your next adventure starts with one word.</div></div></main>
-        <div class="landing-foot"><span>Small steps, real fluency.</span><span>Learn at your pace · Celebrate every win</span></div>
+        <header class="landing-nav">
+          <a class="logo" href="#">
+            <span class="logo-mark">L</span>
+            <span>LinguaQuest</span>
+          </a>
+          <div>
+            <button class="btn outline" data-action="open-login">Log in</button>
+            <button class="btn" data-action="open-register">Get started</button>
+          </div>
+        </header>
+        <main class="landing-main">
+          <section class="landing-copy">
+            <span class="tag">A little practice. A lot of progress.</span>
+            <h1>Make every word count.</h1>
+            <p>Build a daily language habit with bite-sized lessons, playful games, and a community cheering you on.</p>
+            <div class="landing-actions">
+              <button class="btn" data-action="open-register">Start learning — it’s free <span>→</span></button>
+              <button class="btn outline" data-action="open-login">I already have an account</button>
+            </div>
+            <div class="landing-proof">
+              <span>Earn XP as you learn</span>
+              <span>Build a daily streak</span>
+            </div>
+          </section>
+          <div class="landing-art">
+            <div class="people-slideshow" aria-hidden="true">
+              <img
+                class="people-slide"
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"
+                alt=""
+              >
+              <img
+                class="people-slide"
+                src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"
+                alt=""
+              >
+              <img
+                class="people-slide"
+                src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&amp;fit=crop&amp;w=1200&amp;q=80"
+                alt=""
+              >
+            </div>
+            <div class="bubble bubble-one">Bonjour!</div>
+            <div class="bubble bubble-two">¡Hola!</div>
+            <div class="bubble bubble-three">こんにちは</div>
+            <div class="people-caption">Learn a language. Connect with the world.</div>
+            <div class="landing-note">Your next adventure starts with one word.</div>
+          </div>
+        </main>
+        <div class="landing-foot">
+          <span>Small steps, real fluency.</span>
+          <span>Learn at your pace · Celebrate every win</span>
+        </div>
       </div>`;
   }
 
