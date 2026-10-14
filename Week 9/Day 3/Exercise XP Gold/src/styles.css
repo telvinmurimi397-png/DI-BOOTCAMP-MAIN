@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #24312d;
+  background: #f4f3ec;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background-image: radial-gradient(#aeb3a7 0.55px, transparent 0.55px);
+  background-size: 14px 14px;
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.page-shell { width: min(100% - 40px, 540px); margin: 0 auto; padding: 38px 0 32px; }
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 64px; font-size: 13px; font-weight: 700; }
+.brand-mark { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #d9ed60; font: 800 18px 'Manrope', sans-serif; }
+
+.auth-card { padding: 42px 46px 35px; border: 1px solid #d8d9ce; border-radius: 5px; background: #fffefa; box-shadow: 9px 10px 0 #dfe0d5; animation: rise-in 420ms ease-out both; }
+.card-kicker { display: flex; align-items: center; gap: 8px; color: #77817a; font: 500 10px 'DM Mono', monospace; letter-spacing: .09em; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #b3bd80; }
+.status-dot.is-online { background: #8da34e; box-shadow: 0 0 0 3px rgb(141 163 78 / 15%); }
+h1 { margin: 27px 0 0; font: 600 clamp(36px, 8vw, 51px)/1.1 'Manrope', sans-serif; letter-spacing: -.04em; }
+.card-intro { margin: 13px 0 0; color: #818981; font-size: 13px; }
+
+.login-form { display: grid; gap: 9px; margin-top: 30px; }
+.login-form label { margin-top: 5px; color: #4c5a50; font-size: 11px; font-weight: 600; }
+.login-form input { width: 100%; min-height: 45px; padding: 0 13px; border: 1px solid #dfe1d7; border-radius: 3px; outline: 0; background: #fafaf5; color: #24312d; font-size: 13px; }
+.login-form input::placeholder { color: #a1a89f; }
+.login-form input:focus { border-color: #8a9c52; box-shadow: 0 0 0 3px rgb(138 156 82 / 12%); }
+.primary-button { display: flex; min-height: 46px; align-items: center; justify-content: space-between; margin-top: 14px; padding: 0 15px; border: 0; border-radius: 3px; background: #293b32; color: #fffefa; font-size: 12px; font-weight: 600; transition: background 140ms ease, transform 140ms ease; }
+.primary-button:hover { transform: translateY(-1px); background: #425847; }
+.primary-button span { font-size: 17px; font-weight: 400; }
+.demo-note { margin: 19px 0 0; color: #929990; font-size: 10px; text-align: center; }
+
+.signed-in-card { text-align: center; }
+.signed-in-card .card-kicker { justify-content: center; }
+.account-avatar { display: grid; width: 64px; height: 64px; margin: 31px auto 18px; place-items: center; border: 1px solid #e2e7d4; border-radius: 50%; background: #f2f5e6; color: #526044; font: 600 25px 'Manrope', sans-serif; }
+.welcome-label { margin: 0; color: #849065; font: 500 9px 'DM Mono', monospace; letter-spacing: .1em; }
+.signed-in-card h1 { margin-top: 10px; font-size: clamp(32px, 7vw, 43px); }
+.account-details { display: grid; gap: 7px; margin: 29px 0 24px; padding: 16px; border: 1px solid #e6e7df; border-radius: 3px; background: #fafaf5; text-align: left; }
+.account-details span { color: #929990; font: 500 9px 'DM Mono', monospace; letter-spacing: .07em; }
+.account-details strong { overflow-wrap: anywhere; color: #445249; font-size: 12px; font-weight: 500; }
+.logout-button { display: flex; width: 100%; min-height: 43px; align-items: center; justify-content: space-between; padding: 0 14px; border: 1px solid #dfe1d7; border-radius: 3px; background: transparent; color: #526044; font-size: 12px; font-weight: 600; transition: background 140ms ease, border-color 140ms ease; }
+.logout-button:hover { border-color: #cbd2b5; background: #f7f8f1; }
+.logout-button span { font-size: 16px; }
+
+.page-note { margin: 28px 0 0; color: #899189; font: 10px 'DM Mono', monospace; text-align: center; }
+button:focus-visible { outline: 3px solid #a5b648; outline-offset: 3px; }
+
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 600px) {
+  .page-shell { width: min(100% - 28px, 500px); padding-top: 24px; }
+  .brand { margin-bottom: 42px; }
+  .auth-card { padding: 32px 24px 27px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
