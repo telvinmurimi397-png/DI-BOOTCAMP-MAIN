@@ -1,55 +1,86 @@
 const bcrypt = require('bcryptjs');
 const db = require('./connection');
+const additionalProducts = require('./catalog-additions');
+
+const retiredDuplicateProducts = [
+  'Dough Scraper and Cutter',
+  'Steak Knife Set (6 pcs)',
+  'Heavy-Duty Garlic Press',
+  'Angled Y-Style Vegetable Peeler',
+  'Multi-Purpose Prep Grater',
+];
 
 const products = [
-  ['Beechwood Spatula Set (3 pcs)', 'Hand-finished beechwood spatulas in three shapes. Gentle on non-stick surfaces, built to last for years.', 18.0, 25, 'Cooking Tools', '🍴'],
-  ['Stainless Steel Tongs, 12"', 'Locking kitchen tongs with scalloped grips and a hanging loop. Heat-resistant up to 230°C.', 12.0, 40, 'Cooking Tools', '🥢'],
-  ['Silicone Whisk Set (2 pcs)', 'Two whisks with food-grade silicone heads — perfect for eggs, sauces and batters without scratching bowls.', 10.0, 35, 'Cooking Tools', '🌀'],
-  ['Cast Iron Skillet, 10 inch', 'Pre-seasoned cast iron skillet. Superb heat retention for searing, frying and baking. Oven safe.', 45.0, 8, 'Cooking Tools', '🍳'],
-  ["Chef's Knife, 8 inch", 'High-carbon stainless steel blade with a full-tang, ergonomic handle. Sharp, balanced, and easy to hone.', 58.0, 10, 'Cutlery & Cutting', '🔪'],
-  ['Bamboo Cutting Board, Medium', 'Sustainably sourced bamboo board with juice groove and handle. Kind to your knife edges.', 22.0, 15, 'Cutlery & Cutting', '🪵'],
-  ['Kitchen Scissors with Sheath', 'Heavy-duty multipurpose shears for herbs, poultry and packaging. Comes with a protective sheath.', 9.0, 30, 'Cutlery & Cutting', '✂️'],
-  ['Measuring Cups & Spoons (8 pcs)', 'Complete nesting set of stainless measuring cups and spoons with engraved markings that never fade.', 14.0, 28, 'Measuring & Prep', '🥄'],
-  ['Stainless Mixing Bowls (set of 3)', 'Three graduated mixing bowls with non-slip bases and pour spouts. Dishwasher safe.', 34.0, 12, 'Measuring & Prep', '🥣'],
-  ['Vegetable Peeler, Dual Blade', 'Sharp swivel blade with a comfortable grip. Also great for shaving cheese and chocolate.', 6.0, 50, 'Measuring & Prep', '🥔'],
-  ['Glass Storage Jars w/ Bamboo Lids (3)', 'Airtight borosilicate jars with bamboo lids — ideal for spices, grains and coffee. Set of three.', 27.0, 16, 'Storage & Serving', '🫙'],
-  ['Ceramic Serving Bowl, Speckled', 'Hand-glazed speckled stoneware bowl. Generous 2-litre capacity for salads, pasta and sharing dishes.', 24.0, 0, 'Storage & Serving', '🍲'],
+  ['Handcrafted Wooden Utensil Set (7 pcs)', 'A seven-piece set of wooden spoons and turners for stirring, flipping and serving.', 34.0, 18, 'Cooking Tools', '', '/images/products/wooden-utensil-set.jpg'],
+  ['Balloon Whisk Set (3 pcs)', 'Three stainless steel balloon and spiral whisks for beating eggs, mixing batters and blending sauces.', 19.0, 22, 'Cooking Tools', '', '/images/products/whisks.jpg'],
+  ['Stainless Steel Tongs Set (3 pcs)', 'Three long-handled steel tongs for turning food on the grill or serving hot dishes.', 16.0, 24, 'Cooking Tools', '', '/images/products/tongs.jpg'],
+  ['Y-Style Vegetable Peeler', 'A compact handheld peeler for preparing potatoes, carrots and other firm produce.', 8.0, 35, 'Prep Tools', '', '/images/products/vegetable-peeler.jpg'],
+  ['Wooden Rolling Pin Set (2 pcs)', 'A handled rolling pin and a straight pin for rolling pastry and dough.', 22.0, 12, 'Baking Tools', '', '/images/products/rolling-pin.jpg'],
+  ["Chicago Cutlery Paring Knife", 'A compact kitchen knife suited to peeling and trimming fruit and vegetables.', 16.0, 10, 'Cutlery & Cutting', '', '/images/products/paring-knife.jpg'],
+  ['Handheld Cheese Grater', 'A small handheld grater for cheese and vegetables. Wash and dry after use.', 11.0, 28, 'Prep Tools', '', '/images/products/cheese-graters.jpg'],
+  ['Slotted Serving Spoon', 'A slotted spoon for lifting vegetables and other foods while leaving cooking liquid behind.', 9.0, 20, 'Cooking Tools', '', '/images/products/slotted-spoon.jpg'],
+  ['Wooden Cooking Spoon', 'A sturdy wooden spoon for stirring soups, sauces and other dishes during cooking.', 6.0, 30, 'Cooking Tools', '', '/images/products/wooden-spoon.jpg'],
 ];
 
 const seedAll = db.transaction(() => {
-  db.exec('DELETE FROM order_items; DELETE FROM orders; DELETE FROM products; DELETE FROM users;');
+  const removeUnpurchasedProduct = db.prepare(`
+    DELETE FROM products
+    WHERE name = ?
+      AND NOT EXISTS (
+        SELECT 1 FROM order_items WHERE order_items.product_id = products.id
+      )
+  `);
+  const findRetiredProduct = db.prepare('SELECT id FROM products WHERE name = ?');
+  for (const name of retiredDuplicateProducts) {
+    removeUnpurchasedProduct.run(name);
+    if (findRetiredProduct.get(name)) {
+      console.warn(`Keeping "${name}" because it is referenced by order history.`);
+    }
+  }
 
   const insertProduct = db.prepare(
-    'INSERT INTO products (name, description, price, stock, category, emoji) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO products (name, description, price, stock, category, emoji, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
-  for (const p of products) insertProduct.run(...p);
+  const findProduct = db.prepare('SELECT id FROM products WHERE name = ?');
+  for (const product of products) {
+    if (!findProduct.get(product[0])) insertProduct.run(...product);
+  }
+  const insertAdditionalProduct = db.prepare(
+    'INSERT INTO products (name, description, price, stock, category, emoji, image_url) VALUES (@name, @description, @price, @stock, @category, @emoji, @image_url)'
+  );
+  for (const product of additionalProducts) {
+    if (!findProduct.get(product.name)) insertAdditionalProduct.run(product);
+  }
 
   const insertUser = db.prepare(
-    'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)'
+    'INSERT OR IGNORE INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)'
   );
-  const adminId = insertUser.run('Store Admin', 'admin@store.com', bcrypt.hashSync('admin123', 10), 'admin').lastInsertRowid;
-  const customerId = insertUser.run('Demo Customer', 'customer@store.com', bcrypt.hashSync('customer123', 10), 'customer').lastInsertRowid;
+  insertUser.run('Store Admin', 'admin@store.com', bcrypt.hashSync('admin123', 10), 'admin');
+  insertUser.run('Demo Customer', 'customer@store.com', bcrypt.hashSync('customer123', 10), 'customer');
 
-  // One sample order so the admin dashboard isn't empty on first run
-  const spatula = db.prepare('SELECT * FROM products WHERE name LIKE ?').get('Beechwood%');
-  const tongs = db.prepare('SELECT * FROM products WHERE name LIKE ?').get('Stainless Steel Tongs%');
-  const total = spatula.price * 2 + tongs.price;
-  const orderId = db.prepare(`
-    INSERT INTO orders (user_id, total, shipping_name, shipping_address, shipping_city, shipping_phone)
-    VALUES (?, ?, 'Demo Customer', '12 Olive Street, Apt 4', 'Amman', '+962 7 0000 0000')
-  `).run(customerId, total).lastInsertRowid;
+  const orderCount = db.prepare('SELECT COUNT(*) AS count FROM orders').get().count;
+  if (orderCount === 0) {
+    const customerId = db.prepare('SELECT id FROM users WHERE email = ?').get('customer@store.com').id;
+    const utensilSet = db.prepare('SELECT * FROM products WHERE name = ?').get('Handcrafted Wooden Utensil Set (7 pcs)');
+    const tongs = db.prepare('SELECT * FROM products WHERE name = ?').get('Stainless Steel Tongs Set (3 pcs)');
+    const total = utensilSet.price * 2 + tongs.price;
+    const orderId = db.prepare(`
+      INSERT INTO orders (user_id, total, shipping_name, shipping_address, shipping_city, shipping_phone)
+      VALUES (?, ?, 'Demo Customer', '18 Willow Lane, Apt 4B', 'Nairobi', '+254 712 345 678')
+    `).run(customerId, total).lastInsertRowid;
 
-  const insertItem = db.prepare(
-    'INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)'
-  );
-  insertItem.run(orderId, spatula.id, 2, spatula.price);
-  insertItem.run(orderId, tongs.id, 1, tongs.price);
-
-  return adminId;
+    const insertItem = db.prepare(
+      'INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)'
+    );
+    insertItem.run(orderId, utensilSet.id, 2, utensilSet.price);
+    insertItem.run(orderId, tongs.id, 1, tongs.price);
+  }
 });
 
 seedAll();
-console.log('✅ Database seeded.');
+const categoryCounts = db.prepare('SELECT category, COUNT(*) AS count FROM products GROUP BY category ORDER BY category').all();
+console.log('Database seeded.');
 console.log('   Admin:    admin@store.com / admin123');
 console.log('   Customer: customer@store.com / customer123');
-console.log('   (12 products, 1 sample order)');
+console.log(`   ${db.prepare('SELECT COUNT(*) AS count FROM products').get().count} products total`);
+for (const category of categoryCounts) console.log(`   ${category.category}: ${category.count} products`);

@@ -1,11 +1,10 @@
 const express = require('express');
 const db = require('../db/connection');
+const CATEGORIES = require('../db/categories');
 const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(requireAdmin);
-
-const CATEGORIES = ['Cooking Tools', 'Cutlery & Cutting', 'Measuring & Prep', 'Storage & Serving'];
 
 /* ---------- Dashboard ---------- */
 
@@ -36,7 +35,7 @@ router.get('/products/new', (req, res) => {
 });
 
 router.post('/products', (req, res) => {
-  const { name, category, price, stock, emoji, description } = req.body;
+  const { name, category, price, stock, image_url, description } = req.body;
   const parsedPrice = Number(price);
   const parsedStock = Number(stock);
   if (!name || !category || isNaN(parsedPrice) || parsedPrice < 0 || isNaN(parsedStock) || parsedStock < 0) {
@@ -48,9 +47,9 @@ router.post('/products', (req, res) => {
     });
   }
   db.prepare(`
-    INSERT INTO products (name, description, price, stock, category, emoji)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(name.trim(), description || '', parsedPrice, parsedStock, category, emoji || '🍳');
+    INSERT INTO products (name, description, price, stock, category, emoji, image_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(name.trim(), description || '', parsedPrice, parsedStock, category, '', image_url || '');
   res.redirect('/admin/products');
 });
 
@@ -61,7 +60,7 @@ router.get('/products/:id/edit', (req, res) => {
 });
 
 router.post('/products/:id', (req, res) => {
-  const { name, category, price, stock, emoji, description } = req.body;
+  const { name, category, price, stock, image_url, description } = req.body;
   const parsedPrice = Number(price);
   const parsedStock = Number(stock);
   if (!name || !category || isNaN(parsedPrice) || parsedPrice < 0 || isNaN(parsedStock) || parsedStock < 0) {
@@ -73,9 +72,9 @@ router.post('/products/:id', (req, res) => {
     });
   }
   db.prepare(`
-    UPDATE products SET name = ?, description = ?, price = ?, stock = ?, category = ?, emoji = ?
+    UPDATE products SET name = ?, description = ?, price = ?, stock = ?, category = ?, emoji = ?, image_url = ?
     WHERE id = ?
-  `).run(name.trim(), description || '', parsedPrice, parsedStock, category, emoji || '🍳', req.params.id);
+  `).run(name.trim(), description || '', parsedPrice, parsedStock, category, '', image_url || '', req.params.id);
   res.redirect('/admin/products');
 });
 

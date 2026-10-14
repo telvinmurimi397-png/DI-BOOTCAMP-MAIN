@@ -1,3 +1,4 @@
+from backend.constants import STATUSES
 from backend.db import get_connection
 from backend.validate import is_valid_text
 
@@ -55,6 +56,8 @@ def get_report_by_id(report_id):
 def update_status(report_id, status, note=""):
     if not status:
         return {"error": "Status is required"}, 400
+    if status not in STATUSES:
+        return {"error": "Invalid status"}, 400
     with get_connection() as conn:
         existing = conn.execute("SELECT id FROM reports WHERE id = ?", (report_id,)).fetchone()
         if not existing:

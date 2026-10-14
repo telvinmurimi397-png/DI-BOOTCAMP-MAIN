@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db/connection');
+const categories = require('../db/categories');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -16,6 +17,26 @@ function getCartItems(req) {
 /* ---------- Storefront ---------- */
 
 router.get('/', (req, res) => {
+  const categoryCards = categories.map((name) => ({
+    name,
+    count: db.prepare('SELECT COUNT(*) AS count FROM products WHERE category = ?').get(name).count,
+    description: {
+      'Baking Tools': 'Reliable essentials for mixing, shaping and baking.',
+      'Cooking Tools': 'Everyday helpers for stirring, flipping and serving.',
+      'Cutlery & Cutting': 'Sharp, practical tools for confident prep.',
+      'Prep Tools': 'Make chopping, measuring and prep feel easier.',
+    }[name],
+  }));
+  const featuredProducts = categories
+    .map((category) => db.prepare(
+      'SELECT * FROM products WHERE category = ? AND stock > 0 ORDER BY id LIMIT 1'
+    ).get(category))
+    .filter(Boolean);
+
+  res.render('home', { title: 'Home', categoryCards, featuredProducts });
+});
+
+router.get('/shop', (req, res) => {
   const { category, q } = req.query;
   let sql = 'SELECT * FROM products WHERE 1=1';
   const params = [];
@@ -30,15 +51,17 @@ router.get('/', (req, res) => {
   sql += ' ORDER BY category, name';
 
   const products = db.prepare(sql).all(...params);
-  const categories = db
-    .prepare('SELECT DISTINCT category FROM products ORDER BY category')
-    .all()
-    .map((r) => r.category);
+  const categoryGroups = !category && !q
+    ? categories
+      .map((name) => ({ name, products: products.filter((product) => product.category === name) }))
+      .filter((group) => group.products.length > 0)
+    : [];
 
   res.render('index', {
     title: 'Shop',
     products,
     categories,
+    categoryGroups,
     activeCategory: category || '',
     q: q || '',
   });
@@ -63,7 +86,7 @@ router.post('/cart/add', (req, res) => {
   const qty = Math.max(1, Number(req.body.qty) || 1);
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
 
-  if (!product) return res.redirect('/');
+  if (!product) return res.redirect('/shop');
   if (product.stock < 1) {
     req.session.message = `"${product.name}" is out of stock.`;
     return res.redirect(`/product/${id}`);

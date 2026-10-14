@@ -4,11 +4,10 @@
 <p><a class="btn" href="/admin/products/new">+ Add Product</a> <a class="btn btn-outline" href="/admin">&larr; Dashboard</a></p>
 
 <table class="cart-table">
-  <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+  <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
   <tbody>
     <% products.forEach((p) => { %>
       <tr>
-        <td class="row-emoji"><%= p.emoji %></td>
         <td><%= p.name %></td>
         <td><%= p.category %></td>
         <td>$<%= p.price.toFixed(2) %></td>

@@ -23,7 +23,7 @@
     <h2>Order Summary</h2>
     <% cart.forEach((item) => { %>
       <div class="summary-row">
-        <span><%= item.emoji %> <%= item.name %> × <%= item.qty %></span>
+        <span><%= item.name %> × <%= item.qty %></span>
         <span>$<%= (item.price * item.qty).toFixed(2) %></span>
       </div>
     <% }) %>

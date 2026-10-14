@@ -9,9 +9,10 @@
 <body>
 <header class="site-header">
   <div class="container nav">
-    <a href="/" class="logo">🍳 The Kitchen Drawer</a>
+    <a href="/" class="logo">The Kitchen Drawer</a>
     <nav class="nav-links">
-      <a href="/">Shop</a>
+      <a href="/">Home</a>
+      <a href="/shop">Shop</a>
       <a href="/cart">Cart <% if (cartCount > 0) { %><span class="badge"><%= cartCount %></span><% } %></a>
       <% if (currentUser) { %>
         <a href="/auth/account"><%= currentUser.name %></a>

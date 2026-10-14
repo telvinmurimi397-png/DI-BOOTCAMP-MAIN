@@ -1,7 +1,7 @@
 {
   "name": "kitchen-drawer-store",
   "version": "1.0.0",
-  "description": "E-commerce mini store for kitchen utensils (Node.js, Express, EJS, SQLite)",
+  "description": "E-commerce mini store for cooking utensils (Node.js, Express, EJS, SQLite)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

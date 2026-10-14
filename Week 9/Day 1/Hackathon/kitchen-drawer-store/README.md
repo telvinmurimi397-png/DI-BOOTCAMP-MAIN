@@ -1,11 +1,16 @@
 # The Kitchen Drawer
 
-A complete mini e-commerce store for kitchen utensils, built with **Node.js, Express, EJS and SQLite**.
+A complete mini e-commerce store for cooking utensils, built with **Node.js, Express, EJS and SQLite**.
+
+Product photos are real utensil photographs from Wikimedia Commons, stored locally in `public/images/products`. See [the photo credits](./public/images/products/ATTRIBUTION.md) for creators and license terms.
+
+The expanded demo catalog has about 20 distinct products in each of its four categories. `npm run seed` adds missing products and demo accounts, removes retired duplicate listings when they are not referenced by an order, and preserves accounts and order history.
 
 ## Features
 
 **Storefront**
-- Product catalog with category filter and search
+- Homepage with category links and featured products
+- Product catalog at `/shop` with category filters and search
 - Product detail pages with stock indicators ("Only X left", "Out of stock")
 - Session-based shopping cart
 - Checkout with shipping form (Cash on Delivery demo payment)

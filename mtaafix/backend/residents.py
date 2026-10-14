@@ -1,9 +1,7 @@
-import json
-import os
-import sqlite3
-from http.server import BaseHTTPRequestHandler
+import secrets
 
-from backend.auth import create_session_for_resident, hash_password, verify_password, get_session_user
+from backend.auth import get_session_user, hash_password, verify_password
+from backend.constants import AREAS, CATEGORIES
 from backend.db import get_connection
 from backend.validate import is_valid_name, is_valid_phone, is_valid_rating, is_valid_text
 
@@ -30,7 +28,8 @@ def resident_register(payload):
             (name, phone, password_hash),
         )
         resident_id = cursor.lastrowid
-        token = create_session_for_resident(resident_id)
+        token = secrets.token_urlsafe(32)
+        conn.execute("INSERT INTO sessions (token, resident_id) VALUES (?, ?)", (token, resident_id))
         conn.commit()
 
     return {"token": token, "resident": {"id": resident_id, "name": name, "phone": phone}}, 201
@@ -50,7 +49,8 @@ def resident_login(payload):
         if not resident or not verify_password(password, resident["password_hash"]):
             return {"error": "Invalid credentials"}, 401
 
-        token = create_session_for_resident(resident["id"])
+        token = secrets.token_urlsafe(32)
+        conn.execute("INSERT INTO sessions (token, resident_id) VALUES (?, ?)", (token, resident["id"]))
         conn.commit()
 
     return {"token": token, "resident": {"id": resident["id"], "name": resident["name"], "phone": resident["phone"]}}, 200
@@ -96,9 +96,9 @@ def create_report(token, payload):
         return {"error": "Title is required"}, 400
     if not is_valid_text(description, minimum=10, maximum=2000):
         return {"error": "Description must be at least 10 characters"}, 400
-    if not area:
+    if not area or area not in AREAS:
         return {"error": "Area is required"}, 400
-    if not category:
+    if not category or category not in CATEGORIES:
         return {"error": "Category is required"}, 400
 
     latitude = payload.get("latitude")
@@ -142,6 +142,10 @@ def update_report(token, report_id, payload):
             return {"error": "Title is required"}, 400
         if not is_valid_text(description, minimum=10, maximum=2000):
             return {"error": "Description is too short"}, 400
+        if not area or area not in AREAS:
+            return {"error": "Area is required"}, 400
+        if not category or category not in CATEGORIES:
+            return {"error": "Category is required"}, 400
 
         conn.execute(
             "UPDATE reports SET title = ?, description = ?, area = ?, category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",

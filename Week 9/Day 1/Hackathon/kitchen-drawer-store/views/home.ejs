@@ -1,0 +1,61 @@
+<%- include('partials/header') %>
+
+<section class="home-hero">
+  <div class="home-hero-copy">
+    <span class="eyebrow">A little more joy in the kitchen</span>
+    <h1>Good food starts with the right tools.</h1>
+    <p>Thoughtful everyday utensils for prepping, cooking and baking at home.</p>
+    <div class="home-hero-actions">
+      <a class="btn" href="/shop">Explore the shop</a>
+      <a class="btn btn-outline" href="#categories">Browse categories</a>
+    </div>
+  </div>
+  <div class="home-hero-image">
+    <img src="/images/products/kitchen-utensils.jpg" alt="A collection of kitchen utensils">
+  </div>
+</section>
+
+<section class="home-section" id="categories">
+  <div class="home-section-heading">
+    <div>
+      <span class="eyebrow">Find your essentials</span>
+      <h2>Shop by category</h2>
+    </div>
+    <a class="link-btn" href="/shop">View all products &rarr;</a>
+  </div>
+  <div class="category-cards">
+    <% categoryCards.forEach((category) => { %>
+      <a class="category-card" href="/shop?category=<%= encodeURIComponent(category.name) %>">
+        <h3><%= category.name %></h3>
+        <p><%= category.description %></p>
+        <span class="category-card-count"><%= category.count %> products <span aria-hidden="true">&rarr;</span></span>
+      </a>
+    <% }) %>
+  </div>
+</section>
+
+<section class="home-section featured-section">
+  <div class="home-section-heading">
+    <div>
+      <span class="eyebrow">Picked for your kitchen</span>
+      <h2>Everyday favourites</h2>
+    </div>
+    <a class="link-btn" href="/shop">See the full collection &rarr;</a>
+  </div>
+  <div class="product-grid">
+    <% featuredProducts.forEach((product) => { %>
+      <%- include('partials/product-card', { product }) %>
+    <% }) %>
+  </div>
+</section>
+
+<section class="home-callout">
+  <div>
+    <span class="eyebrow">Ready when you are</span>
+    <h2>Make room for something useful.</h2>
+    <p>Find practical pieces for all the little moments that make a meal.</p>
+  </div>
+  <a class="btn" href="/shop">Shop all utensils</a>
+</section>
+
+<%- include('partials/footer') %>

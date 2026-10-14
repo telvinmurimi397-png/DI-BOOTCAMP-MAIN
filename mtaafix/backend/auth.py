@@ -1,22 +1,40 @@
 import hashlib
 import secrets
-import sqlite3
 
 from backend.db import get_connection
 
 
+def _hash_with_scrypt(password: str, salt: str) -> str:
+    return hashlib.scrypt(password.encode("utf-8"), salt=salt.encode("utf-8"), n=16384, r=8, p=1, dklen=64).hex()
+
+
 def hash_password(password: str) -> str:
     salt = secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 200000)
-    return f"pbkdf2_sha256${salt}${digest.hex()}"
+    digest = _hash_with_scrypt(password, salt)
+    return f"scrypt${salt}${digest}"
 
 
 def verify_password(password: str, stored_hash: str) -> bool:
-    if not stored_hash or not stored_hash.startswith("pbkdf2_sha256$"):
+    if not stored_hash:
         return False
-    _, salt, digest_hex = stored_hash.split("$", 2)
-    candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 200000)
-    return candidate.hex() == digest_hex
+
+    if stored_hash.startswith("scrypt$"):
+        try:
+            _, salt, digest_hex = stored_hash.split("$", 2)
+        except ValueError:
+            return False
+        candidate = _hash_with_scrypt(password, salt)
+        return candidate == digest_hex
+
+    if stored_hash.startswith("pbkdf2_sha256$"):
+        try:
+            _, salt, digest_hex = stored_hash.split("$", 2)
+        except ValueError:
+            return False
+        candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 200000)
+        return candidate.hex() == digest_hex
+
+    return False
 
 
 def create_session_for_ruler(ruler_id: int) -> str:
@@ -36,6 +54,8 @@ def create_session_for_resident(resident_id: int) -> str:
 
 
 def get_session_user(token: str):
+    if not token:
+        return None
     with get_connection() as conn:
         row = conn.execute(
             "SELECT * FROM sessions WHERE token = ?",

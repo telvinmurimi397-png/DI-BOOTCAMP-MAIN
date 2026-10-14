@@ -1,41 +1,48 @@
 <%- include('partials/header') %>
 
 <section class="hero">
-  <h1>Quality tools for every kitchen</h1>
-  <p>Durable, honest utensils — no gimmicks, no clutter.</p>
+  <h1>Everyday tools for better cooking</h1>
+  <p>Practical kitchen utensils for prep, cooking and baking.</p>
 </section>
 
-<form class="search-bar" method="get" action="/">
+<form class="search-bar" method="get" action="/shop">
   <input type="text" name="q" placeholder="Search utensils…" value="<%= q %>">
   <button class="btn" type="submit">Search</button>
 </form>
 
 <div class="chips">
-  <a class="chip <%= activeCategory === '' ? 'active' : '' %>" href="/">All</a>
+  <a class="chip <%= activeCategory === '' ? 'active' : '' %>" href="/shop">All</a>
   <% categories.forEach((c) => { %>
-    <a class="chip <%= activeCategory === c ? 'active' : '' %>" href="/?category=<%= encodeURIComponent(c) %>"><%= c %></a>
+    <a class="chip <%= activeCategory === c ? 'active' : '' %>" href="/shop?category=<%= encodeURIComponent(c) %>"><%= c %></a>
   <% }) %>
 </div>
 
-<div class="product-grid">
-  <% products.forEach((p) => { %>
-    <div class="product-card <%= p.stock === 0 ? 'out' : '' %>">
-      <a href="/product/<%= p.id %>">
-        <div class="product-emoji"><%= p.emoji %></div>
-        <div class="product-info">
-          <span class="product-category"><%= p.category %></span>
-          <h3><%= p.name %></h3>
-          <p class="price">$<%= p.price.toFixed(2) %></p>
-          <% if (p.stock === 0) { %>
-            <span class="stock out">Out of stock</span>
-          <% } else if (p.stock < 10) { %>
-            <span class="stock low">Only <%= p.stock %> left</span>
-          <% } %>
+<% if (categoryGroups.length) { %>
+  <div class="category-sections">
+    <% categoryGroups.forEach((group) => { %>
+      <section class="category-section" id="category-<%= group.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') %>">
+        <div class="category-heading">
+          <div>
+            <h2><%= group.name %></h2>
+            <span class="category-count"><%= group.products.length %> products</span>
+          </div>
+          <a class="link-btn" href="/shop?category=<%= encodeURIComponent(group.name) %>">Shop this category &rarr;</a>
         </div>
-      </a>
-    </div>
-  <% }) %>
-</div>
+        <div class="product-grid">
+          <% group.products.forEach((product) => { %>
+            <%- include('partials/product-card', { product }) %>
+          <% }) %>
+        </div>
+      </section>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="product-grid">
+    <% products.forEach((product) => { %>
+      <%- include('partials/product-card', { product }) %>
+    <% }) %>
+  </div>
+<% } %>
 
 <% if (!products.length) { %><p class="empty">No products found. Try a different search.</p><% } %>
 

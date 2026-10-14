@@ -3,7 +3,8 @@ import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from backend.auth import get_session_user
+from backend.auth import get_session_user, verify_password
+from backend.constants import STATUSES
 from backend.db import get_connection, init_db
 from backend.residents import (
     create_report,
@@ -39,13 +40,18 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             json_response(self, 200, {"status": "ok"})
             return
         if path == "/api/statuses":
-            json_response(self, 200, {"statuses": ["new", "acknowledged", "in_progress", "resolved", "closed"]})
+            json_response(self, 200, {"statuses": STATUSES})
             return
         if path == "/api/areas":
             json_response(self, 200, {"areas": ["Central", "Kibera", "Westlands", "Kawangware", "Embakasi", "Ngong"]})
             return
         if path == "/api/categories":
             json_response(self, 200, {"categories": ["Water", "Roads", "Waste", "Lights", "Security", "Health", "Other"]})
+            return
+        if path == "/api/residents/me":
+            token = self.headers.get("Authorization", "").replace("Bearer ", "")
+            result, status = resident_me(token)
+            json_response(self, status, result)
             return
         if path == "/api/reports":
             token = self.headers.get("Authorization", "").replace("Bearer ", "")
@@ -55,11 +61,9 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
                 json_response(self, status, result)
                 return
             if user and "username" in dict(user):
-                result, status = list_reports_for_resident(token)
-                json_response(self, status, result)
+                json_response(self, 200, {"reports": list_reports(include_all=True)})
                 return
-            result = {"reports": list_reports(include_all=True)}
-            json_response(self, 200, result)
+            json_response(self, 200, {"reports": list_reports(include_all=True)})
             return
         if path.startswith("/api/rulers/"):
             self._handle_ruler_routes(path)
@@ -92,6 +96,15 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             result, status = create_report(token, payload)
             json_response(self, status, result)
             return
+        if path.startswith("/api/reports/") and path.endswith("/rate"):
+            report_id = self._parse_report_id(path)
+            if report_id is None:
+                json_response(self, 404, {"error": "Not found"})
+                return
+            token = self.headers.get("Authorization", "").replace("Bearer ", "")
+            result, status = rate_report(token, report_id, payload)
+            json_response(self, status, result)
+            return
         if path.startswith("/api/rulers/"):
             self._handle_ruler_post(path, payload)
             return
@@ -111,7 +124,10 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             return
 
         if path.startswith("/api/reports/"):
-            report_id = int(path.split("/")[-1])
+            report_id = self._parse_report_id(path)
+            if report_id is None:
+                json_response(self, 404, {"error": "Not found"})
+                return
             token = self.headers.get("Authorization", "").replace("Bearer ", "")
             result, status = update_report(token, report_id, payload)
             json_response(self, status, result)
@@ -122,7 +138,10 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         if path.startswith("/api/reports/"):
-            report_id = int(path.split("/")[-1])
+            report_id = self._parse_report_id(path)
+            if report_id is None:
+                json_response(self, 404, {"error": "Not found"})
+                return
             token = self.headers.get("Authorization", "").replace("Bearer ", "")
             result, status = delete_report(token, report_id)
             json_response(self, status, result)
@@ -150,7 +169,7 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             password = payload.get("password") or ""
             with get_connection() as conn:
                 ruler = conn.execute("SELECT * FROM rulers WHERE username = ?", (username,)).fetchone()
-                if not ruler or not (ruler["password_hash"] and password == "admin123"):
+                if not ruler or not verify_password(password, ruler["password_hash"]):
                     json_response(self, 401, {"error": "Invalid credentials"})
                     return
                 token = os.urandom(16).hex()
@@ -159,7 +178,10 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             json_response(self, 200, {"token": token, "ruler": {"id": ruler["id"], "username": ruler["username"]}})
             return
         if path.startswith("/api/rulers/reports/") and path.endswith("/status"):
-            report_id = int(path.split("/")[3])
+            report_id = self._parse_report_id(path)
+            if report_id is None:
+                json_response(self, 404, {"error": "Not found"})
+                return
             token = self.headers.get("Authorization", "").replace("Bearer ", "")
             user = get_session_user(token)
             if not user or "username" not in dict(user):
@@ -169,7 +191,10 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             json_response(self, status, result)
             return
         if path.startswith("/api/rulers/reports/") and path.endswith("/message"):
-            report_id = int(path.split("/")[3])
+            report_id = self._parse_report_id(path)
+            if report_id is None:
+                json_response(self, 404, {"error": "Not found"})
+                return
             token = self.headers.get("Authorization", "").replace("Bearer ", "")
             user = get_session_user(token)
             if not user or "username" not in dict(user):
@@ -179,6 +204,17 @@ class MtaaFixHandler(BaseHTTPRequestHandler):
             json_response(self, status, result)
             return
         json_response(self, 404, {"error": "Not found"})
+
+    def _parse_report_id(self, path):
+        trimmed = path.rstrip("/")
+        segments = trimmed.split("/")
+        last = segments[-1]
+        if last in {"rate", "status", "message"} and len(segments) >= 2:
+            last = segments[-2]
+        try:
+            return int(last)
+        except (TypeError, ValueError):
+            return None
 
     def _read_body(self):
         length = int(self.headers.get("Content-Length", "0"))
