@@ -26,7 +26,7 @@
             <h2><%= group.name %></h2>
             <span class="category-count"><%= group.products.length %> products</span>
           </div>
-          <a class="link-btn" href="/shop?category=<%= encodeURIComponent(group.name) %>">Shop this category &rarr;</a>
+          <a class="link-btn" href="/shop?category=<%= encodeURIComponent(group.name) %>">Shop this category</a>
         </div>
         <div class="product-grid">
           <% group.products.forEach((product) => { %>

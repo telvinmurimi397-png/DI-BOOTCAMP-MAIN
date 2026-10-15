@@ -3,7 +3,7 @@
 <h1>Your Cart</h1>
 
 <% if (!cart.length) { %>
-  <p class="empty">Your cart is empty. <a href="/shop">Browse the shop →</a></p>
+  <p class="empty">Your cart is empty. <a href="/shop">Browse the shop</a></p>
 <% } else { %>
   <table class="cart-table">
     <thead>
@@ -31,7 +31,7 @@
   </table>
 
   <div class="cart-actions">
-    <a href="/shop" class="btn btn-outline">&larr; Continue shopping</a>
+    <a href="/shop" class="btn btn-outline">Continue shopping</a>
     <a href="/checkout" class="btn">Proceed to Checkout</a>
   </div>
 <% } %>

@@ -21,14 +21,14 @@
       <span class="eyebrow">Find your essentials</span>
       <h2>Shop by category</h2>
     </div>
-    <a class="link-btn" href="/shop">View all products &rarr;</a>
+    <a class="link-btn" href="/shop">View all products</a>
   </div>
   <div class="category-cards">
     <% categoryCards.forEach((category) => { %>
       <a class="category-card" href="/shop?category=<%= encodeURIComponent(category.name) %>">
         <h3><%= category.name %></h3>
         <p><%= category.description %></p>
-        <span class="category-card-count"><%= category.count %> products <span aria-hidden="true">&rarr;</span></span>
+        <span class="category-card-count"><%= category.count %> products</span>
       </a>
     <% }) %>
   </div>
@@ -40,7 +40,7 @@
       <span class="eyebrow">Picked for your kitchen</span>
       <h2>Everyday favourites</h2>
     </div>
-    <a class="link-btn" href="/shop">See the full collection &rarr;</a>
+    <a class="link-btn" href="/shop">See the full collection</a>
   </div>
   <div class="product-grid">
     <% featuredProducts.forEach((product) => { %>
