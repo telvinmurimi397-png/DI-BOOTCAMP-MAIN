@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #26352f;
+  background: #f4f3ec;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background-image: radial-gradient(#aeb3a7 0.55px, transparent 0.55px);
+  background-size: 14px 14px;
+}
+
+button { font: inherit; cursor: pointer; }
+a { color: inherit; }
+
+.page-shell { width: min(100% - 40px, 720px); margin: 0 auto; padding: 76px 0 35px; }
+.page-heading { margin-bottom: 30px; }
+.eyebrow, .status-kicker { margin: 0 0 13px; color: #7c8865; font: 500 10px 'DM Mono', monospace; letter-spacing: .12em; }
+h1 { margin: 0; font: 600 clamp(39px, 8vw, 62px)/1.05 'Manrope', sans-serif; letter-spacing: -.05em; }
+h1 span { color: #95a64a; }
+.intro { margin: 14px 0 0; color: #78817a; font-size: 14px; }
+
+.profile-card { overflow: hidden; border: 1px solid #d8d9ce; border-radius: 6px; background: #fffefa; box-shadow: 9px 10px 0 #dfe0d5; }
+.profile-topline { display: flex; align-items: center; gap: 9px; padding: 20px 30px; border-bottom: 1px solid #ecece5; color: #7c8865; font: 500 10px 'DM Mono', monospace; letter-spacing: .1em; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #9aaf50; }
+.user-id { margin-left: auto; color: #9ba198; }
+.identity { display: flex; align-items: center; gap: 18px; padding: 32px 30px 29px; }
+.avatar { display: grid; width: 62px; height: 62px; flex: 0 0 62px; place-items: center; border-radius: 50%; background: #e6ebd3; color: #43543a; font: 600 27px 'Manrope', sans-serif; }
+.identity h2, .status-card h2 { margin: 0; font: 600 clamp(22px, 5vw, 30px)/1.2 'Manrope', sans-serif; letter-spacing: -.035em; }
+.username { margin: 6px 0 0; color: #899088; font-size: 13px; }
+.profile-details { display: grid; grid-template-columns: 1fr 1fr; gap: 25px 36px; padding: 26px 30px; border-top: 1px solid #ecece5; border-bottom: 1px solid #ecece5; }
+.detail { display: grid; min-width: 0; gap: 7px; }
+.detail-label { color: #9a9f96; font: 500 9px 'DM Mono', monospace; letter-spacing: .1em; }
+.detail > :last-child, .location > :last-child { overflow-wrap: anywhere; color: #39463f; font-size: 13px; }
+.detail a { text-decoration-color: #d4d9c5; text-underline-offset: 3px; }
+.detail a:hover { color: #738542; }
+.location { display: flex; justify-content: space-between; gap: 20px; padding: 20px 30px; }
+.page-footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; color: #8d958a; font: 10px 'DM Mono', monospace; }
+
+.status-card { display: grid; min-height: 270px; place-content: center; justify-items: center; padding: 35px; text-align: center; }
+.status-card > p:last-child { margin: 10px 0 0; color: #858e83; font-size: 13px; }
+.loader { width: 24px; height: 24px; margin-bottom: 13px; border: 2px solid #e1e5d5; border-top-color: #81934b; border-radius: 50%; animation: spin .75s linear infinite; }
+.status-card .status-kicker { margin-bottom: 12px; }
+.status-card .error-message { max-width: 420px; overflow-wrap: anywhere; }
+.error-card h2 { font-size: 24px; }
+.retry-button { margin-top: 20px; padding: 11px 17px; border: 0; border-radius: 3px; background: #293b32; color: #fffefa; font-size: 12px; font-weight: 600; }
+.retry-button:hover { background: #425847; }
+.retry-button:focus-visible { outline: 3px solid #a5b648; outline-offset: 3px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 560px) {
+  .page-shell { width: min(100% - 28px, 500px); padding-top: 46px; }
+  .profile-topline, .identity { padding-right: 21px; padding-left: 21px; }
+  .profile-details { grid-template-columns: 1fr; gap: 19px; padding: 23px 21px; }
+  .location { align-items: flex-start; padding: 19px 21px; }
+  .page-footer { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; }
+}
