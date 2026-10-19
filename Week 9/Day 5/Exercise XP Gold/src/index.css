@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap');
+
+:root {
+  font-family: 'DM Sans', sans-serif;
+  color: #252a24;
+  background: #f3f1e9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #252a24;
+  --muted: #777a70;
+  --paper: #f3f1e9;
+  --line: #dddcd1;
+  --green: #365b48;
+  --red: #b5533b;
+  --gold: #d1a34b;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--paper); color: var(--ink); }
+button, a { font: inherit; }
+a { color: inherit; }
+.page-shell { max-width: 1260px; margin: 0 auto; padding: 0 38px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; height: 76px; border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 1.05rem; font-weight: 700; letter-spacing: .02em; }
+.brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid var(--green); color: var(--green); font-family: 'Playfair Display', Georgia, serif; font-size: 1.2rem; }
+.brand-sub { display: block; margin-top: 2px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: .54rem; font-weight: 400; letter-spacing: .08em; }
+.cart-jump { display: flex; align-items: center; gap: 12px; text-decoration: none; font-size: .88rem; }
+.cart-jump span, .cart-count { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: var(--green); color: white; font-family: 'DM Mono', monospace; font-size: .75rem; }
+.page-intro { padding: 58px 0 50px; border-bottom: 1px solid var(--line); }
+.eyebrow { margin: 0 0 9px; color: var(--red); font-family: 'DM Mono', monospace; font-size: .67rem; letter-spacing: .09em; text-transform: uppercase; }
+.page-intro h1 { margin: 0 0 15px; font-family: 'Playfair Display', Georgia, serif; font-size: 4.8rem; font-weight: 600; line-height: .98; }
+.page-intro h1 em { color: var(--green); font-weight: 500; }
+.page-intro > p:last-child { max-width: 480px; margin: 0; color: var(--muted); font-size: .98rem; line-height: 1.65; }
+.shop-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 46px; align-items: start; padding: 39px 0 60px; }
+.section-heading, .cart-heading { display: flex; justify-content: space-between; align-items: end; margin-bottom: 22px; }
+.section-heading .eyebrow, .cart-heading .eyebrow { margin-bottom: 4px; }
+.section-heading h2, .cart-heading h2 { margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 1.7rem; font-weight: 600; }
+.catalog-count { padding-bottom: 4px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: .73rem; }
+.product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 16px; }
+.product-card { min-width: 0; }
+.cover-wrap { position: relative; display: grid; height: 208px; place-items: center; overflow: hidden; background: #e3e1d6; }
+.cover-wrap::after { position: absolute; inset: 0; border: 1px solid rgb(30 39 31 / 7%); content: ''; pointer-events: none; }
+.book-cover { width: 130px; height: 182px; object-fit: cover; box-shadow: 5px 8px 14px rgb(43 40 29 / 19%); transition: transform .25s ease; }
+.product-card:hover .book-cover { transform: translateY(-4px) rotate(-1deg); }
+.cover-index { position: absolute; right: 8px; bottom: 7px; color: #78796d; font-family: 'DM Mono', monospace; font-size: .54rem; letter-spacing: .04em; }
+.product-info { padding: 12px 1px 0; }
+.product-category { margin: 0 0 5px; color: var(--red); font-family: 'DM Mono', monospace; font-size: .62rem; text-transform: uppercase; }
+.product-info h3 { min-height: 42px; margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 1.12rem; font-weight: 600; line-height: 1.25; }
+.product-author { margin: 5px 0 14px; color: var(--muted); font-size: .77rem; }
+.product-buy-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.product-buy-row strong { font-family: 'DM Mono', monospace; font-size: .82rem; font-weight: 500; white-space: nowrap; }
+.add-button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border: 1px solid var(--green); border-radius: 2px; background: transparent; color: var(--green); cursor: pointer; font-size: .71rem; transition: color .15s, background .15s; }
+.add-button span { font-size: 1rem; line-height: .8; }
+.add-button:hover { background: var(--green); color: white; }
+.add-button:focus-visible, .quantity-controls button:focus-visible, .checkout-button:focus-visible { outline: 3px solid rgb(181 83 59 / 35%); outline-offset: 2px; }
+.cart-panel { position: sticky; top: 24px; padding: 22px 20px 18px; border: 1px solid var(--line); background: #f8f7f1; }
+.cart-heading { align-items: center; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+.cart-heading h2 { font-size: 1.45rem; }
+.cart-count { width: 26px; height: 26px; }
+.empty-cart { display: flex; flex-direction: column; align-items: center; padding: 31px 10px 32px; text-align: center; }
+.empty-mark { display: grid; width: 42px; height: 42px; margin-bottom: 12px; place-items: center; border: 1px solid #c8c7ba; border-radius: 50%; color: var(--green); font-size: 1.3rem; }
+.empty-cart p { margin: 0 0 5px; font-family: 'Playfair Display', Georgia, serif; font-size: 1rem; }
+.empty-cart > span:last-child { color: var(--muted); font-size: .8rem; }
+.cart-list { margin: 0; padding: 0; list-style: none; }
+.cart-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+.cart-line-copy h3 { margin: 0 0 4px; font-family: 'Playfair Display', Georgia, serif; font-size: .98rem; font-weight: 600; }
+.cart-line-copy p { margin: 0; color: var(--muted); font-size: .75rem; }
+.quantity-controls { display: flex; align-items: center; gap: 8px; grid-row: 2; }
+.quantity-controls button { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+.quantity-controls span { min-width: 15px; text-align: center; font-family: 'DM Mono', monospace; font-size: .75rem; }
+.line-total { align-self: center; grid-column: 2; grid-row: 1 / span 2; font-family: 'DM Mono', monospace; font-size: .76rem; font-weight: 500; }
+.cart-total { display: flex; justify-content: space-between; margin-top: 19px; font-size: .9rem; }
+.cart-total strong { font-family: 'DM Mono', monospace; font-size: .96rem; font-weight: 500; }
+.shipping-note { margin: 7px 0 17px; color: var(--muted); font-size: .7rem; }
+.checkout-button { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 13px 14px; border: 0; background: var(--green); color: #fff; cursor: pointer; font-size: .82rem; }
+.checkout-button:disabled { background: #a8ada4; cursor: not-allowed; }
+.checkout-button span { font-size: 1rem; }
+.page-footer { display: flex; justify-content: space-between; gap: 16px; padding: 18px 0 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: .74rem; }
+
+@media (max-width: 980px) {
+  .shop-layout { grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; }
+  .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  .page-shell { padding: 0 20px; }
+  .page-intro { padding: 42px 0 35px; }
+  .page-intro h1 { font-size: 3.5rem; }
+  .shop-layout { grid-template-columns: 1fr; gap: 34px; padding-top: 30px; }
+  .cart-panel { position: static; grid-row: 1; }
+  .catalog { grid-row: 2; }
+}
+
+@media (max-width: 430px) {
+  .page-shell { padding: 0 14px; }
+  .topbar { height: 66px; }
+  .page-intro h1 { font-size: 3rem; }
+  .product-grid { gap: 22px 11px; }
+  .cover-wrap { height: 178px; }
+  .book-cover { width: 110px; height: 154px; }
+  .product-buy-row { align-items: start; flex-direction: column; }
+  .page-footer { flex-direction: column; gap: 6px; }
+}
