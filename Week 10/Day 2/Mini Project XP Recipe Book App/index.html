@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f5f0" />
+    <meta
+      name="description"
+      content="A cozy place to save and revisit your favorite recipes."
+    />
+    <title>Gather — Recipe Book</title>
+  </head>
+  <body>
+    <main class="recipe-app">
+      <header class="site-header">
+        <a class="wordmark" href="#" aria-label="Gather recipe book home">
+          <span class="wordmark-icon" aria-hidden="true">g.</span>
+          <span>gather<span class="wordmark-period">.</span></span>
+        </a>
+        <p class="header-note">A little book of things worth making</p>
+      </header>
+
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">YOUR PERSONAL RECIPE BOOK</p>
+        <h1 id="page-title">Made to be <em>shared.</em></h1>
+        <p class="intro-copy">
+          Keep the recipes you love close, and the ones you can’t wait to try
+          even closer.
+        </p>
+      </section>
+
+      <section class="workspace" aria-label="Recipe book">
+        <form id="recipeEntryForm" class="recipe-form">
+          <div class="form-heading">
+            <div>
+              <p class="eyebrow">ADD TO YOUR COLLECTION</p>
+              <h2>A new favorite</h2>
+            </div>
+            <span class="form-sparkle" aria-hidden="true">✳</span>
+          </div>
+
+          <label for="recipeTitle">Recipe title</label>
+          <input
+            type="text"
+            id="recipeTitle"
+            name="title"
+            placeholder="e.g. Sunday lemon cake"
+            maxlength="100"
+            required
+          />
+
+          <label for="ingredients">Ingredients <span>one per line</span></label>
+          <textarea
+            id="ingredients"
+            name="ingredients"
+            placeholder="2 cups flour&#10;1 lemon, zested"
+            rows="5"
+            required
+          ></textarea>
+
+          <label for="instructions">Instructions</label>
+          <textarea
+            id="instructions"
+            name="instructions"
+            placeholder="Tell the story, step by step..."
+            rows="5"
+            required
+          ></textarea>
+
+          <button class="button button-primary add-button" type="submit">
+            <span aria-hidden="true">＋</span> Add recipe
+          </button>
+          <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
+        </form>
+
+        <section class="collection" aria-labelledby="collection-title">
+          <div class="collection-heading">
+            <div>
+              <p class="eyebrow">THE GOOD STUFF</p>
+              <h2 id="collection-title">Your recipes</h2>
+            </div>
+            <span id="recipeCount" class="recipe-count">0 recipes</span>
+          </div>
+
+          <div id="recipeContainer" class="recipe-grid" aria-live="polite"></div>
+
+          <div class="collection-footer">
+            <p>Good food tastes better when remembered.</p>
+            <button
+              id="clearRecipesButton"
+              class="button button-text"
+              type="button"
+              disabled
+            >
+              Clear all recipes
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <footer class="site-footer">
+        <span>Made with a little extra butter.</span>
+        <span aria-hidden="true">✳</span>
+      </footer>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
