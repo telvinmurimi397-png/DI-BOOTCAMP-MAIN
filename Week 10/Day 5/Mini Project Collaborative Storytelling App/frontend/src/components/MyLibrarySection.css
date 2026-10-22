@@ -1,0 +1,165 @@
+.library-section {
+  width: calc(100% - clamp(36px, 6vw, 112px));
+  margin: 0 auto;
+  padding: 65px 0 78px;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 24px;
+}
+
+.library-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.library-eyebrow {
+  margin: 0 0 10px;
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.library-heading h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(34px, 4vw, 46px);
+  font-weight: 500;
+  letter-spacing: -1.7px;
+}
+
+.library-heading h2 em {
+  color: var(--green);
+  font-weight: 500;
+}
+
+.library-heading > p {
+  max-width: 355px;
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.library-story-list {
+  display: grid;
+  gap: 10px;
+}
+
+.library-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(165px, 210px);
+  gap: 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+}
+
+.library-story-copy {
+  min-width: 0;
+}
+
+.library-story-author {
+  margin: 0 0 6px !important;
+  color: var(--green) !important;
+  font-size: 8px !important;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+.library-story-copy h3 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.library-story-copy > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.library-story-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+}
+
+.library-story-actions > button {
+  min-height: 33px;
+  padding: 0 9px;
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  background: var(--green);
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.library-story-actions > button.library-remove-action {
+  border-color: var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+
+.library-story-actions > button.library-remove-action:hover {
+  border-color: #b4533c;
+  color: #b4533c;
+}
+
+.library-empty {
+  display: grid;
+  min-height: 200px;
+  justify-items: center;
+  align-content: center;
+  padding: 20px;
+  border: 1px dashed var(--line);
+  text-align: center;
+}
+
+.library-empty h3 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.library-empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+@media (max-width: 850px) {
+  .library-section {
+    width: calc(100% - 54px);
+  }
+}
+
+@media (max-width: 560px) {
+  .library-section {
+    width: calc(100% - 36px);
+    padding: 48px 0 56px;
+  }
+
+  .library-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .library-story {
+    grid-template-columns: 1fr;
+  }
+}
