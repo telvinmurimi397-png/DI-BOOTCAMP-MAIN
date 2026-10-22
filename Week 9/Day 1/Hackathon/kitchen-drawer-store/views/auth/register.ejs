@@ -4,12 +4,13 @@
   <h1>Create Account</h1>
   <% if (error) { %><div class="error"><%= error %></div><% } %>
   <form method="post" action="/auth/register" class="form-card">
+    <input type="hidden" name="returnTo" value="<%= returnTo %>">
     <label>Name <input type="text" name="name" required></label>
     <label>Email <input type="email" name="email" required></label>
     <label>Password (min 6 characters) <input type="password" name="password" minlength="6" required></label>
     <button class="btn btn-full" type="submit">Sign Up</button>
   </form>
-  <p>Already have an account? <a href="/auth/login">Login</a></p>
+  <p>Already have an account? <a href="/auth/login<%= returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '' %>">Login</a></p>
 </div>
 
 <%- include('../partials/footer') %>

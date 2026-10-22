@@ -36,7 +36,7 @@ router.get('/', (req, res) => {
   res.render('home', { title: 'Home', categoryCards, featuredProducts });
 });
 
-router.get('/shop', (req, res) => {
+router.get('/shop', requireAuth, (req, res) => {
   const { category, q } = req.query;
   let sql = 'SELECT * FROM products WHERE 1=1';
   const params = [];
@@ -67,13 +67,15 @@ router.get('/shop', (req, res) => {
   });
 });
 
-router.get('/product/:id', (req, res) => {
+router.get('/product/:id', requireAuth, (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
   if (!product) return res.status(404).render('404', { title: 'Product Not Found' });
   res.render('product', { title: product.name, product });
 });
 
 /* ---------- Cart ---------- */
+
+router.use(['/cart', '/checkout', '/order'], requireAuth);
 
 router.get('/cart', (req, res) => {
   const cart = getCartItems(req);
@@ -114,14 +116,14 @@ router.post('/cart/remove', (req, res) => {
 
 /* ---------- Checkout ---------- */
 
-router.get('/checkout', requireAuth, (req, res) => {
+router.get('/checkout', (req, res) => {
   const cart = getCartItems(req);
   if (!cart.length) return res.redirect('/cart');
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   res.render('checkout', { title: 'Checkout', cart, total, error: null });
 });
 
-router.post('/checkout', requireAuth, (req, res) => {
+router.post('/checkout', (req, res) => {
   const { name, address, city, phone } = req.body;
   const cart = getCartItems(req);
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -166,7 +168,7 @@ router.post('/checkout', requireAuth, (req, res) => {
   res.redirect(`/order/${orderId}`);
 });
 
-router.get('/order/:id', requireAuth, (req, res) => {
+router.get('/order/:id', (req, res) => {
   const order = db
     .prepare('SELECT * FROM orders WHERE id = ? AND user_id = ?')
     .get(req.params.id, req.session.user.id);

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const db = require('./connection');
 const additionalProducts = require('./catalog-additions');
+const productImageUrl = require('./product-image');
 
 const retiredDuplicateProducts = [
   'Dough Scraper and Cutter',
@@ -41,15 +42,26 @@ const seedAll = db.transaction(() => {
   const insertProduct = db.prepare(
     'INSERT INTO products (name, description, price, stock, category, emoji, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
+  const updateProductImage = db.prepare('UPDATE products SET image_url = ? WHERE name = ?');
   const findProduct = db.prepare('SELECT id FROM products WHERE name = ?');
   for (const product of products) {
-    if (!findProduct.get(product[0])) insertProduct.run(...product);
+    const imageUrl = productImageUrl(product[0]);
+    if (findProduct.get(product[0])) {
+      updateProductImage.run(imageUrl, product[0]);
+    } else {
+      insertProduct.run(...product.slice(0, 6), imageUrl);
+    }
   }
   const insertAdditionalProduct = db.prepare(
     'INSERT INTO products (name, description, price, stock, category, emoji, image_url) VALUES (@name, @description, @price, @stock, @category, @emoji, @image_url)'
   );
   for (const product of additionalProducts) {
-    if (!findProduct.get(product.name)) insertAdditionalProduct.run(product);
+    const imageUrl = productImageUrl(product.name);
+    if (findProduct.get(product.name)) {
+      updateProductImage.run(imageUrl, product.name);
+    } else {
+      insertAdditionalProduct.run({ ...product, image_url: imageUrl });
+    }
   }
 
   const insertUser = db.prepare(
