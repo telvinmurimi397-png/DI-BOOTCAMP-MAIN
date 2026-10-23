@@ -6,29 +6,31 @@
 <% if (!orders.length) { %>
   <p class="empty">No orders yet.</p>
 <% } else { %>
-  <table class="cart-table">
-    <thead><tr><th>#</th><th>Customer</th><th>Date</th><th>Ship To</th><th>Total</th><th>Status</th></tr></thead>
-    <tbody>
-      <% orders.forEach((o) => { %>
-        <tr>
-          <td>#<%= o.id %></td>
-          <td><%= o.email %></td>
-          <td><%= o.created_at %></td>
-          <td><%= o.shipping_city %></td>
-          <td>$<%= o.total.toFixed(2) %></td>
-          <td>
-            <form method="post" action="/admin/orders/<%= o.id %>/status" class="status-form">
-              <select name="status" onchange="this.form.submit()">
-                <% ['pending','shipped','delivered','cancelled'].forEach((s) => { %>
-                  <option value="<%= s %>" <%= o.status === s ? 'selected' : '' %>><%= s %></option>
-                <% }) %>
-              </select>
-            </form>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+  <div class="table-scroll" role="region" aria-label="Manage orders" tabindex="0">
+    <table class="cart-table">
+      <thead><tr><th>#</th><th>Customer</th><th>Date</th><th>Ship To</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody>
+        <% orders.forEach((o) => { %>
+          <tr>
+            <td>#<%= o.id %></td>
+            <td><%= o.email %></td>
+            <td><%= o.created_at %></td>
+            <td><%= o.shipping_city %></td>
+            <td>$<%= o.total.toFixed(2) %></td>
+            <td>
+              <form method="post" action="/admin/orders/<%= o.id %>/status" class="status-form">
+                <select name="status" onchange="this.form.submit()">
+                  <% ['pending','shipped','delivered','cancelled'].forEach((s) => { %>
+                    <option value="<%= s %>" <%= o.status === s ? 'selected' : '' %>><%= s %></option>
+                  <% }) %>
+                </select>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
 <% } %>
 
 <%- include('../partials/footer') %>

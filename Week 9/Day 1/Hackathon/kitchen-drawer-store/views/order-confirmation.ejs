@@ -4,21 +4,23 @@
   <h1>Order confirmed</h1>
   <p>Order <strong>#<%= order.id %></strong> · Status: <span class="status <%= order.status %>"><%= order.status %></span> · Placed on <%= order.created_at %></p>
 
-  <table class="cart-table">
-    <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>
-    <tbody>
-      <% items.forEach((item) => { %>
-        <tr>
-          <td><%= item.name %></td>
-          <td><%= item.quantity %></td>
-          <td>$<%= (item.price_at_purchase * item.quantity).toFixed(2) %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-    <tfoot>
-      <tr><td colspan="2"><strong>Total (Cash on Delivery)</strong></td><td><strong>$<%= order.total.toFixed(2) %></strong></td></tr>
-    </tfoot>
-  </table>
+  <div class="table-scroll" role="region" aria-label="Order items" tabindex="0">
+    <table class="cart-table">
+      <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>
+      <tbody>
+        <% items.forEach((item) => { %>
+          <tr>
+            <td><%= item.name %></td>
+            <td><%= item.quantity %></td>
+            <td>$<%= (item.price_at_purchase * item.quantity).toFixed(2) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr><td colspan="2"><strong>Total (Cash on Delivery)</strong></td><td><strong>$<%= order.total.toFixed(2) %></strong></td></tr>
+      </tfoot>
+    </table>
+  </div>
 
   <div class="form-card">
     <h2>Deliver to</h2>

@@ -10,13 +10,18 @@
 <header class="site-header">
   <div class="container nav">
     <a href="/" class="logo">The Kitchen Drawer</a>
-    <nav class="nav-links">
+    <button class="nav-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="primary-navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="nav-links" id="primary-navigation">
       <a href="/">Home</a>
       <a href="/shop">Shop</a>
       <a href="/cart">Cart <% if (cartCount > 0) { %><span class="badge"><%= cartCount %></span><% } %></a>
       <span class="nav-auth-links">
         <% if (currentUser) { %>
-          <a href="/auth/account" class="nav-account-link" title="<%= currentUser.name %>" aria-label="Account: <%= currentUser.name %>"><%= currentUser.name %></a>
+          <a href="/auth/account" class="nav-account-link">My Account</a>
           <% if (currentUser.role === 'admin') { %><a href="/admin">Admin</a><% } %>
           <a href="/auth/logout">Logout</a>
         <% } else { %>

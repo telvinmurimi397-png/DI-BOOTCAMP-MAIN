@@ -5,30 +5,32 @@
 <% if (!cart.length) { %>
   <p class="empty">Your cart is empty. <a href="/shop">Browse the shop</a></p>
 <% } else { %>
-  <table class="cart-table">
-    <thead>
-      <tr><th>Product</th><th>Price</th><th>Qty</th><th>Total</th><th></th></tr>
-    </thead>
-    <tbody>
-      <% cart.forEach((item) => { %>
-        <tr>
-          <td><%= item.name %></td>
-          <td>$<%= item.price.toFixed(2) %></td>
-          <td><%= item.qty %></td>
-          <td>$<%= (item.price * item.qty).toFixed(2) %></td>
-          <td>
-            <form method="post" action="/cart/remove">
-              <input type="hidden" name="id" value="<%= item.id %>">
-              <button class="link-btn" type="submit">Remove</button>
-            </form>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-    <tfoot>
-      <tr><td colspan="3"><strong>Total</strong></td><td colspan="2"><strong>$<%= total.toFixed(2) %></strong></td></tr>
-    </tfoot>
-  </table>
+  <div class="table-scroll" role="region" aria-label="Shopping cart items" tabindex="0">
+    <table class="cart-table">
+      <thead>
+        <tr><th>Product</th><th>Price</th><th>Qty</th><th>Total</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% cart.forEach((item) => { %>
+          <tr>
+            <td><%= item.name %></td>
+            <td>$<%= item.price.toFixed(2) %></td>
+            <td><%= item.qty %></td>
+            <td>$<%= (item.price * item.qty).toFixed(2) %></td>
+            <td>
+              <form method="post" action="/cart/remove">
+                <input type="hidden" name="id" value="<%= item.id %>">
+                <button class="link-btn" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr><td colspan="3"><strong>Total</strong></td><td colspan="2"><strong>$<%= total.toFixed(2) %></strong></td></tr>
+      </tfoot>
+    </table>
+  </div>
 
   <div class="cart-actions">
     <a href="/shop" class="btn btn-outline">Continue shopping</a>

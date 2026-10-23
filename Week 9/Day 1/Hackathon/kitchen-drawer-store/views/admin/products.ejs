@@ -3,24 +3,26 @@
 <h1>Manage Products</h1>
 <p><a class="btn" href="/admin/products/new">+ Add Product</a> <a class="btn btn-outline" href="/admin">Dashboard</a></p>
 
-<table class="cart-table">
-  <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
-  <tbody>
-    <% products.forEach((p) => { %>
-      <tr>
-        <td><%= p.name %></td>
-        <td><%= p.category %></td>
-        <td>$<%= p.price.toFixed(2) %></td>
-        <td><%= p.stock %></td>
-        <td class="row-actions">
-          <a class="link-btn" href="/admin/products/<%= p.id %>/edit">Edit</a>
-          <form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Delete <%= p.name %>?">
-            <button class="link-btn danger" type="submit">Delete</button>
-          </form>
-        </td>
-      </tr>
-    <% }) %>
-  </tbody>
-</table>
+<div class="table-scroll" role="region" aria-label="Manage products" tabindex="0">
+  <table class="cart-table">
+    <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+    <tbody>
+      <% products.forEach((p) => { %>
+        <tr>
+          <td><%= p.name %></td>
+          <td><%= p.category %></td>
+          <td>$<%= p.price.toFixed(2) %></td>
+          <td><%= p.stock %></td>
+          <td class="row-actions">
+            <a class="link-btn" href="/admin/products/<%= p.id %>/edit">Edit</a>
+            <form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Delete <%= p.name %>?">
+              <button class="link-btn danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
 
 <%- include('../partials/footer') %>

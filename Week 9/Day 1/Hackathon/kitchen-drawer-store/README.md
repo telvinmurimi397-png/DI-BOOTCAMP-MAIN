@@ -13,7 +13,7 @@ The expanded demo catalog has about 20 distinct products in each of its four cat
 - Product catalog at `/shop` with category filters and search
 - Product detail pages with stock indicators ("Only X left", "Out of stock")
 - Session-based shopping cart
-- Checkout with shipping form (Cash on Delivery demo payment)
+- Checkout with shipping form (Cash on Delivery)
 - Order confirmation page
 
 **Accounts**

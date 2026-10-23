@@ -7,19 +7,21 @@
 <% if (!orders.length) { %>
   <p class="empty">No orders yet. <a href="/shop">Start shopping</a></p>
 <% } else { %>
-  <table class="cart-table">
-    <thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th></tr></thead>
-    <tbody>
-      <% orders.forEach((o) => { %>
-        <tr>
-          <td><a href="/order/<%= o.id %>">#<%= o.id %></a></td>
-          <td><%= o.created_at %></td>
-          <td><span class="status <%= o.status %>"><%= o.status %></span></td>
-          <td>$<%= o.total.toFixed(2) %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+  <div class="table-scroll" role="region" aria-label="Order history" tabindex="0">
+    <table class="cart-table">
+      <thead><tr><th>Order</th><th>Date</th><th>Status</th><th>Total</th></tr></thead>
+      <tbody>
+        <% orders.forEach((o) => { %>
+          <tr>
+            <td><a href="/order/<%= o.id %>">#<%= o.id %></a></td>
+            <td><%= o.created_at %></td>
+            <td><span class="status <%= o.status %>"><%= o.status %></span></td>
+            <td>$<%= o.total.toFixed(2) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
 <% } %>
 
 <%- include('../partials/footer') %>
