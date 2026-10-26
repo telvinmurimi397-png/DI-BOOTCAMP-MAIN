@@ -1,0 +1,2431 @@
+{
+  "info": {
+    "name": "STOKANA API",
+    "description": "End-to-end collection for the STOKANA multi-vendor marketplace. Import the STOKANA local environment, then run the folders in order: setup, catalogue, seller, admin, buyer, fulfilment, messages, seller inbox and reviews. The buyer flow places a real demo order and pays it with the simulated provider. Do not run this against production data.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Setup & auth",
+      "description": "Sign in with the seeded demo accounts. Postman replaces its session cookie automatically, so run the login request for whichever role you need next.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health"
+            },
+            "description": "Confirms the API and PostgreSQL connection are healthy."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Database connected', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Marketplace stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/stats"
+            },
+            "description": "Public catalogue counters used by the home page."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register buyer (optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "description": "Creates a fresh buyer with a unique email. Not required by the rest of the collection, which uses the seeded buyer.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Buyer\",\n  \"email\": \"postman.buyer.{{$timestamp}}@stokana.test\",\n  \"phone\": \"0712 000 111\",\n  \"password\": \"Postman@2026\",\n  \"role\": \"buyer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('newBuyerId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register seller (optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "description": "Creates a pending shop with a unique email. The admin approval request uses newSellerProfileId, so this is a safe way to demonstrate the approval workflow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Postman Seller\",\n  \"email\": \"postman.seller.{{$timestamp}}@stokana.test\",\n  \"phone\": \"0722 000 222\",\n  \"password\": \"Postman@2026\",\n  \"role\": \"seller\",\n  \"shopName\": \"Postman Shop {{$timestamp}}\",\n  \"shopDescription\": \"Temporary shop created by the Postman collection.\",\n  \"shopCounty\": \"Nairobi\",\n  \"shopTown\": \"Westlands\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.user && body.user.sellerProfile) pm.collectionVariables.set('newSellerProfileId', body.user.sellerProfile.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "Signs in as the seeded administrator.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('adminId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login buyer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "Signs in as the seeded buyer, Faith Wambui.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyerEmail}}\",\n  \"password\": \"{{buyerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('buyerId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login seller",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "Signs in as Nairobi Tech Hub, an approved seller.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{sellerEmail}}\",\n  \"password\": \"{{sellerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('sellerId', body.user.id);",
+                  "if (body.user && body.user.sellerProfile) pm.collectionVariables.set('sellerProfileId', body.user.sellerProfile.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me"
+            },
+            "description": "Returns the account for the current session cookie, or null when signed out."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Public catalogue",
+      "description": "Public endpoints — no session required. Category, product and shop ids are saved for later requests.",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/categories"
+            },
+            "description": "Stores the first two active categories for product creation and filtering."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const active = (body.categories || []).filter((category) => category.isActive !== false);",
+                  "const first = active.find((category) => category.slug === 'electronics') || active[0];",
+                  "if (first) { pm.collectionVariables.set(\"categoryId\", first.id); pm.collectionVariables.set(\"categorySlug\", first.slug); }",
+                  "const second = active.find((category) => !first || String(category.id) !== String(first.id));",
+                  "if (second) { pm.collectionVariables.set(\"secondCategoryId\", second.id); pm.collectionVariables.set(\"secondCategorySlug\", second.slug); }",
+                  "pm.test('At least two active categories exist', () => pm.expect(active.length).to.be.at.least(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?q={{searchTerm}}&limit=8"
+            },
+            "description": "Keyword search used by the Explore page. Also stores a seed product slug for the product-detail request."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const first = (body.products || [])[0];",
+                  "if (first && !pm.collectionVariables.get('browseProductSlug')) pm.collectionVariables.set('browseProductSlug', first.slug);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Browse by category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products?category={{categorySlug}}&sort=popular&limit=8"
+            },
+            "description": "Filters an active category and sorts by popularity."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Product detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{browseProductSlug}}"
+            },
+            "description": "Full product page payload with images, seller, related products and the latest reviews."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Product reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{browseProductSlug}}/reviews?page=1&limit=5"
+            },
+            "description": "Paginated buyer reviews for a product."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List shops",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops?limit=12"
+            },
+            "description": "Verified shop directory. Stores the first shop slug for the detail request."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const first = (body.shops || [])[0];",
+                  "if (first && !pm.collectionVariables.get('shopSlug')) pm.collectionVariables.set('shopSlug', first.shopSlug);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Shop detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/shops/{{shopSlug}}"
+            },
+            "description": "Shop profile plus its approved products."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Seller",
+      "description": "Signs in as the seeded approved seller. Creates a product that the admin approves in the next folder.",
+      "item": [
+        {
+          "name": "Login seller",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{sellerEmail}}\",\n  \"password\": \"{{sellerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('sellerId', body.user.id);",
+                  "if (body.user && body.user.sellerProfile) pm.collectionVariables.set('sellerProfileId', body.user.sellerProfile.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/overview"
+            },
+            "description": "Products, low stock, sales, earnings, recent orders and unread messages."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get shop profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/shop"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update shop profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/shop"
+            },
+            "description": "Updates the seller shop details. Replace values with your own shop data when testing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Genuine laptops, audio and everyday tech from Nairobi CBD. Tested before dispatch.\",\n  \"logoUrl\": \"/assets/products/laptop.jpg\",\n  \"bannerUrl\": \"/assets/products/laptop.jpg\",\n  \"county\": \"Nairobi\",\n  \"town\": \"Nairobi CBD\",\n  \"phone\": \"+254700000002\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List own products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products?status=all&limit=20"
+            },
+            "description": "Seller catalogue with counts by review status."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products"
+            },
+            "description": "Creates a pending product with one image URL. Stores productId and productSlug for admin approval and the buyer flow.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Test Product {{$timestamp}}\",\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"A demonstration product created by the STOKANA Postman collection.\",\n  \"price\": 2500,\n  \"compareAtPrice\": 3000,\n  \"stock\": 10,\n  \"condition\": \"new\",\n  \"location\": \"Nairobi\",\n  \"imageUrls\": [\n    \"/assets/products/headphones.jpg\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.product) { pm.collectionVariables.set('productId', body.product.id); pm.collectionVariables.set('productSlug', body.product.slug); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get own product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update own product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 2400,\n  \"stock\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update stock",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}/stock"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add image by URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}/images"
+            },
+            "description": "Adds a second product image and stores imageId for the primary/delete requests.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"/assets/products/powerbank.jpg\",\n  \"altText\": \"Power bank\",\n  \"isPrimary\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.image) pm.collectionVariables.set('imageId', body.image.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload image file (manual)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}/images/upload"
+            },
+            "description": "Choose a local image file in the request body before sending. Uses the server upload or Cloudinary when configured.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "altText",
+                  "value": "Postman upload",
+                  "type": "text"
+                },
+                {
+                  "key": "isPrimary",
+                  "value": "false",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set primary image",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}/images/{{imageId}}/primary"
+            },
+            "description": "Marks the added image as the primary product image."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete added image",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/products/{{productId}}/images/{{imageId}}"
+            },
+            "description": "Removes the image added by URL."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/orders?limit=30"
+            },
+            "description": "Paid orders for this seller. Stores the shipment id for the most recent order."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const target = pm.collectionVariables.get('orderNumber');",
+                  "const orders = body.orders || [];",
+                  "const order = orders.find((entry) => String(entry.orderNumber) === String(target)) || orders[0];",
+                  "if (order && order.shipmentId) pm.collectionVariables.set('shipmentId', order.shipmentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sales summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/sales"
+            },
+            "description": "Monthly gross sales, commission and earnings history."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/reviews"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Admin",
+      "description": "Signs in as the administrator, approves the optional new shop and the product created above, then inspects platform data.",
+      "item": [
+        {
+          "name": "Login admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('adminId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/overview"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List pending sellers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sellers?status=pending&limit=20"
+            },
+            "description": "Review queue for new shops. Stores the first pending shop profile id."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const first = (body.sellers || [])[0];",
+                  "if (first) pm.collectionVariables.set('pendingSellerProfileId', first.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve the new shop",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sellers/{{newSellerProfileId}}/review"
+            },
+            "description": "Approves the shop created by Register seller (optional). Change the id to pendingSellerProfileId if you want to approve an existing application.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List pending products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products?status=pending&limit=20"
+            },
+            "description": "Product moderation queue. Stores the first pending product id."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const first = (body.products || [])[0];",
+                  "if (first) pm.collectionVariables.set('pendingProductId', first.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Approve the new product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{productId}}/review"
+            },
+            "description": "Publishes the product created in the Seller folder so it appears in the catalogue and can be bought.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all sellers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/sellers?status=all&limit=20"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users?role=all&limit=20"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/orders?status=all&limit=20"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reports"
+            },
+            "description": "Optional from/to query parameters use YYYY-MM-DD."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Commissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/commissions?status=all"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/categories"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Platform settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/settings"
+            },
+            "description": "Current commission rate, shipping fee and free-shipping threshold. PATCH the same endpoint to change them."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Buyer cart & orders",
+      "description": "Uses the seeded buyer and the admin-approved test product. Places a real order and pays it with the simulated provider.",
+      "item": [
+        {
+          "name": "Login buyer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyerEmail}}\",\n  \"password\": \"{{buyerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('buyerId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cart suggestions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/suggestions"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add product to cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items"
+            },
+            "description": "Adds the test product and stores the cart item id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "const item = (body.items || []).find((entry) => String(entry.productId) === String(pm.collectionVariables.get('productId')));",
+                  "if (item) pm.collectionVariables.set('cartItemId', item.itemId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update cart quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/cart/items/{{cartItemId}}"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/checkout"
+            },
+            "description": "Creates the order, reserves stock, calculates commission server-side and creates a pending simulated payment.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shippingName\": \"Faith Wambui\",\n  \"shippingPhone\": \"+254700000008\",\n  \"shippingCounty\": \"Nairobi\",\n  \"shippingTown\": \"Westlands\",\n  \"shippingAddress\": \"12 Postman Avenue, near Sarit Centre\",\n  \"notes\": \"Created by the STOKANA Postman collection\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.order) pm.collectionVariables.set('orderNumber', body.order.orderNumber);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Retry pending payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderNumber}}/payment/retry"
+            },
+            "description": "Returns the existing pending payment instead of creating a duplicate."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pay successfully",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderNumber}}/payment/simulate"
+            },
+            "description": "Server verifies the amount, marks the order paid, and creates commissions and one shipment per seller.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"success\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Payment processed', () => pm.expect(pm.response.json().order.paymentStatus).to.eql('paid'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Repeat payment callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderNumber}}/payment/simulate"
+            },
+            "description": "A duplicate successful callback must be ignored.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"outcome\": \"success\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Duplicate ignored', () => pm.expect(pm.response.json().alreadyProcessed).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Order detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderNumber}}"
+            },
+            "description": "Full order with items, payments and shipment links. Stores orderItemId for the review flow."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const item = body.order && body.order.items && body.order.items[0];",
+                  "if (item) { pm.collectionVariables.set('orderItemId', item.id); if (item.shipmentId) pm.collectionVariables.set('shipmentId', item.shipmentId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buyer orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?limit=10"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buyer stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/stats"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel unpaid order (optional)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderNumber}}/cancel"
+            },
+            "description": "Only works while an order is still pending_payment. The main collection pays the order, so create another unpaid order before using this request."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Seller fulfilment",
+      "description": "Switches back to the seller, dispatches and delivers the paid order so the buyer can review it.",
+      "item": [
+        {
+          "name": "Login seller",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{sellerEmail}}\",\n  \"password\": \"{{sellerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('sellerId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh seller orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/orders?limit=30"
+            },
+            "description": "Finds the paid order and stores its shipment id."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "const target = pm.collectionVariables.get('orderNumber');",
+                  "const orders = body.orders || [];",
+                  "const order = orders.find((entry) => String(entry.orderNumber) === String(target)) || orders[0];",
+                  "if (order && order.shipmentId) pm.collectionVariables.set('shipmentId', order.shipmentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Dispatch shipment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/shipments/{{shipmentId}}"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"dispatched\",\n  \"carrier\": \"G4S Kenya\",\n  \"trackingNumber\": \"G4S-{{$timestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark delivered",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/seller/shipments/{{shipmentId}}"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"delivered\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Messages",
+      "description": "Buyer side of a conversation with the seeded seller. The seller side follows.",
+      "item": [
+        {
+          "name": "Login buyer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyerEmail}}\",\n  \"password\": \"{{buyerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.user) pm.collectionVariables.set('buyerId', body.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations"
+            },
+            "description": "Opens or reuses the buyer–seller conversation and stores conversationId.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sellerId\": \"{{sellerId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.conversation) pm.collectionVariables.set('conversationId', body.conversation.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Send message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations/{{conversationId}}/messages"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Hello from the STOKANA Postman collection.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read conversation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations/{{conversationId}}"
+            },
+            "description": "Returns the conversation and up to 200 messages, and marks incoming messages as read."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unread count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/unread-count"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Seller inbox",
+      "description": "Seller side of the same conversation, proving both participants see the same thread.",
+      "item": [
+        {
+          "name": "Login seller",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{sellerEmail}}\",\n  \"password\": \"{{sellerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller reads conversation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations/{{conversationId}}"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Conversation participants are correct', () => { const c = pm.response.json().conversation; pm.expect(String(c.buyerId)).to.eql(String(pm.collectionVariables.get('buyerId'))); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller replies",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations/{{conversationId}}/messages"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Thanks for reaching out — the item is in stock.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller conversation list",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/conversations"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Seller unread count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/messages/unread-count"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9. Reviews",
+      "description": "Signs back in as the buyer and reviews the delivered order item.",
+      "item": [
+        {
+          "name": "Login buyer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{buyerEmail}}\",\n  \"password\": \"{{buyerPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reviewable purchases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/mine?page=1&limit=10"
+            },
+            "description": "Lists the buyer’s reviews and delivered items waiting for a review."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews"
+            },
+            "description": "Requires a delivered order item that has not been reviewed yet.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderItemId\": \"{{orderItemId}}\",\n  \"rating\": 5,\n  \"title\": \"Delivered as promised\",\n  \"comment\": \"Created by the STOKANA Postman collection.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Product reviews after review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productSlug}}/reviews?page=1&limit=5"
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "adminEmail",
+      "value": "admin@stokana.co.ke"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin@2026"
+    },
+    {
+      "key": "buyerEmail",
+      "value": "buyer@stokana.co.ke"
+    },
+    {
+      "key": "buyerPassword",
+      "value": "Buyer@2026"
+    },
+    {
+      "key": "sellerEmail",
+      "value": "nairobitech@stokana.co.ke"
+    },
+    {
+      "key": "sellerPassword",
+      "value": "Seller@2026"
+    },
+    {
+      "key": "searchTerm",
+      "value": "headphones"
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "categorySlug",
+      "value": ""
+    },
+    {
+      "key": "secondCategoryId",
+      "value": ""
+    },
+    {
+      "key": "secondCategorySlug",
+      "value": ""
+    },
+    {
+      "key": "browseProductSlug",
+      "value": ""
+    },
+    {
+      "key": "shopSlug",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "productSlug",
+      "value": ""
+    },
+    {
+      "key": "imageId",
+      "value": ""
+    },
+    {
+      "key": "cartItemId",
+      "value": ""
+    },
+    {
+      "key": "orderNumber",
+      "value": ""
+    },
+    {
+      "key": "orderItemId",
+      "value": ""
+    },
+    {
+      "key": "shipmentId",
+      "value": ""
+    },
+    {
+      "key": "conversationId",
+      "value": ""
+    },
+    {
+      "key": "sellerId",
+      "value": ""
+    },
+    {
+      "key": "sellerProfileId",
+      "value": ""
+    },
+    {
+      "key": "pendingSellerProfileId",
+      "value": ""
+    },
+    {
+      "key": "newSellerProfileId",
+      "value": ""
+    },
+    {
+      "key": "pendingProductId",
+      "value": ""
+    },
+    {
+      "key": "adminId",
+      "value": ""
+    },
+    {
+      "key": "buyerId",
+      "value": ""
+    },
+    {
+      "key": "newBuyerId",
+      "value": ""
+    }
+  ]
+}

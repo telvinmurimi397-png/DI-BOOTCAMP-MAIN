@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories · STOKANA</title>
+  <meta name="description" content="Browse all product categories on STOKANA — electronics, fashion, beauty, home, groceries and more.">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script type="module" src="/js/pages/categories.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+  <main class="page-bg">
+    <div class="container">
+      <div style="padding:36px 0 4px">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Categories</span>
+        </nav>
+        <span class="eyebrow">Browse the marketplace</span>
+        <h1 style="margin:12px 0 10px;font-size:clamp(30px,4.4vw,46px)">Every category, one place</h1>
+        <p class="muted" style="max-width:620px;font-size:14px">Find exactly what you need across ten curated categories, all stocked by verified Kenyan shops.</p>
+      </div>
+
+      <div class="categories-grid" id="category-grid" style="padding:28px 0 60px">
+        <div class="skeleton" style="height:76px;border-radius:14px"></div>
+        <div class="skeleton" style="height:76px;border-radius:14px"></div>
+        <div class="skeleton" style="height:76px;border-radius:14px"></div>
+        <div class="skeleton" style="height:76px;border-radius:14px"></div>
+        <div class="skeleton" style="height:76px;border-radius:14px"></div>
+      </div>
+
+      <div class="promo-banner" style="margin-bottom:60px">
+        <div style="position:relative;z-index:1">
+          <span class="eyebrow">Can’t find it?</span>
+          <h2>Search the whole marketplace.</h2>
+          <p>Use search to look across product names, descriptions, shops and categories at once.</p>
+          <a class="btn btn-lg" href="/explore">Start exploring</a>
+        </div>
+        <ul class="promo-list">
+          <li>Ten curated categories</li>
+          <li>Verified sellers only</li>
+          <li>Real buyer reviews</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+  <div data-site-footer></div>
+</body>
+</html>

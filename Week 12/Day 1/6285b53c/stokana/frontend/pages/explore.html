@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore products · STOKANA</title>
+  <meta name="description" content="Search and filter products from verified Kenyan sellers on STOKANA.">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script type="module" src="/js/pages/explore.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+  <main>
+    <section class="explore-hero">
+      <div class="container">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Explore</span>
+        </nav>
+        <div class="explore-title-row">
+          <div>
+            <h1 id="explore-title">Explore the marketplace</h1>
+            <p id="explore-subtitle">Quality products from shops verified by STOKANA.</p>
+          </div>
+          <span class="badge blue" id="results-count">Loading products…</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="container">
+      <div class="explore-layout">
+        <aside class="filter-panel" id="filter-panel" aria-label="Product filters">
+          <div class="filter-head">
+            <strong>Filters</strong>
+            <button class="btn btn-ghost btn-sm" type="button" id="clear-filters">Clear all</button>
+          </div>
+          <div class="filter-section">
+            <strong>Categories</strong>
+            <div class="filter-list" id="filter-categories">
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+              <div class="skeleton skeleton-line"></div>
+            </div>
+          </div>
+          <form class="filter-section" id="price-form">
+            <strong>Price range (KSh)</strong>
+            <div class="price-range">
+              <input class="input" type="number" min="0" step="50" placeholder="Min" id="price-min" aria-label="Minimum price">
+              <span>–</span>
+              <input class="input" type="number" min="0" step="50" placeholder="Max" id="price-max" aria-label="Maximum price">
+            </div>
+            <button class="btn btn-secondary btn-sm btn-block" type="submit" style="margin-top:9px">Apply price</button>
+          </form>
+          <div class="filter-section">
+            <strong>Availability</strong>
+            <label class="checkbox"><input type="checkbox" id="in-stock"> In stock only</label>
+            <label class="checkbox" style="margin-top:8px"><input type="checkbox" id="featured-only"> Featured products</label>
+          </div>
+          <div class="filter-section">
+            <strong>Need help?</strong>
+            <p class="small muted" style="line-height:1.6">Every seller is verified. If a product looks wrong, report it from the product page.</p>
+          </div>
+        </aside>
+
+        <section>
+          <div class="explore-toolbar">
+            <div class="row">
+              <button class="btn btn-secondary btn-sm mobile-filter-btn" type="button" id="toggle-filters">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z"/></svg>
+                Filters
+              </button>
+              <div class="filter-chips" id="active-filters"></div>
+            </div>
+            <div class="row">
+              <label class="small muted" for="sort-select">Sort by</label>
+              <select class="select" id="sort-select" style="min-height:38px;width:auto;font-size:12.5px">
+                <option value="newest">Newest first</option>
+                <option value="popular">Most popular</option>
+                <option value="rating">Top rated</option>
+                <option value="price_asc">Price: low to high</option>
+                <option value="price_desc">Price: high to low</option>
+              </select>
+            </div>
+          </div>
+          <div class="results-grid" id="results-grid"></div>
+          <div id="results-pagination"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <div data-site-footer></div>
+</body>
+</html>

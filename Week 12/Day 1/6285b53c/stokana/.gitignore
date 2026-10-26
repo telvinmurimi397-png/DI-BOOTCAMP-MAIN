@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Uploaded images (development storage)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
+
+# Test output
+coverage/
+tmp/
+ 

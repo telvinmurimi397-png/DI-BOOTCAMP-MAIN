@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create your account · STOKANA</title>
+  <meta name="description" content="Join STOKANA as a buyer or seller. Shop verified Kenyan shops or open your own storefront.">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script type="module" src="/js/pages/register.js"></script>
+</head>
+<body>
+  <div class="auth-page">
+    <aside class="auth-brand">
+      <a class="brand" href="/" aria-label="STOKANA home">
+        <span class="brand-mark">
+          <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </span>
+        STOKANA<span class="brand-dot">.</span>
+      </a>
+      <div class="auth-brand-copy">
+        <span class="eyebrow" style="color:#8fb3f0">One account. Endless possibilities.</span>
+        <h2>Join a marketplace built for Kenya.</h2>
+        <p>Create a free account to shop from verified local shops — or open your own storefront and reach buyers nationwide.</p>
+        <ul class="auth-points">
+          <li><span class="auth-points-icon"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span> Free buyer account with order tracking</li>
+          <li><span class="auth-points-icon"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span> Seller shop reviewed and approved by our team</li>
+          <li><span class="auth-points-icon"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span> Direct chat between buyers and sellers</li>
+        </ul>
+      </div>
+      <div class="auth-quote">
+        <span class="avatar sm">JM</span>
+        <span>“My shop went live in under a day. Buyers message me directly.” — James M., Nakuru</span>
+      </div>
+    </aside>
+
+    <div class="auth-form-side">
+      <div class="auth-card" style="width:min(480px,100%)">
+        <a class="brand auth-mobile-brand" href="/" aria-label="STOKANA home">
+          <span class="brand-mark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </span>
+          STOKANA<span class="brand-dot">.</span>
+        </a>
+        <h1>Create your account</h1>
+        <p>It takes less than two minutes. Choose how you want to use STOKANA.</p>
+        <div id="register-alert"></div>
+
+        <div class="role-picker" style="margin-bottom:20px" role="group" aria-label="Choose account type">
+          <button class="role-option active" type="button" data-role="buyer" aria-pressed="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57L23 6H6"/></svg>
+            <span><strong>I'm a buyer</strong><span>Shop from verified sellers</span></span>
+          </button>
+          <button class="role-option" type="button" data-role="seller" aria-pressed="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></svg>
+            <span><strong>I'm a seller</strong><span>Open your own shop</span></span>
+          </button>
+        </div>
+
+        <form class="auth-form" id="register-form" novalidate>
+          <div class="form-grid" style="gap:14px">
+            <div class="form-group span-2">
+              <label class="form-label" for="register-name">Full name</label>
+              <input class="input" id="register-name" name="fullName" type="text" placeholder="e.g. Amina Wanjiru" autocomplete="name" required minlength="2" maxlength="120">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-email">Email address</label>
+              <input class="input" id="register-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-phone">Phone <span class="optional">(optional)</span></label>
+              <input class="input" id="register-phone" name="phone" type="tel" placeholder="+254 712 345 678" autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-password">Password</label>
+              <div class="input-group">
+                <input class="input has-action" id="register-password" name="password" type="password" placeholder="At least 8 characters" autocomplete="new-password" required minlength="8" maxlength="72" style="padding-left:13px">
+                <button class="input-action" type="button" data-toggle-password aria-label="Show password">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <span class="form-hint">Use 8+ characters with uppercase, lowercase and a number.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-confirm">Confirm password</label>
+              <input class="input" id="register-confirm" name="confirmPassword" type="password" placeholder="Repeat your password" autocomplete="new-password" required>
+            </div>
+          </div>
+
+          <div id="seller-fields" class="hidden" style="display:grid;gap:14px">
+            <div class="divider" style="margin:4px 0"></div>
+            <div class="form-group">
+              <label class="form-label" for="register-shop-name">Shop name</label>
+              <input class="input" id="register-shop-name" name="shopName" type="text" placeholder="e.g. Wanjiru Electronics" minlength="3" maxlength="120">
+              <span class="form-hint">This is the name buyers will see. It must be unique.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="register-shop-description">What do you sell? <span class="optional">(optional)</span></label>
+              <textarea class="textarea" id="register-shop-description" name="shopDescription" rows="2" maxlength="1000" placeholder="Tell buyers about your products and what makes your shop special."></textarea>
+            </div>
+            <div class="form-grid" style="gap:14px">
+              <div class="form-group">
+                <label class="form-label" for="register-county">County</label>
+                <select class="select" id="register-county" name="shopCounty">
+                  <option value="">Choose your county</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="register-town">Town or estate</label>
+                <input class="input" id="register-town" name="shopTown" type="text" placeholder="e.g. Westlands" maxlength="80">
+              </div>
+            </div>
+            <div class="alert info" style="margin:0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <div>New shops are reviewed by an administrator. You can add products straight away, but they will only go live once your shop is approved.</div>
+            </div>
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" name="terms" id="register-terms" required>
+            <span>I agree to the <a href="/terms" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+          </label>
+
+          <button class="btn btn-primary btn-lg btn-block" type="submit" id="register-submit">Create account</button>
+        </form>
+
+        <div class="auth-foot">
+          Already have an account? <a href="/login">Sign in</a>
+        </div>
+        <a class="auth-back-link" href="/">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          Back to the marketplace
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shops · STOKANA</title>
+  <meta name="description" content="Discover verified Kenyan shops selling electronics, fashion, beauty, home goods and more on STOKANA.">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/main.css">
+  <script type="module" src="/js/pages/shops.js"></script>
+</head>
+<body>
+  <div data-site-header></div>
+  <main class="page-bg">
+    <section style="background:#fff;border-bottom:1px solid var(--line)">
+      <div class="container" style="padding:36px 0 32px">
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Home</a>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Shops</span>
+        </nav>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:8px">
+          <div>
+            <span class="eyebrow">Verified sellers</span>
+            <h1 style="margin:12px 0 10px;font-size:clamp(30px,4.4vw,46px)">Shops you can trust</h1>
+            <p class="muted" style="max-width:600px;font-size:14px">Every shop on STOKANA is reviewed before it can sell. Browse independent Kenyan businesses and buy with confidence.</p>
+          </div>
+          <form id="shop-search" role="search" style="width:min(100%,360px)">
+            <div class="input-group">
+              <span class="input-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </span>
+              <input class="input" type="search" name="q" id="shop-search-input" placeholder="Search shops by name" aria-label="Search shops" autocomplete="off">
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <div class="container">
+      <div style="padding:26px 0 16px">
+        <span class="muted" id="shop-count" style="font-size:13px">Loading shops…</span>
+      </div>
+      <div class="shop-grid" id="shop-grid" style="padding-bottom:56px">
+        <div class="skeleton" style="height:190px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:190px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:190px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:190px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:190px;border-radius:var(--radius)"></div>
+        <div class="skeleton" style="height:190px;border-radius:var(--radius)"></div>
+      </div>
+
+      <div class="promo-banner" style="margin-bottom:60px">
+        <div style="position:relative;z-index:1">
+          <span class="eyebrow">Sell on STOKANA</span>
+          <h2>Open your shop in minutes.</h2>
+          <p>Create a seller account, add your products and reach buyers across Kenya. New shops are reviewed by our team before going live.</p>
+          <a class="btn btn-lg" href="/register?role=seller">Start selling</a>
+        </div>
+        <ul class="promo-list">
+          <li>No listing fees on your first products</li>
+          <li>Chat directly with buyers</li>
+          <li>Track sales and payouts in one place</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+  <div data-site-footer></div>
+</body>
+</html>
