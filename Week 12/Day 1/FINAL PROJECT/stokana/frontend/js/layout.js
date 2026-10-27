@@ -6,6 +6,7 @@ import { escapeHtml } from './format.js';
 import { installImageFallback, installFocusShortcut } from './global.js';
 
 const NAV_LINKS = [
+  { href: '/', label: 'Home' },
   { href: '/explore', label: 'Explore' },
   { href: '/categories', label: 'Categories' },
   { href: '/shops', label: 'Shops' }
@@ -35,7 +36,7 @@ function headerHtml(user, active) {
         </a>
         <nav class="header-nav" aria-label="Primary navigation">
           ${nav}
-          ${user?.role === 'seller' ? '<a class="nav-link" href="/seller">Seller hub</a>' : '<a class="nav-link" href="/register?role=seller">Sell on STOKANA</a>'}
+          ${user?.role === 'buyer' ? '' : user?.role === 'seller' ? '<a class="nav-link" href="/seller">Seller hub</a>' : '<a class="nav-link" href="/register?role=seller">Sell on STOKANA</a>'}
         </nav>
         <form class="header-search" action="/explore" method="get" role="search" data-header-search>
           <span class="search-icon">${icon('search', { size: 18 })}</span>
@@ -234,6 +235,7 @@ function drawerHtml(user) {
         <input class="input search-input" type="search" name="q" placeholder="Search STOKANA…" aria-label="Search products">
       </form>
       <nav class="drawer-nav" aria-label="Mobile navigation">
+        <a href="/"><span>Home</span>${icon('chevron-right', { size: 15 })}</a>
         <a href="/explore"><span>Explore</span>${icon('chevron-right', { size: 15 })}</a>
         <a href="/categories"><span>Categories</span>${icon('chevron-right', { size: 15 })}</a>
         <a href="/shops"><span>Shops</span>${icon('chevron-right', { size: 15 })}</a>

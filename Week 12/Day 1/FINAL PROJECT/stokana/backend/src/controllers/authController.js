@@ -72,7 +72,7 @@ async function register(req, res) {
 }
 
 async function login(req, res) {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
   const row = await userService.findByEmail(email);
 
   const passwordMatches = await bcrypt.compare(password, row ? row.passwordHash : DUMMY_HASH);
@@ -81,6 +81,10 @@ async function login(req, res) {
   }
   if (!row.isActive) {
     throw forbidden('This account has been deactivated. Please contact support.');
+  }
+  if (role && role !== row.role) {
+    const accountType = row.role === 'admin' ? 'an admin' : `a ${row.role}`;
+    throw forbidden(`This account is registered as ${accountType}. Choose the ${row.role} option to sign in.`);
   }
 
   await db.query('UPDATE users SET last_login_at = now() WHERE id = $1', [row.id]);

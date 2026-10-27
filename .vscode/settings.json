@@ -1,5 +1,6 @@
 {
   "liveServer.settings.port": 5501,
   "json.schemaDownload.enable": false,
-  "json.schemas": []
+  "json.schemas": [],
+  "python.terminal.useEnvFile": true
 }

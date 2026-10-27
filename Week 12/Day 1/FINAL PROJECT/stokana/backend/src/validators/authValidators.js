@@ -47,7 +47,8 @@ const registerSchema = z
 
 const loginSchema = z.object({
   email: emailRule,
-  password: z.string().min(1, 'Enter your password.').max(72)
+  password: z.string().min(1, 'Enter your password.').max(72),
+  role: z.enum(['buyer', 'seller', 'admin']).optional()
 });
 
 const forgotPasswordSchema = z.object({ email: emailRule });

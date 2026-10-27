@@ -815,3 +815,9 @@ body.site-body main {
     display: none;
   }
 }
+
+@media (max-width: 380px) {
+  .header-actions > a.btn {
+    display: none;
+  }
+}
