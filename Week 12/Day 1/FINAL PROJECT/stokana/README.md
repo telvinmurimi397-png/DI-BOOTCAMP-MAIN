@@ -439,7 +439,7 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 
 - [ ] Provision PostgreSQL 14+ with TLS and automated backups.
 - [ ] Run `database/schema.sql` against the production database.
-- [ ] Do **not** load the demo seed into production. Create the first admin account with a one-off script or a controlled SQL insert using a bcrypt hash.
+- [ ] Do **not** load the demo seed into production. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` temporarily in the production environment and run `npm run admin:bootstrap` from `backend/` against the production database. Remove the temporary variables after it succeeds. This one-off command updates the sole existing admin or creates one if none exists; it is not run at app startup. Never put the password in source code or commit it.
 - [ ] Set `NODE_ENV=production`, a 32+ character `SESSION_SECRET`, the real `APP_URL`, `COOKIE_SECURE=true`, `PGSSL=true` and `TRUST_PROXY=true` when behind a proxy.
 - [ ] Configure a durable image store (Cloudinary or a persistent mounted volume for `backend/uploads`).
 - [ ] Complete Daraja sandbox testing for successful, declined, cancelled and timed-out prompts; verify callback reachability, retries, exact order totals and idempotency before enabling production credentials. Never expose payment secrets to the browser.

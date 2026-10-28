@@ -8,6 +8,7 @@
     "dev": "nodemon src/app.js",
     "db:schema": "psql \"$DATABASE_URL\" -f ../database/schema.sql",
     "db:seed": "psql \"$DATABASE_URL\" -f ../database/seeds/dev_seed.sql",
+    "admin:bootstrap": "node scripts/bootstrap-admin.js",
     "test:smoke": "node tests/smoke.test.js",
     "test:mpesa": "node --test tests/mpesa.test.js"
   },
