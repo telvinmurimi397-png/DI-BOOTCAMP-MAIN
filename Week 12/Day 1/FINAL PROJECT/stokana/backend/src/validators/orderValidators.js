@@ -30,6 +30,10 @@ const simulatePaymentSchema = z.object({
   outcome: z.enum(['success', 'failed']).default('success')
 });
 
+const mpesaPaymentSchema = z.object({
+  phone: z.string().trim().min(7).max(20)
+});
+
 const reviewSchema = z.object({
   orderItemId: z.coerce.number().int().positive(),
   rating: z.coerce.number().int().min(1, 'Choose a rating.').max(5),
@@ -43,5 +47,6 @@ module.exports = {
   buyerOrdersQuerySchema,
   orderIdParamsSchema,
   simulatePaymentSchema,
+  mpesaPaymentSchema,
   reviewSchema
 };

@@ -93,7 +93,7 @@ function render(dash, data) {
         value: money(revenue.pendingPayouts, { compact: true }),
         iconName: 'wallet',
         tone: 'amber',
-        foot: '<a href="/admin/commissions">Open commissions →</a>'
+        foot: '<a href="/admin/commissions">Open commissions</a>'
       },
       {
         label: 'Marketplace accounts',

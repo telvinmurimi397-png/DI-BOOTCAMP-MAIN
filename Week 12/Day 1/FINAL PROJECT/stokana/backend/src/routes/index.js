@@ -11,6 +11,7 @@ const messageRoutes = require('./messageRoutes');
 const sellerRoutes = require('./sellerRoutes');
 const adminRoutes = require('./adminRoutes');
 const reviewRoutes = require('./reviewRoutes');
+const paymentRoutes = require('./paymentRoutes');
 const catalogueController = require('../controllers/catalogueController');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -70,5 +71,6 @@ router.use('/messages', messageRoutes);
 router.use('/seller', sellerRoutes);
 router.use('/admin', adminRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/payments', paymentRoutes);
 
 module.exports = router;

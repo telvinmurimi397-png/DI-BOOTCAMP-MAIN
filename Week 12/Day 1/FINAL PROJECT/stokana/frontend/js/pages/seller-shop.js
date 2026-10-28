@@ -183,7 +183,7 @@ function render() {
             shop.shopName
           )}</strong> and your page is <strong>/shop/${escapeHtml(
             shop.shopSlug
-          )}</strong>. Email <a href="mailto:hello@stokana.co.ke">hello@stokana.co.ke</a> to change them.</span>
+          )}</strong>. Email <a href="mailto:teff397@gmail.com">teff397@gmail.com</a> to change them.</span>
         </div>
       </div>
     </div>`;

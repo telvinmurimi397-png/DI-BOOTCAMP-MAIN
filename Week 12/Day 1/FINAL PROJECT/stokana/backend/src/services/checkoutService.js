@@ -1,12 +1,17 @@
 const crypto = require('crypto');
 const db = require('../config/db');
+const env = require('../config/env');
+const mpesaService = require('./mpesaService');
 const settingsService = require('../services/settingsService');
 const { generateOrderNumber } = require('../utils/slug');
 const { toCents, fromCents } = require('../utils/money');
 const { badRequest, conflict, notFound } = require('../utils/errors');
 
-function paymentReference(orderNumber) {
-  return `SIM-${orderNumber}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+function paymentReference(orderNumber, provider = 'simulated') {
+  const suffix = crypto.randomBytes(12).toString('hex').toUpperCase();
+  return provider === 'mpesa'
+    ? `MPESA-${orderNumber}-${suffix}`
+    : `SIM-${orderNumber}-${suffix.slice(0, 6)}`;
 }
 
 async function placeOrder(buyer, shipping) {
@@ -78,6 +83,9 @@ async function placeOrder(buyer, shipping) {
     const thresholdCents = toCents(settings.freeShippingThreshold);
     const shippingCents = subtotalCents >= thresholdCents ? 0 : toCents(settings.shippingFee);
     const totalCents = subtotalCents + shippingCents;
+    if (env.paymentProvider === 'mpesa' && totalCents % 100 !== 0) {
+      throw badRequest('M-PESA checkout totals must be whole Kenyan shillings. Adjust the cart and try again.');
+    }
     const earningsCentsTotal = subtotalCents - commissionCentsTotal;
 
     const orderNumber = generateOrderNumber();
@@ -141,12 +149,21 @@ async function placeOrder(buyer, shipping) {
       }
     }
 
-    const paymentRef = paymentReference(order.orderNumber);
+    const provider = env.paymentProvider;
+    const paymentRef = paymentReference(order.orderNumber, provider);
+    const callbackToken = provider === 'mpesa' ? crypto.randomBytes(32).toString('hex') : null;
     const paymentResult = await client.query(
-      `INSERT INTO payments (order_id, provider, provider_ref, amount, phone, status)
-       VALUES ($1, 'simulated', $2, $3, $4, 'pending')
+      `INSERT INTO payments (order_id, provider, provider_ref, amount, phone, status, raw_payload)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
        RETURNING id, provider, provider_ref AS "providerRef", amount, status, created_at AS "createdAt"`,
-      [order.id, paymentRef, fromCents(totalCents), shipping.shippingPhone]
+      [
+        order.id,
+        provider,
+        paymentRef,
+        fromCents(totalCents),
+        shipping.shippingPhone,
+        callbackToken ? { callbackToken, initiationStatus: 'not_started' } : null
+      ]
     );
 
     await client.query('DELETE FROM cart_items WHERE cart_id = $1', [items[0].cartId]);
@@ -160,7 +177,7 @@ async function placeOrder(buyer, shipping) {
       },
       payment: {
         ...paymentResult.rows[0],
-        simulated: true
+        ...(provider === 'simulated' ? { simulated: true } : {})
       }
     };
   });
@@ -182,6 +199,18 @@ async function cancelOrder(buyerId, orderNumber) {
     }
     if (order.status !== 'pending_payment') {
       throw conflict('Only unpaid orders can be cancelled. Contact the seller or support instead.');
+    }
+
+    const activeMpesaPayment = await client.query(
+      `SELECT raw_payload->>'initiationStatus' AS "initiationStatus"
+       FROM payments
+       WHERE order_id = $1 AND provider = 'mpesa' AND status = 'pending'
+       ORDER BY created_at DESC, id DESC
+       LIMIT 1 FOR UPDATE`,
+      [order.id]
+    );
+    if (['requesting', 'initiated'].includes(activeMpesaPayment.rows[0]?.initiationStatus)) {
+      throw conflict('An M-PESA request is still in progress. Wait for its result before cancelling.');
     }
 
     await client.query(
@@ -232,22 +261,37 @@ async function retryPayment(buyerId, orderNumber) {
     );
     if (existing.rows[0]) {
       return {
-        payment: { ...existing.rows[0], simulated: true },
+        payment: {
+          ...existing.rows[0],
+          ...(existing.rows[0].provider === 'simulated' ? { simulated: true } : {})
+        },
         orderNumber: order.orderNumber
       };
     }
 
-    const paymentRef = paymentReference(order.orderNumber);
+    const provider = env.paymentProvider;
+    const paymentRef = paymentReference(order.orderNumber, provider);
+    const callbackToken = provider === 'mpesa' ? crypto.randomBytes(32).toString('hex') : null;
     const paymentResult = await client.query(
-      `INSERT INTO payments (order_id, provider, provider_ref, amount, phone, status)
-       VALUES ($1, 'simulated', $2, $3, $4, 'pending')
+      `INSERT INTO payments (order_id, provider, provider_ref, amount, phone, status, raw_payload)
+       VALUES ($1, $2, $3, $4, $5, 'pending', $6)
        RETURNING id, provider, provider_ref AS "providerRef", amount, status, created_at AS "createdAt"`,
-      [order.id, paymentRef, order.total, order.shipping_phone]
+      [
+        order.id,
+        provider,
+        paymentRef,
+        order.total,
+        order.shipping_phone,
+        callbackToken ? { callbackToken, initiationStatus: 'not_started' } : null
+      ]
     );
     await client.query("UPDATE orders SET payment_status = 'unpaid' WHERE id = $1", [order.id]);
 
     return {
-      payment: { ...paymentResult.rows[0], simulated: true },
+      payment: {
+        ...paymentResult.rows[0],
+        ...(provider === 'simulated' ? { simulated: true } : {})
+      },
       orderNumber: order.orderNumber
     };
   });

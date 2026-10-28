@@ -87,11 +87,11 @@ function buyBoxHtml() {
           <span data-qty-value>1</span>
           <button type="button" data-qty-step="1" aria-label="Increase quantity" ${soldOut ? 'disabled' : ''}>${icon('plus', { size: 15 })}</button>
         </div>
-        <button class="btn btn-primary" type="button" id="add-to-cart" ${soldOut ? 'disabled' : ''}>
+        <button class="btn btn-shopping" type="button" id="add-to-cart" ${soldOut ? 'disabled' : ''}>
           ${icon('cart', { size: 17 })} ${soldOut ? 'Sold out' : 'Add to cart'}
         </button>
       </div>
-      <button class="btn btn-secondary btn-block" type="button" id="buy-now" ${soldOut ? 'disabled' : ''}>
+      <button class="btn btn-shopping btn-block" type="button" id="buy-now" ${soldOut ? 'disabled' : ''}>
         Buy now
       </button>
       <div class="buy-secondary">

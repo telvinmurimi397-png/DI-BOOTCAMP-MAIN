@@ -129,7 +129,7 @@ function render(dash, data) {
         iconName: 'message',
         tone: unreadMessages > 0 ? 'amber' : '',
         foot: unreadMessages > 0
-          ? '<a href="/seller/messages">Reply to buyers →</a>'
+          ? '<a href="/seller/messages">Reply to buyers</a>'
           : 'You are all caught up'
       }
     ])}

@@ -84,10 +84,10 @@ function renderSummary(summary) {
       <div class="summary-line total"><span>Total</span><span>${money(summary.total)}</span></div>
       ${
         summary.canCheckout
-          ? `<a class="btn btn-primary btn-lg btn-block" href="/checkout">Proceed to checkout ${icon('arrow-right', {
+          ? `<a class="btn btn-shopping btn-lg btn-block" href="/checkout">Proceed to checkout ${icon('arrow-right', {
               size: 16
             })}</a>`
-          : `<button class="btn btn-primary btn-lg btn-block" type="button" disabled>Proceed to checkout</button>
+          : `<button class="btn btn-shopping btn-lg btn-block" type="button" disabled>Proceed to checkout</button>
              <p class="form-error" style="text-align:center">Remove unavailable items to continue.</p>`
       }
       <div class="delivery-note" style="border-top:1px solid var(--line);margin-top:2px">

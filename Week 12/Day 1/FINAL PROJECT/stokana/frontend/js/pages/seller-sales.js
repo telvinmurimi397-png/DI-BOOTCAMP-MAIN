@@ -149,7 +149,7 @@ function render(data) {
           </div>
           <div class="settings-note" style="margin-top:16px">
             ${icon('info', { size: 16 })}
-            <span>Contact <a href="mailto:hello@stokana.co.ke">hello@stokana.co.ke</a> if your available balance has not changed after a completed payout.</span>
+            <span>Contact <a href="mailto:teff397@gmail.com">teff397@gmail.com</a> if your available balance has not changed after a completed payout.</span>
           </div>
         </div>`
       })}

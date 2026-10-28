@@ -7,7 +7,8 @@ const {
   checkoutSchema,
   orderNumberParamsSchema,
   buyerOrdersQuerySchema,
-  simulatePaymentSchema
+  simulatePaymentSchema,
+  mpesaPaymentSchema
 } = require('../validators/orderValidators');
 
 const router = express.Router();
@@ -37,6 +38,12 @@ router.post(
   validate(orderNumberParamsSchema, 'params'),
   validate(simulatePaymentSchema),
   asyncHandler(orderController.simulatePayment)
+);
+router.post(
+  '/:orderNumber/payment/stk-push',
+  validate(orderNumberParamsSchema, 'params'),
+  validate(mpesaPaymentSchema),
+  asyncHandler(orderController.startMpesaPayment)
 );
 
 module.exports = router;

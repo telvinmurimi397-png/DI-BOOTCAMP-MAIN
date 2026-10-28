@@ -90,6 +90,9 @@ const aliases = {
 
 export function icon(name, { size = 20, className = '', strokeWidth = 1.9, fill = false } = {}) {
   const key = aliases[name] || name;
+  if (/^(arrow|chevron)-/.test(key) || ['download', 'logout', 'refresh', 'trending-up', 'upload'].includes(key)) {
+    return '';
+  }
   const body = paths[key];
   if (!body) return '';
   const isFilled = key === 'star-filled' || fill;

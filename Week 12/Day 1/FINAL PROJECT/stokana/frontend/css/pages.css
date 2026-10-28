@@ -1,12 +1,99 @@
+/* Page-specific marketplace backgrounds */
+body.page-marketplace {
+  background:
+    linear-gradient(rgba(251, 252, 255, 0.93), rgba(251, 252, 255, 0.93)),
+    url("https://images.unsplash.com/photo-1534452203293-494d7ddbf7e0?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-categories {
+  background:
+    linear-gradient(rgba(251, 252, 255, 0.92), rgba(251, 252, 255, 0.92)),
+    url("https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-shops {
+  background:
+    linear-gradient(110deg, rgba(217, 232, 255, 0.92), rgba(219, 241, 231, 0.9)),
+    url("/assets/products/basket.jpg") center / cover fixed;
+  background-repeat: no-repeat;
+}
+
+body.page-cart {
+  background:
+    linear-gradient(rgba(249, 251, 255, 0.95), rgba(249, 251, 255, 0.95)),
+    url("https://images.unsplash.com/photo-1555529771-835f59fc5efe?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-checkout {
+  background:
+    linear-gradient(rgba(249, 251, 255, 0.95), rgba(249, 251, 255, 0.95)),
+    url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-account {
+  background:
+    linear-gradient(rgba(250, 252, 255, 0.96), rgba(250, 252, 255, 0.96)),
+    url("https://images.unsplash.com/photo-1556742111-a301076d9d18?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-info {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
+    url("https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-product,
+body.page-shop-detail {
+  background:
+    linear-gradient(rgba(250, 252, 255, 0.94), rgba(250, 252, 255, 0.94)),
+    url("https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-dashboard {
+  background:
+    linear-gradient(rgba(247, 249, 253, 0.96), rgba(247, 249, 253, 0.96)),
+    url("https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1800&q=80") center / cover fixed;
+}
+
+body.page-home {
+  background:
+    linear-gradient(rgba(251, 252, 255, 0.66), rgba(251, 252, 255, 0.78)),
+    url("https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1800&q=85") center / cover fixed;
+  background-repeat: no-repeat;
+}
+
+body.page-home .trust-strip {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+body.page-home .section.soft {
+  background: rgba(247, 249, 252, 0.84);
+}
+
+body.page-home .section.white {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+body.page-categories .page-bg,
+body.page-shops .page-bg,
+body.page-cart .page-bg,
+body.page-checkout .page-bg,
+body.page-account .page-bg,
+body.page-info .page-bg,
+body.page-product .page-bg,
+body.page-shop-detail .page-bg,
+body.page-dashboard .page-bg {
+  background: transparent;
+}
+
 /* Home */
 .hero {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 78% 24%, rgba(245, 166, 35, 0.12), transparent 34%),
-    radial-gradient(ellipse at 82% 14%, rgba(29, 91, 255, 0.15), transparent 44%),
-    radial-gradient(ellipse at 18% 100%, rgba(14, 159, 110, 0.09), transparent 40%),
-    linear-gradient(180deg, #fbfcff 0%, var(--page) 100%);
+    linear-gradient(90deg, rgba(251, 252, 255, 1) 0%, rgba(251, 252, 255, 0.97) 41%, rgba(251, 252, 255, 0.72) 58%, rgba(251, 252, 255, 0.18) 78%),
+    url("https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1800&q=85") center 46% / cover no-repeat,
+    #fbfcff;
   border-bottom: 1px solid var(--line);
 }
 
@@ -545,9 +632,25 @@
 
 /* Explore */
 .explore-hero {
-  background: var(--surface-soft);
+  background:
+    linear-gradient(90deg, rgba(251, 252, 255, 0.96), rgba(251, 252, 255, 0.78)),
+    url("https://images.unsplash.com/photo-1534452203293-494d7ddbf7e0?auto=format&fit=crop&w=1800&q=80") center 48% / cover no-repeat;
   border-bottom: 1px solid var(--line);
   padding: 30px 0;
+}
+
+.categories-hero {
+  background:
+    linear-gradient(90deg, rgba(251, 252, 255, 0.94), rgba(251, 252, 255, 0.78)),
+    url("https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=80") center 45% / cover no-repeat;
+  border-bottom: 1px solid var(--line);
+}
+
+.shops-hero {
+  background:
+    linear-gradient(105deg, rgba(218, 233, 255, 0.58), rgba(221, 242, 232, 0.4)),
+    url("/assets/products/basket.jpg") center 52% / cover no-repeat;
+  border-bottom: 1px solid var(--line);
 }
 
 .breadcrumb {
@@ -569,9 +672,7 @@
 }
 
 .breadcrumb svg {
-  color: #b3bdcc;
-  width: 12px;
-  height: 12px;
+  display: none;
 }
 
 .explore-title-row {
@@ -1180,6 +1281,16 @@
   flex-direction: column;
 }
 
+.auth-brand::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(155deg, rgba(8, 23, 51, 0.96) 5%, rgba(11, 36, 76, 0.84) 48%, rgba(13, 61, 132, 0.64)),
+    url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1400&q=85") center / cover no-repeat;
+}
+
 .auth-brand::after {
   content: "";
   position: absolute;
@@ -1607,9 +1718,11 @@ checkout,
 }
 
 .checkout-steps svg {
-  width: 13px;
-  height: 13px;
-  color: #c2cbd9;
+  display: none;
+}
+
+.auth-back-link svg {
+  display: none;
 }
 
 .order-summary-items {

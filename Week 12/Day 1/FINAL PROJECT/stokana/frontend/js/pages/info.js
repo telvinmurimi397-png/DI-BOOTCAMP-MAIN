@@ -1,8 +1,8 @@
 import { mountSite } from '../layout.js';
 import { icon } from '../icons.js';
 
-const SUPPORT_EMAIL = 'hello@stokana.co.ke';
-const SUPPORT_PHONE = '+254 700 000 000';
+const SUPPORT_EMAIL = 'teff397@gmail.com';
+const SUPPORT_PHONE = '+254 753 694 364';
 
 const PAGES = {
   help: {
@@ -86,7 +86,7 @@ const PAGES = {
             <div class="info-contact-card">
               <span class="stat-icon green">${icon('phone', { size: 17 })}</span>
               <strong>Call or WhatsApp</strong>
-              <a href="tel:+254700000000">${SUPPORT_PHONE}</a>
+              <a href="tel:+254753694364">${SUPPORT_PHONE}</a>
             </div>
             <div class="info-contact-card">
               <span class="stat-icon amber">${icon('clock', { size: 17 })}</span>

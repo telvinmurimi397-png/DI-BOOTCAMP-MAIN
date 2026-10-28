@@ -1,7 +1,7 @@
 .btn {
-  --btn-bg: var(--blue-600);
+  --btn-bg: var(--navy-brand);
   --btn-color: #fff;
-  --btn-border: var(--blue-600);
+  --btn-border: var(--navy-brand);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -13,7 +13,7 @@
   background: var(--btn-bg);
   color: var(--btn-color);
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
   transition: transform var(--transition), box-shadow var(--transition), background var(--transition), border-color var(--transition), color var(--transition);
@@ -21,9 +21,9 @@
 
 .btn:hover {
   color: var(--btn-color);
-  background: var(--blue-700);
-  border-color: var(--blue-700);
-  box-shadow: var(--shadow-blue);
+  background: #101a31;
+  border-color: #101a31;
+  box-shadow: 0 10px 22px rgba(20, 33, 61, 0.2);
   transform: translateY(-1px);
 }
 
@@ -57,15 +57,28 @@
 }
 
 .btn-dark {
-  --btn-bg: var(--navy-900);
+  --btn-bg: var(--navy-brand);
   --btn-color: #fff;
-  --btn-border: var(--navy-900);
+  --btn-border: var(--navy-brand);
 }
 
 .btn-dark:hover {
-  background: var(--navy-800);
-  border-color: var(--navy-800);
+  background: #101a31;
+  border-color: #101a31;
   box-shadow: var(--shadow-md);
+}
+
+.btn-shopping {
+  --btn-bg: var(--orange-shopping);
+  --btn-color: var(--navy-brand);
+  --btn-border: var(--orange-shopping);
+}
+
+.btn-shopping:hover {
+  background: #e89400;
+  border-color: #e89400;
+  color: var(--navy-brand);
+  box-shadow: 0 10px 22px rgba(252, 163, 17, 0.28);
 }
 
 .btn-ghost {
@@ -566,9 +579,9 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--ink);
+  border: 1px solid var(--orange-shopping);
+  background: var(--orange-shopping);
+  color: var(--navy-brand);
   display: grid;
   place-items: center;
   box-shadow: var(--shadow-sm);
@@ -584,9 +597,9 @@
 }
 
 .quick-add:hover {
-  background: var(--blue-600);
-  border-color: var(--blue-600);
-  color: #fff;
+  background: #e89400;
+  border-color: #e89400;
+  color: var(--navy-brand);
 }
 
 .quick-add:disabled {
@@ -612,7 +625,7 @@
 
 .product-name {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.38;
   color: var(--ink);
   letter-spacing: -0.01em;
@@ -667,7 +680,7 @@
 
 .price {
   font-size: 16.5px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--ink);
 }
@@ -1099,6 +1112,12 @@
   font-weight: 700;
   display: grid;
   place-items: center;
+}
+
+.pagination-btns .page-btn:first-child,
+.pagination-btns .page-btn:last-child {
+  min-width: 72px;
+  white-space: nowrap;
 }
 
 .page-btn:hover:not(:disabled) {

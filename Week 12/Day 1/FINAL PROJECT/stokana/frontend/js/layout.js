@@ -3,7 +3,7 @@ import { api } from './api.js';
 import { getUser, goToLogin, logout, dashboardFor } from './auth.js';
 import { avatar, toast, errorMessage } from './ui.js';
 import { escapeHtml } from './format.js';
-import { installImageFallback, installFocusShortcut } from './global.js';
+import { installImageFallback, installFocusShortcut, installRevealAnimations } from './global.js';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -36,7 +36,7 @@ function headerHtml(user, active) {
         </a>
         <nav class="header-nav" aria-label="Primary navigation">
           ${nav}
-          ${user?.role === 'buyer' ? '' : user?.role === 'seller' ? '<a class="nav-link" href="/seller">Seller hub</a>' : '<a class="nav-link" href="/register?role=seller">Sell on STOKANA</a>'}
+          ${user?.role === 'seller' ? '<a class="nav-link" href="/seller">Seller hub</a>' : ''}
         </nav>
         <form class="header-search" action="/explore" method="get" role="search" data-header-search>
           <span class="search-icon">${icon('search', { size: 18 })}</span>
@@ -64,7 +64,7 @@ function headerActions(user) {
   if (!user) {
     return `
       <a class="btn btn-ghost btn-sm" href="/login">Sign in</a>
-      <a class="btn btn-sm" href="/register">Join free</a>`;
+      <a class="btn btn-sm" href="/register">Create account</a>`;
   }
 
   const firstName = user.fullName.split(/\s+/)[0];
@@ -193,8 +193,8 @@ function footerHtml() {
       <div class="footer-bottom">
         <span>© ${new Date().getFullYear()} STOKANA. All rights reserved. Made in Kenya.</span>
         <div class="row">
-          <a href="/help">hello@stokana.co.ke</a>
-          <a href="/help">+254 700 000 000</a>
+          <a href="mailto:teff397@gmail.com">teff397@gmail.com</a>
+          <a href="tel:+254753694364">+254 753 694 364</a>
           <span>Nairobi, Kenya</span>
         </div>
       </div>
@@ -403,6 +403,7 @@ function wireQuickAdd() {
 export async function mountSite() {
   installImageFallback();
   installFocusShortcut();
+  installRevealAnimations();
   wireQuickAdd();
 
   const headerHost = document.querySelector('[data-site-header]');

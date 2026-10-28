@@ -185,7 +185,7 @@ function render() {
           ${
             order.canRetryPayment
               ? `<div style="display:grid;gap:8px;margin-top:16px">
-                  <button class="btn btn-primary btn-block" type="button" id="pay-order">Pay now</button>
+                  <button class="btn btn-shopping btn-block" type="button" id="pay-order">Pay now</button>
                   <button class="btn btn-ghost btn-block" type="button" id="cancel-order">Cancel order</button>
                 </div>`
               : ''

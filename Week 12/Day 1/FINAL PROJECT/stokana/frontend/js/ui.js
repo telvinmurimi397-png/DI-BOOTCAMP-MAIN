@@ -159,7 +159,7 @@ export function paginationHtml({ page = 1, totalPages = 1, total = 0, limit = 12
         Math.min(page * limit, total)
       )} of ${plainNumber(total)}</span>
       <div class="pagination-btns">
-        <button class="page-btn" type="button" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''} aria-label="Previous page">${icon('chevron-left', { size: 15 })}</button>
+        <button class="page-btn" type="button" data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''} aria-label="Previous page">Previous</button>
         ${pages
           .map((value) =>
             value === '…'
@@ -167,7 +167,7 @@ export function paginationHtml({ page = 1, totalPages = 1, total = 0, limit = 12
               : `<button class="page-btn${value === page ? ' active' : ''}" type="button" data-page="${value}">${value}</button>`
           )
           .join('')}
-        <button class="page-btn" type="button" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''} aria-label="Next page">${icon('chevron-right', { size: 15 })}</button>
+        <button class="page-btn" type="button" data-page="${page + 1}" ${page >= totalPages ? 'disabled' : ''} aria-label="Next page">Next</button>
       </div>
     </div>`;
 }

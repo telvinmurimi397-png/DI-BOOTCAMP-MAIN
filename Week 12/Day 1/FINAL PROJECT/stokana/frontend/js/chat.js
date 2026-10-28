@@ -290,7 +290,7 @@ export function mountChat(container, { user, role = 'buyer' }) {
     panel.innerHTML = `
       <div class="chat-panel-head">
         <button class="icon-btn chat-back" type="button" data-chat-back aria-label="Back to conversations">
-          ${icon('chevron-left', { size: 19 })}
+          Back
         </button>
         ${conversationAvatar(conversation)}
         <div class="grow">

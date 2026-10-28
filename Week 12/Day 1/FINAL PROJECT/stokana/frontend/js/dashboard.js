@@ -83,6 +83,7 @@ export async function initDashboard({ role, active, title, subtitle = '', action
 
   installImageFallback();
   document.body.classList.add('dash-body');
+  document.body.classList.toggle('dash-admin', role === 'admin');
   document.title = `${title} · STOKANA ${role === 'admin' ? 'Admin' : 'Seller'}`;
 
   const root = document.getElementById('dashboard-root');
@@ -115,7 +116,7 @@ export async function initDashboard({ role, active, title, subtitle = '', action
               <strong>${escapeHtml(user.fullName)}</strong>
               <span>${escapeHtml(profileLine)}</span>
             </div>
-            <button class="icon-btn" type="button" data-logout title="Sign out" aria-label="Sign out">${icon('logout', { size: 17 })}</button>
+            <button class="btn btn-ghost btn-sm" type="button" data-logout title="Sign out">Sign out</button>
           </div>
         </div>
       </aside>

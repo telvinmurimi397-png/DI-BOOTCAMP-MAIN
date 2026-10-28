@@ -1,4 +1,33 @@
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/assets/fonts/inter-latin-variable.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/fonts/poppins-600-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/fonts/poppins-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
+  --navy-brand: #14213D;
+  --orange-shopping: #FCA311;
   --navy-950: #071426;
   --navy-900: #0b1b33;
   --navy-800: #142641;
@@ -34,12 +63,12 @@
   --shadow-lg: 0 28px 70px rgba(11, 27, 51, 0.14);
   --shadow-blue: 0 12px 26px rgba(29, 91, 255, 0.24);
 
-  --font-body: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Poppins", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 
   --header-height: 74px;
-  --container: 1200px;
-  --page-gutter: clamp(16px, 4vw, 32px);
+  --container: 1440px;
+  --page-gutter: clamp(12px, 1.5vw, 22px);
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --transition: 180ms var(--ease);
@@ -51,13 +80,31 @@
   box-sizing: border-box;
 }
 
+main,
+section,
+header,
+footer,
+aside,
+article,
+[class*="layout"],
+[class*="grid"] {
+  min-width: 0;
+  max-width: 100%;
+}
+
 html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
   margin: 0;
+  overflow-x: hidden;
   background: var(--page);
   color: var(--ink);
   font-family: var(--font-body);
@@ -65,6 +112,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  text-align: left;
 }
 
 body.no-scroll {
@@ -88,7 +136,7 @@ h4 {
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: var(--ink);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 h1 {
@@ -179,6 +227,19 @@ hr {
 
 .section.white {
   background: var(--surface);
+}
+
+body.motion-enabled .motion-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 520ms var(--ease) var(--reveal-delay, 0ms),
+    transform 520ms var(--ease) var(--reveal-delay, 0ms);
+}
+
+body.motion-enabled .motion-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .stack {

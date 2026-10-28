@@ -12,6 +12,7 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 const isProduction = nodeEnv === 'production';
 const sessionSecret = process.env.SESSION_SECRET || '';
 const databaseUrl = process.env.DATABASE_URL || '';
+const paymentProvider = process.env.PAYMENT_PROVIDER || 'simulated';
 
 const missing = [];
 if (!databaseUrl) missing.push('DATABASE_URL');
@@ -27,6 +28,14 @@ if (isProduction && sessionSecret.length < 32) {
 }
 
 const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`;
+if (!['simulated', 'mpesa'].includes(paymentProvider)) {
+  throw new Error('PAYMENT_PROVIDER must be either "simulated" or "mpesa".');
+}
+
+const mpesaEnvironment = process.env.MPESA_ENVIRONMENT || 'sandbox';
+if (!['sandbox', 'production'].includes(mpesaEnvironment)) {
+  throw new Error('MPESA_ENVIRONMENT must be either "sandbox" or "production".');
+}
 
 const env = {
   nodeEnv,
@@ -38,7 +47,16 @@ const env = {
   sessionSecret,
   cookieSecure: bool(process.env.COOKIE_SECURE, isProduction),
   trustProxy: bool(process.env.TRUST_PROXY, isProduction),
-  paymentProvider: process.env.PAYMENT_PROVIDER || 'simulated',
+  paymentProvider,
+  mpesa: {
+    environment: mpesaEnvironment,
+    consumerKey: process.env.MPESA_CONSUMER_KEY || '',
+    consumerSecret: process.env.MPESA_CONSUMER_SECRET || '',
+    shortcode: process.env.MPESA_SHORTCODE || '',
+    passkey: process.env.MPESA_PASSKEY || '',
+    transactionType: process.env.MPESA_TRANSACTION_TYPE || 'CustomerPayBillOnline',
+    callbackUrl: process.env.MPESA_CALLBACK_URL || ''
+  },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
     apiKey: process.env.CLOUDINARY_API_KEY || '',

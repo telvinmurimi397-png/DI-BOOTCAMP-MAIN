@@ -2,9 +2,17 @@ const checkoutService = require('../services/checkoutService');
 const orderService = require('../services/orderService');
 const paymentService = require('../services/paymentService');
 const env = require('../config/env');
+const mpesaService = require('../services/mpesaService');
 const { ApiError } = require('../utils/errors');
 
 async function checkout(req, res) {
+  if (env.paymentProvider === 'mpesa') {
+    try {
+      mpesaService.assertConfigured();
+    } catch (error) {
+      throw new ApiError(503, error.message);
+    }
+  }
   const result = await checkoutService.placeOrder(req.user, req.body);
   res.status(201).json(result);
 }
@@ -35,9 +43,6 @@ async function cancelOrder(req, res) {
 }
 
 async function retryPayment(req, res) {
-  if (env.paymentProvider !== 'simulated') {
-    throw new ApiError(404, 'Payment retry is not available for the configured provider.');
-  }
   const result = await checkoutService.retryPayment(req.user.id, req.params.orderNumber);
   res.json(result);
 }
@@ -54,6 +59,18 @@ async function simulatePayment(req, res) {
   res.json(result);
 }
 
+async function startMpesaPayment(req, res) {
+  if (env.paymentProvider !== 'mpesa') {
+    throw new ApiError(404, 'M-PESA payments are not enabled.');
+  }
+  const result = await paymentService.startMpesaPayment(
+    req.user.id,
+    req.params.orderNumber,
+    req.body.phone
+  );
+  res.json(result);
+}
+
 module.exports = {
   checkout,
   listOrders,
@@ -61,5 +78,6 @@ module.exports = {
   stats,
   cancelOrder,
   retryPayment,
-  simulatePayment
+  simulatePayment,
+  startMpesaPayment
 };

@@ -224,7 +224,14 @@ The convenience scripts `npm run db:schema` and `npm run db:seed` rely on a shel
 | `PGSSL` | No | Set `true` when the database requires TLS. Defaults to on in production. |
 | `COOKIE_SECURE` | No | Send session cookie only over HTTPS. Defaults to on in production. |
 | `TRUST_PROXY` | No | Trust one reverse-proxy hop. Enable behind Nginx/Heroku/Render. |
-| `PAYMENT_PROVIDER` | No | `simulated` is the implemented provider. |
+| `PAYMENT_PROVIDER` | No | `simulated` (default) or `mpesa` for Safaricom Daraja STK Push. |
+| `MPESA_ENVIRONMENT` | No | `sandbox` (default) or `production`. |
+| `MPESA_CONSUMER_KEY` | When using M-PESA | Daraja app consumer key. Keep it server-side in `backend/.env`. |
+| `MPESA_CONSUMER_SECRET` | When using M-PESA | Daraja app consumer secret. Keep it server-side in `backend/.env`. |
+| `MPESA_SHORTCODE` | When using M-PESA | Paybill or organization shortcode registered with Daraja. |
+| `MPESA_PASSKEY` | When using M-PESA | STK Push passkey issued for the shortcode. |
+| `MPESA_TRANSACTION_TYPE` | No | Defaults to `CustomerPayBillOnline`; set the Daraja-supported type for your shortcode. |
+| `MPESA_CALLBACK_URL` | When using M-PESA | Public HTTPS callback endpoint, e.g. `https://your-domain.example/api/payments/mpesa/callback`. |
 | `CLOUDINARY_CLOUD_NAME` | No | Enables Cloudinary storage when all three Cloudinary values are set. |
 | `CLOUDINARY_API_KEY` | No | Cloudinary API key (server-side only). |
 | `CLOUDINARY_API_SECRET` | No | Cloudinary secret (server-side only). |
@@ -261,8 +268,8 @@ The seed also creates 15 approved products, two pending products, demo orders, r
 1. A buyer adds products from one or more sellers to the cart.
 2. Checkout locks the cart items and products, validates that products, shops and categories are still active, and checks stock inside one transaction.
 3. The server calculates subtotal, shipping and commission from the current **server-side** settings; the browser never supplies prices or commission.
-4. The order is created as `pending_payment` / `unpaid`, stock is decremented, a pending simulated payment is created, and the cart is cleared.
-5. The buyer simulates a successful or failed payment. On success the server verifies the payment amount against the order total, marks the payment successful and the order `processing` / `paid`, then writes one commission row per order item and one shipment row per seller.
+4. The order is created as `pending_payment` / `unpaid`, stock is decremented, a pending payment is created for the configured provider, and the cart is cleared.
+5. In simulated mode the buyer can simulate a successful or failed payment. In M-PESA mode the server sends an STK Push to the buyer's phone and waits for the callback. A successful callback is checked against the Daraja STK Query API and the exact order amount before the payment is marked successful and the order `processing` / `paid`; commissions and shipments are then created once.
 6. Sellers see paid orders only, update shipments and can deliver the order.
 7. The buyer can review delivered items. Cancelling an unpaid order restores stock and fails its pending payments.
 
@@ -288,7 +295,22 @@ curl -X POST http://localhost:4000/api/orders/STK-YYYYMMDD-XXXXXX/payment/retry 
 curl -X POST http://localhost:4000/api/orders/STK-YYYYMMDD-XXXXXX/cancel ...
 ```
 
-Repeating a successful callback returns `alreadyProcessed: true` and creates no additional payment or commission. Failed payments leave the order reserved so the buyer can retry. Real M-Pesa integration should replace `paymentService.simulatePayment` while preserving the same server-side verification, idempotency and amount checks.
+### M-PESA Daraja STK Push
+
+The simulator remains the default. To enable real Daraja sandbox requests, add the Daraja app credentials, shortcode, passkey and a publicly reachable HTTPS callback URL to `backend/.env`, then set:
+
+```dotenv
+PAYMENT_PROVIDER=mpesa
+MPESA_ENVIRONMENT=sandbox
+MPESA_TRANSACTION_TYPE=CustomerPayBillOnline
+MPESA_CALLBACK_URL=https://your-public-host.example/api/payments/mpesa/callback
+```
+
+Restart the backend after changing environment variables. Checkout sends an STK Push to the Kenyan phone number entered for delivery. Only the server talks to Daraja, and a payment is finalized only after its callback matches the stored request, Daraja's STK Query confirms success, and the callback amount exactly matches the order. The callback URL must be reachable over HTTPS from Safaricom; `localhost` will not work. Use sandbox credentials and Safaricom's test numbers before switching to production. M-PESA STK amounts must be whole KES.
+
+Run the focused phone-number and timestamp checks with `npm run test:mpesa` from `backend`.
+
+Repeating a successful callback returns `alreadyProcessed: true` and creates no additional payment or commission. Failed payments leave the order reserved so the buyer can retry. Before enabling production payments, complete sandbox tests for successful, declined, cancelled and timed-out prompts; verify callback reachability, retries and order totals; and obtain Safaricom production approval. The configured credentials and callback still need an end-to-end test in the environment where the application will run.
 
 ---
 
@@ -420,7 +442,7 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 - [ ] Do **not** load the demo seed into production. Create the first admin account with a one-off script or a controlled SQL insert using a bcrypt hash.
 - [ ] Set `NODE_ENV=production`, a 32+ character `SESSION_SECRET`, the real `APP_URL`, `COOKIE_SECURE=true`, `PGSSL=true` and `TRUST_PROXY=true` when behind a proxy.
 - [ ] Configure a durable image store (Cloudinary or a persistent mounted volume for `backend/uploads`).
-- [ ] Replace the simulated payment service with the real provider (M-Pesa Daraja STK push and callback), keeping amounts and idempotency verified server-side. Never expose payment secrets to the browser.
+- [ ] Complete Daraja sandbox testing for successful, declined, cancelled and timed-out prompts; verify callback reachability, retries, exact order totals and idempotency before enabling production credentials. Never expose payment secrets to the browser.
 - [ ] Integrate an email provider for password reset links; the development console log is not a production delivery mechanism.
 - [ ] Review the demo help, refunds, terms and privacy copy with the business/legal owner.
 - [ ] Configure the reverse proxy for HTTPS, request size limits, timeouts and WebSocket upgrades.
@@ -444,7 +466,7 @@ Socket.IO currently runs in-process. If you run more than one Node instance, add
 
 ## Known limitations and next steps
 
-- **Payments are simulated.** No real money moves. The server-side payment boundary is ready for M-Pesa STK push and callback verification.
+- **Payment readiness is unverified.** The default provider is `simulated`, and Daraja STK Push/callback support is implemented. An end-to-end sandbox payment and production configuration still need to be verified; do not assume credentials or callback reachability work just because Daraja mode is selected.
 - **Password reset emails are not sent.** In development the reset link is logged to the server console and returned as `devResetToken`; production needs an email integration.
 - **Local image uploads are not durable.** Use Cloudinary or persistent storage in production.
 - **Single-instance realtime.** Add a Socket.IO adapter before horizontal scaling.
