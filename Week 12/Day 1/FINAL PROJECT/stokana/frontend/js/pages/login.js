@@ -7,24 +7,9 @@ const form = document.getElementById('login-form');
 const alertHost = document.getElementById('login-alert');
 const submitButton = document.getElementById('login-submit');
 const searchParams = new URLSearchParams(window.location.search);
-let selectedRole = searchParams.get('role') || (searchParams.get('next')?.startsWith('/admin') ? 'admin' : 'buyer');
-if (!['buyer', 'seller', 'admin'].includes(selectedRole)) selectedRole = 'buyer';
-
-function setSelectedRole(role) {
-  selectedRole = role;
-  document.querySelectorAll('[data-role]').forEach((button) => {
-    const active = button.dataset.role === role;
-    button.classList.toggle('active', active);
-    button.setAttribute('aria-pressed', String(active));
-  });
-}
 
 async function init() {
   bindPasswordToggles();
-  setSelectedRole(selectedRole);
-  document.querySelectorAll('[data-role]').forEach((button) => {
-    button.addEventListener('click', () => setSelectedRole(button.dataset.role));
-  });
 
   const existing = await getUser();
   if (existing) {
@@ -45,7 +30,7 @@ async function init() {
 
     setButtonLoading(submitButton, true, 'Signing in…');
     try {
-      const data = await api.post('/auth/login', { email, password, role: selectedRole });
+      const data = await api.post('/auth/login', { email, password });
       setUser(data.user);
       window.location.replace(nextPath(dashboardFor(data.user.role)));
     } catch (error) {

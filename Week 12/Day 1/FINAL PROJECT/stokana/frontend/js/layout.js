@@ -177,7 +177,6 @@ function footerHtml() {
             <li><a href="/register?role=seller">Open a shop</a></li>
             <li><a href="/seller">Seller hub</a></li>
             <li><a href="/help#selling">Seller guide</a></li>
-            <li><a href="/admin">Administration</a></li>
           </ul>
         </div>
         <div class="footer-col">
