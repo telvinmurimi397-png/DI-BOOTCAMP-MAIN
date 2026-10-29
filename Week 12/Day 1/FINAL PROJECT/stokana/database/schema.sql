@@ -356,7 +356,7 @@ BEFORE UPDATE ON settings
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 INSERT INTO settings (key, value) VALUES
-  ('platform_commission_rate', '0.10'),
+  ('platform_commission_rate', '0.05'),
   ('shipping_fee', '250'),
   ('free_shipping_threshold', '5000')
 ON CONFLICT (key) DO NOTHING;

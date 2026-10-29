@@ -186,11 +186,11 @@ SELECT v.order_number, u.id, v.status, 'paid', v.subtotal, v.shipping_fee, v.tot
        u.email, v.county, v.town, v.address, now() - (v.days_old || ' days')::interval,
        now() - (v.days_old || ' days')::interval
 FROM (VALUES
-  ('STK-DEMO-1001', 'buyer@stokana.co.ke', 'delivered', 15400, 0, 15400, 1540, 13860,
+  ('STK-DEMO-1001', 'buyer@stokana.co.ke', 'delivered', 15400, 0, 15400, 770, 14630,
    'Faith Wambui', '+254700000008', 'Nairobi', 'Lavington', 'Kipi Court, House 12', 12),
-  ('STK-DEMO-1002', 'buyer@stokana.co.ke', 'delivered', 3450, 250, 3700, 345, 3105,
+  ('STK-DEMO-1002', 'buyer@stokana.co.ke', 'delivered', 3450, 250, 3700, 172.5, 3277.5,
    'Faith Wambui', '+254700000008', 'Nairobi', 'Lavington', 'Kipi Court, House 12', 20),
-  ('STK-DEMO-1003', 'wanjiru@example.com', 'processing', 3150, 250, 3400, 315, 2835,
+  ('STK-DEMO-1003', 'wanjiru@example.com', 'processing', 3150, 250, 3400, 157.5, 2992.5,
    'Wanjiru Kamau', '+254700000009', 'Kiambu', 'Ruiru', 'Membley Estate, Block C', 2)
 ) AS v(order_number, buyer_email, status, subtotal, shipping_fee, total, commission_total,
        seller_earnings_total, shipping_name, shipping_phone, county, town, address, days_old)
@@ -201,7 +201,7 @@ INSERT INTO order_items
   (order_id, seller_id, product_id, product_name, product_image_url, unit_price, quantity,
    line_total, commission_rate, commission_amount, seller_earnings)
 SELECT o.id, p.seller_id, p.id, p.name, v.url, v.unit_price, v.quantity, v.line_total,
-       0.10, ROUND(v.line_total * 0.10, 2), ROUND(v.line_total * 0.90, 2)
+       0.05, ROUND(v.line_total * 0.05, 2), ROUND(v.line_total * 0.95, 2)
 FROM (VALUES
   ('STK-DEMO-1001', 'sony-wh-ch720n-headphones', '/assets/products/headphones.jpg', 12500, 1, 12500),
   ('STK-DEMO-1001', 'cotton-throw-blanket',       '/assets/products/blanket.jpg',     2900, 1, 2900),

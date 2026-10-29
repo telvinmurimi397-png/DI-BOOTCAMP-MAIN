@@ -1,7 +1,7 @@
 const db = require('../config/db');
 
 const DEFAULTS = {
-  platform_commission_rate: 0.1,
+  platform_commission_rate: 0.05,
   shipping_fee: 250,
   free_shipping_threshold: 5000
 };
