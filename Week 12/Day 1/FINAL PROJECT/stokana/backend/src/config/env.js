@@ -27,7 +27,10 @@ if (isProduction && sessionSecret.length < 32) {
   throw new Error('SESSION_SECRET must be at least 32 characters in production.');
 }
 
-const appUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`;
+const appUrl =
+  process.env.APP_URL ||
+  process.env.RENDER_EXTERNAL_URL ||
+  `http://localhost:${process.env.PORT || 4000}`;
 if (!['simulated', 'mpesa'].includes(paymentProvider)) {
   throw new Error('PAYMENT_PROVIDER must be either "simulated" or "mpesa".');
 }

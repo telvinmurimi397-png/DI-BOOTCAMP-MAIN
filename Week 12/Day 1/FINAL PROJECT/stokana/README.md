@@ -435,6 +435,25 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 
 ## Deployment checklist
 
+### Deploy to Render
+
+The project includes [`render.yaml`](./render.yaml) for the Node web service. It builds from `backend/` and serves both the API and frontend from one origin. The blueprint uses Render's free web-service plan for a demo; choose a suitable paid plan in Render for production and review the current pricing and service limits before creating resources.
+
+1. Push the repository to GitHub. In Render, create a PostgreSQL database in the same region as the web service. Use a persistent database plan for any data you need to keep.
+2. Before deploying the app, apply `database/schema.sql` once to the new database using its **external** connection URL and `psql` from your computer. From the `stokana` project directory, run:
+
+   ```powershell
+   psql "$env:DATABASE_URL" -v ON_ERROR_STOP=1 -f "database\schema.sql"
+   ```
+
+   Set `$env:DATABASE_URL` in your PowerShell session to the database's external URL first. Do not load `database/seeds/dev_seed.sql` into a public production database.
+3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter the database's **internal** connection URL from Render. Keep this value and all credentials in Render's environment settings, not in Git.
+4. After the first deploy, open the service URL and check `/api/health`. Render's `RENDER_EXTERNAL_URL` is used automatically for origin checks and generated reset links. If you attach a custom domain, set `APP_URL` to that exact HTTPS origin in the service's environment and redeploy.
+5. Create the first admin without using demo credentials. From a trusted machine with network access to the database, run `npm run admin:bootstrap` in `backend/` with the production `DATABASE_URL` and temporary `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables. Remove the temporary variables after the command succeeds; never seed the demo accounts into a public production database.
+6. Configure Cloudinary in the service environment before accepting image uploads. Local `backend/uploads` files are ephemeral on hosted instances. Keep `PAYMENT_PROVIDER=simulated` until Daraja sandbox tests are complete.
+
+The web blueprint does not create a database or incur database charges. Check Render's current plans, free-service limits, backups and data-retention terms before choosing a database plan. The app expects the schema to exist before it is used.
+
 ### Before deployment
 
 - [ ] Provision PostgreSQL 14+ with TLS and automated backups.

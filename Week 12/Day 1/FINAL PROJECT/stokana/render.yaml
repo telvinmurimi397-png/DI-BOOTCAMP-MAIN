@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: stokana
+    runtime: node
+    plan: free
+    rootDir: Week 12/Day 1/FINAL PROJECT/stokana/backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: PGSSL
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: PAYMENT_PROVIDER
+        value: simulated
