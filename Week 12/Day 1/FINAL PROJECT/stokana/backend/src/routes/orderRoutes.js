@@ -3,7 +3,7 @@ const orderController = require('../controllers/orderController');
 const promotionController = require('../controllers/promotionController');
 const asyncHandler = require('../utils/asyncHandler');
 const validate = require('../middleware/validate');
-const { requireBuyer, requireVerifiedEmail } = require('../middleware/auth');
+const { requireBuyer } = require('../middleware/auth');
 const {
   checkoutSchema,
   orderNumberParamsSchema,
@@ -26,7 +26,7 @@ router.post(
   validate(promotionQuoteSchema),
   asyncHandler(promotionController.quote)
 );
-router.post('/checkout', requireVerifiedEmail, validate(checkoutSchema), asyncHandler(orderController.checkout));
+router.post('/checkout', validate(checkoutSchema), asyncHandler(orderController.checkout));
 router.get(
   '/:orderNumber',
   validate(orderNumberParamsSchema, 'params'),

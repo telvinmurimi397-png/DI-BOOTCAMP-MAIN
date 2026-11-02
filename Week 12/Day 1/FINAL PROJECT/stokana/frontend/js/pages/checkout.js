@@ -147,15 +147,6 @@ function summaryHtml() {
 }
 
 function renderCheckout() {
-  if (!user.emailVerified) {
-    root.innerHTML = emptyState({
-      iconName: 'shield-check',
-      title: 'Verify your email before checkout',
-      text: 'Confirm your email address in account settings to place an order.',
-      action: '<a class="btn btn-primary" href="/account">Verify email</a>'
-    });
-    return;
-  }
   if (!cart || !cart.items.length) {
     root.innerHTML = emptyState({
       iconName: 'cart',

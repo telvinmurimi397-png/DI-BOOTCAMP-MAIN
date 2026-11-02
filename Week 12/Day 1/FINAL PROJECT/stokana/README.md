@@ -43,7 +43,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 - Discount codes, scheduled flash sales and featured product/shop placements
 - Loyalty points (1 per KSh 100; 100 points redeem for KSh 10) and KSh 200 referral credit for both users after a referred buyer's first paid, non-refunded order
 - Promotional email consent controls, one-click unsubscribe, admin email/in-app campaigns and opt-in abandoned-cart reminders
-- Checkout with delivery details, shipping fee and free-shipping threshold
+- Checkout with delivery details, shipping fee and free-shipping threshold; email verification is not required
 - One checkout and order number for items from multiple sellers, with separate seller shipments
 - M-PESA STK Push, verified payment receipts, retry handling and failed-payment history
 - Server-calculated per-item commissions and M-PESA seller payout records

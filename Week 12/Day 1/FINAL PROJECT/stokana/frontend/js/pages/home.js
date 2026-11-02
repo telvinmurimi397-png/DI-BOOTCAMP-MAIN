@@ -5,39 +5,10 @@ import {
   categoryTile,
   shopCard,
   skeletonCards,
-  emptyState,
-  img
+  emptyState
 } from '../ui.js';
-import { money, escapeHtml, plainNumber } from '../format.js';
+import { plainNumber } from '../format.js';
 import { getRecentlyViewedSlugs } from '../recently-viewed.js';
-
-function renderHero(products) {
-  const host = document.getElementById('hero-collage');
-  if (!host) return;
-  if (!products.length) {
-    host.innerHTML = '';
-    return;
-  }
-  host.innerHTML = products
-    .slice(0, 4)
-    .map(
-      (product, index) => `
-      <div class="hero-product${index % 2 === 1 ? ' lift' : ''}">
-        <a href="/product/${encodeURIComponent(product.slug)}" aria-label="${escapeHtml(product.name)}">${img(
-          product.imageUrl,
-          product.name
-        )}</a>
-        <div class="hero-product-info">
-          <span>${escapeHtml(product.categoryName)}</span>
-          <strong><a href="/product/${encodeURIComponent(product.slug)}" style="color:inherit">${escapeHtml(
-            product.name
-          )}</a></strong>
-          <span class="price">${money(product.price)}</span>
-        </div>
-      </div>`
-    )
-    .join('');
-}
 
 function renderStats(stats) {
   const map = {
@@ -67,7 +38,6 @@ async function init() {
   ]);
 
   renderStats(stats);
-  renderHero(popular);
 
   const categoriesHost = document.getElementById('home-categories');
   categoriesHost.innerHTML = categories.length
