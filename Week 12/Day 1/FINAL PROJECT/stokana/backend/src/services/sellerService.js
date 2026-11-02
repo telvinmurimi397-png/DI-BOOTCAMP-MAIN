@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { uniqueSlug } = require('../utils/slug');
 const { badRequest, conflict, notFound } = require('../utils/errors');
+const { notifyOrder } = require('./orderNotificationService');
 
 const MONTHLY_SALES_SQL = `
   WITH months AS (
@@ -16,6 +17,7 @@ const MONTHLY_SALES_SQL = `
   FROM months
   LEFT JOIN commissions c
     ON c.seller_id = $1
+    AND c.status <> 'refunded'
     AND date_trunc('month', c.created_at) = months.month
   GROUP BY months.month
   ORDER BY months.month ASC
@@ -42,20 +44,26 @@ async function getOverview(sellerId) {
     ),
     db.query(
       `SELECT
-         COALESCE(SUM(seller_earnings), 0) AS "lifetimeEarnings",
+         COALESCE(SUM(seller_earnings) FILTER (WHERE status <> 'refunded'), 0) AS "lifetimeEarnings",
          COALESCE(SUM(seller_earnings) FILTER (WHERE status = 'earned'), 0) AS "availableBalance",
          COALESCE(SUM(seller_earnings) FILTER (WHERE status = 'paid'), 0) AS "paidOut",
-         COALESCE(SUM(commission_amount), 0) AS "commissionTotal",
-         COALESCE(SUM(gross_amount), 0) AS "grossSales"
+         COALESCE(SUM(commission_amount) FILTER (WHERE status <> 'refunded'), 0) AS "commissionTotal",
+         COALESCE(SUM(gross_amount) FILTER (WHERE status <> 'refunded'), 0) AS "grossSales"
        FROM commissions WHERE seller_id = $1`,
       [sellerId]
     ),
     db.query(
-      `SELECT COALESCE(SUM(oi.quantity), 0)::int AS "unitsSold",
+      `SELECT COALESCE(SUM(GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0)), 0)::int AS "unitsSold",
               COUNT(DISTINCT o.id)::int AS "paidOrders"
        FROM order_items oi
        JOIN orders o ON o.id = oi.order_id
-       WHERE oi.seller_id = $1 AND o.payment_status = 'paid'`,
+       LEFT JOIN LATERAL (
+         SELECT SUM(r.quantity)::int AS quantity
+         FROM order_adjustment_requests r
+         JOIN refunds f ON f.request_id = r.id
+         WHERE r.order_item_id = oi.id
+       ) refunded ON TRUE
+       WHERE oi.seller_id = $1 AND o.payment_status = 'paid' AND o.status <> 'cancelled'`,
       [sellerId]
     ),
     db.query(
@@ -130,6 +138,7 @@ async function listProducts(sellerId, { status = 'all', q, page = 1, limit = 20 
               p.rejection_reason AS "rejectionReason", p.created_at AS "createdAt",
               p.updated_at AS "updatedAt",
               c.id AS "categoryId", c.name AS "categoryName", c.slug AS "categorySlug",
+              (SELECT COUNT(*)::int FROM product_variants pv WHERE pv.product_id = p.id) AS "variantCount",
               COALESCE((
                 SELECT pi.url FROM product_images pi WHERE pi.product_id = p.id
                 ORDER BY pi.is_primary DESC, pi.sort_order ASC, pi.id ASC LIMIT 1
@@ -142,10 +151,18 @@ async function listProducts(sellerId, { status = 'all', q, page = 1, limit = 20 
        FROM products p
        JOIN categories c ON c.id = p.category_id
        LEFT JOIN LATERAL (
-         SELECT SUM(oi.quantity) AS units, SUM(oi.line_total) AS gross
+         SELECT SUM(GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0)) AS units,
+                SUM(oi.unit_price * GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0)) AS gross
          FROM order_items oi
          JOIN orders o ON o.id = oi.order_id
-         WHERE oi.product_id = p.id AND oi.seller_id = $1 AND o.payment_status = 'paid'
+         LEFT JOIN LATERAL (
+           SELECT SUM(r.quantity)::int AS quantity
+           FROM order_adjustment_requests r
+           JOIN refunds f ON f.request_id = r.id
+           WHERE r.order_item_id = oi.id
+         ) refunded ON TRUE
+         WHERE oi.product_id = p.id AND oi.seller_id = $1
+           AND o.payment_status = 'paid' AND o.status <> 'cancelled'
        ) sold ON TRUE
        WHERE ${where.join(' AND ')}
        ORDER BY p.created_at DESC, p.id DESC
@@ -164,7 +181,7 @@ async function listProducts(sellerId, { status = 'all', q, page = 1, limit = 20 
 
 async function getProduct(sellerId, productId) {
   const { rows } = await db.query(
-    `SELECT p.id, p.name, p.slug, p.description, p.price, p.compare_at_price AS "compareAtPrice",
+    `SELECT p.id, p.name, p.slug, p.description, p.specifications, p.price, p.compare_at_price AS "compareAtPrice",
             p.stock, p.status, p.condition, p.location, p.rejection_reason AS "rejectionReason",
             p.created_at AS "createdAt", p.updated_at AS "updatedAt",
             c.id AS "categoryId", c.name AS "categoryName",
@@ -173,7 +190,14 @@ async function getProduct(sellerId, productId) {
                                                 'isPrimary', pi.is_primary)
                               ORDER BY pi.is_primary DESC, pi.sort_order ASC, pi.id ASC)
               FROM product_images pi WHERE pi.product_id = p.id
-            ), '[]'::json) AS images
+            ), '[]'::json) AS images,
+            COALESCE((
+              SELECT json_agg(json_build_object(
+                'id', pv.id, 'sku', pv.sku, 'attributes', pv.attributes,
+                'price', pv.price, 'stock', pv.stock
+              ) ORDER BY pv.id)
+              FROM product_variants pv WHERE pv.product_id = p.id
+            ), '[]'::json) AS variants
      FROM products p
      JOIN categories c ON c.id = p.category_id
      WHERE p.id = $1 AND p.seller_id = $2`,
@@ -186,7 +210,12 @@ async function getProduct(sellerId, productId) {
 async function createProduct(seller, input) {
   const productId = await db.withTransaction(async (client) => {
     const category = await client.query(
-      'SELECT id FROM categories WHERE id = $1 AND is_active = TRUE',
+      `SELECT c.id FROM categories c
+       WHERE c.id = $1 AND c.is_active = TRUE
+         AND NOT EXISTS (
+           SELECT 1 FROM categories child
+           WHERE child.parent_category_id = c.id AND child.is_active = TRUE
+         )`,
       [input.categoryId]
     );
     if (!category.rowCount) throw badRequest('Choose an active category.');
@@ -194,9 +223,9 @@ async function createProduct(seller, input) {
     const slug = uniqueSlug(input.name);
     const result = await client.query(
       `INSERT INTO products
-         (seller_id, category_id, name, slug, description, price, compare_at_price, stock,
-          condition, location, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending')
+         (seller_id, category_id, name, slug, description, specifications, price,
+          compare_at_price, stock, condition, location, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
        RETURNING id`,
       [
         seller.id,
@@ -204,14 +233,26 @@ async function createProduct(seller, input) {
         input.name,
         slug,
         input.description,
+        JSON.stringify(input.specifications || {}),
         input.price.toFixed(2),
         input.compareAtPrice != null ? Number(input.compareAtPrice).toFixed(2) : null,
-        input.stock,
+        input.variants?.length
+          ? input.variants.reduce((total, variant) => total + variant.stock, 0)
+          : input.stock,
         input.condition,
         input.location || null
       ]
     );
     const newId = result.rows[0].id;
+
+    for (const variant of input.variants || []) {
+      await client.query(
+        `INSERT INTO product_variants (product_id, sku, attributes, price, stock)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [newId, variant.sku, JSON.stringify(variant.attributes),
+          variant.price == null ? null : Number(variant.price).toFixed(2), variant.stock]
+      );
+    }
 
     let imageIndex = 0;
     for (const url of input.imageUrls) {
@@ -232,7 +273,7 @@ async function createProduct(seller, input) {
 async function updateProduct(sellerId, productId, input) {
   await db.withTransaction(async (client) => {
     const currentResult = await client.query(
-      `SELECT id, price, compare_at_price AS "compareAtPrice", status, name
+      `SELECT id, price, compare_at_price AS "compareAtPrice", status, name, stock
        FROM products WHERE id = $1 AND seller_id = $2 FOR UPDATE`,
       [productId, sellerId]
     );
@@ -242,7 +283,12 @@ async function updateProduct(sellerId, productId, input) {
 
     if (input.categoryId !== undefined) {
       const category = await client.query(
-        'SELECT id FROM categories WHERE id = $1 AND is_active = TRUE',
+        `SELECT c.id FROM categories c
+         WHERE c.id = $1 AND c.is_active = TRUE
+           AND NOT EXISTS (
+             SELECT 1 FROM categories child
+             WHERE child.parent_category_id = c.id AND child.is_active = TRUE
+           )`,
         [input.categoryId]
       );
       if (!category.rowCount) throw badRequest('Choose an active category.');
@@ -265,11 +311,93 @@ async function updateProduct(sellerId, productId, input) {
     if (input.name !== undefined) set('name', input.name);
     if (input.categoryId !== undefined) set('category_id', input.categoryId);
     if (input.description !== undefined) set('description', input.description);
+    if (input.specifications !== undefined) set('specifications', JSON.stringify(input.specifications));
     if (input.price !== undefined) set('price', finalPrice.toFixed(2));
     if (input.compareAtPrice !== undefined) {
       set('compare_at_price', finalCompare == null ? null : finalCompare.toFixed(2));
     }
-    if (input.stock !== undefined) set('stock', input.stock);
+    if (input.variants !== undefined) {
+      const currentVariants = await client.query(
+        'SELECT id, sku FROM product_variants WHERE product_id = $1 FOR UPDATE',
+        [productId]
+      );
+      if (!currentVariants.rowCount && input.variants.length) {
+        const reservedProduct = await client.query(
+          `SELECT 1 FROM order_items oi
+           JOIN orders o ON o.id = oi.order_id
+           WHERE oi.product_id = $1 AND o.status = 'pending_payment'
+           LIMIT 1`,
+          [productId]
+        );
+        if (reservedProduct.rowCount) {
+          throw conflict('Complete or cancel pending orders before adding product options.');
+        }
+        await client.query(
+          'DELETE FROM cart_items WHERE product_id = $1 AND variant_id IS NULL',
+          [productId]
+        );
+      }
+      const incomingSkus = new Set(input.variants.map((variant) => variant.sku.toLowerCase()));
+      const removedVariants = currentVariants.rows.filter(
+        (variant) => !incomingSkus.has(variant.sku.toLowerCase())
+      );
+      if (removedVariants.length) {
+        const reservedVariant = await client.query(
+          `SELECT 1
+           FROM order_items oi
+           JOIN orders o ON o.id = oi.order_id
+           WHERE oi.product_id = $1 AND oi.variant_sku = ANY($2::varchar[])
+             AND o.status = 'pending_payment'
+           LIMIT 1`,
+          [productId, removedVariants.map((variant) => variant.sku)]
+        );
+        if (reservedVariant.rowCount) {
+          throw conflict('Cancel or complete pending orders before removing their product options.');
+        }
+      }
+
+      for (const variant of removedVariants) {
+        await client.query('DELETE FROM product_variants WHERE id = $1', [variant.id]);
+      }
+      for (const variant of input.variants) {
+        const existing = currentVariants.rows.find(
+          (currentVariant) => currentVariant.sku.toLowerCase() === variant.sku.toLowerCase()
+        );
+        const values = [
+          variant.sku,
+          JSON.stringify(variant.attributes),
+          variant.price == null ? null : Number(variant.price).toFixed(2),
+          variant.stock
+        ];
+        if (existing) {
+          await client.query(
+            `UPDATE product_variants
+             SET sku = $1, attributes = $2, price = $3, stock = $4
+             WHERE id = $5`,
+            [...values, existing.id]
+          );
+        } else {
+          await client.query(
+            `INSERT INTO product_variants (product_id, sku, attributes, price, stock)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [productId, ...values]
+          );
+        }
+      }
+      set(
+        'stock',
+        input.variants.length
+          ? input.variants.reduce((total, variant) => total + variant.stock, 0)
+          : (input.stock !== undefined ? input.stock : current.stock)
+      );
+    } else if (input.stock !== undefined) {
+      const hasVariants = await client.query(
+        'SELECT 1 FROM product_variants WHERE product_id = $1 LIMIT 1',
+        [productId]
+      );
+      if (hasVariants.rowCount) throw badRequest('Edit this product to update variant stock.');
+      set('stock', input.stock);
+    }
     if (input.condition !== undefined) set('condition', input.condition);
     if (input.location !== undefined) set('location', input.location || null);
     if (current.status === 'rejected') {
@@ -289,6 +417,11 @@ async function updateProduct(sellerId, productId, input) {
 }
 
 async function updateStock(sellerId, productId, stock) {
+  const variants = await db.query(
+    'SELECT 1 FROM product_variants WHERE product_id = $1 LIMIT 1',
+    [productId]
+  );
+  if (variants.rowCount) throw badRequest('Edit this product to update variant stock.');
   const { rows } = await db.query(
     `UPDATE products SET stock = $1
      WHERE id = $2 AND seller_id = $3 AND status <> 'archived'
@@ -406,11 +539,16 @@ async function getOrders(sellerId, page = 1, limit = 10) {
          COALESCE(SUM(oi.line_total), 0) AS "sellerSubtotal",
          COALESCE(SUM(oi.seller_earnings), 0) AS "sellerEarnings",
          s.id AS "shipmentId", s.status AS "shipmentStatus", s.carrier,
-         s.tracking_number AS "trackingNumber", s.updated_at AS "shipmentUpdatedAt",
+         s.tracking_number AS "trackingNumber", s.tracking_url AS "trackingUrl",
+         s.pickup_location_id AS "pickupLocationId",
+         pl.label AS "pickupLocationLabel", pl.town AS "pickupLocationTown",
+         s.updated_at AS "shipmentUpdatedAt",
          json_agg(json_build_object(
            'id', oi.id,
            'productName', oi.product_name,
            'imageUrl', oi.product_image_url,
+           'variantSku', oi.variant_sku,
+           'variantAttributes', oi.variant_attributes,
            'quantity', oi.quantity,
            'unitPrice', oi.unit_price,
            'lineTotal', oi.line_total
@@ -418,8 +556,9 @@ async function getOrders(sellerId, page = 1, limit = 10) {
        FROM orders o
        JOIN order_items oi ON oi.order_id = o.id
        LEFT JOIN shipments s ON s.order_id = o.id AND s.seller_id = $1
+       LEFT JOIN seller_pickup_locations pl ON pl.id = s.pickup_location_id
        WHERE oi.seller_id = $1 AND o.payment_status = 'paid'
-       GROUP BY o.id, s.id
+       GROUP BY o.id, s.id, pl.id
        ORDER BY o.created_at DESC, o.id DESC
        LIMIT $2 OFFSET $3`,
       [sellerId, limit, offset]
@@ -427,17 +566,46 @@ async function getOrders(sellerId, page = 1, limit = 10) {
   ]);
 
   const total = countResult.rows[0].total;
+  const pickupLocations = await listPickupLocations(sellerId);
   return {
     orders: listResult.rows,
+    pickupLocations,
     pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) }
   };
 }
 
 async function updateShipment(sellerId, shipmentId, input) {
-  return db.withTransaction(async (client) => {
+  const result = await db.withTransaction(async (client) => {
+    const shipmentOwner = await client.query(
+      `SELECT order_id AS "orderId", pickup_location_id AS "pickupLocationId",
+              carrier, tracking_number AS "trackingNumber", tracking_url AS "trackingUrl"
+       FROM shipments WHERE id = $1 AND seller_id = $2`,
+      [shipmentId, sellerId]
+    );
+    if (!shipmentOwner.rows[0]) throw notFound('Shipment not found.');
+
+    const order = await client.query(
+      `SELECT id, order_number AS "orderNumber", status
+       FROM orders WHERE id = $1 AND payment_status = 'paid' FOR UPDATE`,
+      [shipmentOwner.rows[0].orderId]
+    );
+    if (!order.rows[0]) throw conflict('This order has not been paid yet.');
+    if (order.rows[0].status === 'cancelled') throw conflict('This order was cancelled.');
+
+    const cancellation = await client.query(
+      `SELECT 1 FROM order_adjustment_requests
+       WHERE order_id = $1 AND request_type = 'cancellation'
+         AND status IN ('pending', 'approved') LIMIT 1`,
+      [order.rows[0].id]
+    );
+    if (cancellation.rowCount) {
+      throw conflict('Fulfilment is paused while a cancellation request is being reviewed.');
+    }
+
     const shipmentResult = await client.query(
       `SELECT s.id, s.order_id AS "orderId", s.status, s.carrier,
-              s.tracking_number AS "trackingNumber"
+              s.tracking_number AS "trackingNumber", s.tracking_url AS "trackingUrl",
+              s.pickup_location_id AS "pickupLocationId"
        FROM shipments s
        WHERE s.id = $1 AND s.seller_id = $2
        FOR UPDATE`,
@@ -446,26 +614,51 @@ async function updateShipment(sellerId, shipmentId, input) {
     const shipment = shipmentResult.rows[0];
     if (!shipment) throw notFound('Shipment not found.');
 
-    const order = await client.query(
-      "SELECT id, status FROM orders WHERE id = $1 AND payment_status = 'paid' FOR UPDATE",
-      [shipment.orderId]
-    );
-    if (!order.rows[0]) throw conflict('This order has not been paid yet.');
-    if (order.rows[0].status === 'cancelled') throw conflict('This order was cancelled.');
+    const allowedTransitions = {
+      pending: ['dispatched', 'failed'],
+      dispatched: ['dispatched', 'in_transit', 'failed'],
+      in_transit: ['in_transit', 'delivered', 'failed'],
+      failed: ['failed', 'dispatched'],
+      delivered: ['delivered']
+    };
+    if (!allowedTransitions[shipment.status]?.includes(input.status)) {
+      throw conflict(`A ${shipment.status.replace('_', ' ')} shipment cannot move to ${input.status.replace('_', ' ')}.`);
+    }
 
     const carrier = input.carrier || shipment.carrier;
     const trackingNumber = input.trackingNumber || shipment.trackingNumber;
-    const result = await client.query(
+    const trackingUrl = input.trackingUrl || shipment.trackingUrl;
+    let pickupLocationId = input.pickupLocationId === undefined
+      ? shipment.pickupLocationId
+      : input.pickupLocationId;
+    if (pickupLocationId !== null && pickupLocationId !== undefined) {
+      if (Number(pickupLocationId) !== Number(shipment.pickupLocationId)) {
+        const location = await client.query(
+          `SELECT id FROM seller_pickup_locations
+           WHERE id = $1 AND seller_id = $2 AND is_active = TRUE`,
+          [pickupLocationId, sellerId]
+        );
+        if (!location.rowCount) throw badRequest('Choose one of your active pickup locations.');
+      }
+    } else {
+      pickupLocationId = null;
+    }
+    if (input.status === 'dispatched' && !carrier && !trackingNumber) {
+      throw badRequest('Add a courier or tracking number when dispatching an order.');
+    }
+    const updatedShipment = await client.query(
       `UPDATE shipments
        SET status = $1, carrier = $2, tracking_number = $3,
+           tracking_url = $4, pickup_location_id = $5,
            shipped_at = CASE WHEN $1::varchar IN ('dispatched', 'in_transit') AND shipped_at IS NULL
                             THEN now() ELSE shipped_at END,
            delivered_at = CASE WHEN $1::varchar = 'delivered' THEN COALESCE(delivered_at, now())
                               ELSE delivered_at END
-       WHERE id = $4
+       WHERE id = $6
        RETURNING id, status, carrier, tracking_number AS "trackingNumber",
+                 tracking_url AS "trackingUrl", pickup_location_id AS "pickupLocationId",
                  shipped_at AS "shippedAt", delivered_at AS "deliveredAt"`,
-      [input.status, carrier, trackingNumber, shipmentId]
+      [input.status, carrier, trackingNumber, trackingUrl, pickupLocationId, shipmentId]
     );
 
     const statusesResult = await client.query(
@@ -485,9 +678,127 @@ async function updateShipment(sellerId, shipmentId, input) {
     }
 
     return {
-      shipment: result.rows[0],
-      orderStatus: newOrderStatus || order.rows[0].status
+      shipment: updatedShipment.rows[0],
+      orderStatus: newOrderStatus || order.rows[0].status,
+      orderNumber: order.rows[0].orderNumber,
+      changed: shipment.status !== input.status ||
+        carrier !== shipment.carrier ||
+        trackingNumber !== shipment.trackingNumber ||
+        trackingUrl !== shipment.trackingUrl ||
+        pickupLocationId !== shipment.pickupLocationId
     };
+  });
+  if (result.changed) {
+    await notifyOrder(result.orderNumber, {
+      subject: `Delivery update for order ${result.orderNumber}`,
+      message: `A seller updated your shipment to ${result.shipment.status.replace('_', ' ')}.${result.shipment.trackingNumber ? ` Tracking: ${result.shipment.carrier || 'Courier'} ${result.shipment.trackingNumber}.` : ''}`,
+      audience: 'buyer'
+    });
+  }
+  return result;
+}
+
+async function listPickupLocations(sellerId) {
+  const { rows } = await db.query(
+    `SELECT id, label, county, town, address_line AS "addressLine",
+            contact_name AS "contactName", phone, instructions,
+            is_default AS "isDefault", is_active AS "isActive"
+     FROM seller_pickup_locations
+     WHERE seller_id = $1 AND is_active = TRUE
+     ORDER BY is_default DESC, label, id`,
+    [sellerId]
+  );
+  return rows;
+}
+
+async function savePickupLocation(sellerId, input, pickupLocationId = null) {
+  return db.withTransaction(async (client) => {
+    let isDefault = Boolean(input.isDefault);
+    let currentLocation = null;
+    if (pickupLocationId) {
+      const existing = await client.query(
+        `SELECT * FROM seller_pickup_locations
+         WHERE id = $1 AND seller_id = $2 AND is_active = TRUE
+         FOR UPDATE`,
+        [pickupLocationId, sellerId]
+      );
+      if (!existing.rowCount) throw notFound('Pickup location not found.');
+      currentLocation = existing.rows[0];
+      if (input.isDefault === undefined) isDefault = currentLocation.is_default;
+    } else {
+      const active = await client.query(
+        'SELECT 1 FROM seller_pickup_locations WHERE seller_id = $1 AND is_active LIMIT 1',
+        [sellerId]
+      );
+      if (!active.rowCount) isDefault = true;
+    }
+
+    if (isDefault) {
+      await client.query(
+        'UPDATE seller_pickup_locations SET is_default = FALSE WHERE seller_id = $1',
+        [sellerId]
+      );
+    }
+
+    const values = [
+      sellerId,
+      input.label ?? currentLocation?.label,
+      input.county ?? currentLocation?.county,
+      input.town ?? currentLocation?.town,
+      input.addressLine ?? currentLocation?.address_line,
+      input.contactName === undefined ? currentLocation?.contact_name || null : input.contactName || null,
+      input.phone === undefined ? currentLocation?.phone || null : input.phone || null,
+      input.instructions === undefined ? currentLocation?.instructions || null : input.instructions || null,
+      isDefault
+    ];
+    const result = pickupLocationId
+      ? await client.query(
+          `UPDATE seller_pickup_locations
+           SET label = $3, county = $4, town = $5, address_line = $6,
+               contact_name = $7, phone = $8, instructions = $9, is_default = $10
+           WHERE id = $2 AND seller_id = $1
+           RETURNING id`,
+          [sellerId, pickupLocationId, ...values.slice(1)]
+        )
+      : await client.query(
+          `INSERT INTO seller_pickup_locations
+             (seller_id, label, county, town, address_line, contact_name, phone, instructions, is_default)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+           RETURNING id`,
+          values
+        );
+    return result.rows[0].id;
+  });
+}
+
+async function removePickupLocation(sellerId, pickupLocationId) {
+  return db.withTransaction(async (client) => {
+    const current = await client.query(
+      `SELECT is_default AS "wasDefault" FROM seller_pickup_locations
+       WHERE id = $1 AND seller_id = $2 AND is_active = TRUE FOR UPDATE`,
+      [pickupLocationId, sellerId]
+    );
+    if (!current.rowCount) throw notFound('Pickup location not found.');
+    const removed = await client.query(
+      `UPDATE seller_pickup_locations
+       SET is_active = FALSE, is_default = FALSE
+       WHERE id = $1 AND seller_id = $2 AND is_active = TRUE
+       RETURNING id`,
+      [pickupLocationId, sellerId]
+    );
+    if (!removed.rowCount) throw notFound('Pickup location not found.');
+    if (current.rows[0].wasDefault) {
+      await client.query(
+        `UPDATE seller_pickup_locations
+         SET is_default = TRUE
+         WHERE id = (
+           SELECT id FROM seller_pickup_locations
+           WHERE seller_id = $1 AND is_active = TRUE
+           ORDER BY id LIMIT 1
+         )`,
+        [sellerId]
+      );
+    }
   });
 }
 
@@ -544,12 +855,12 @@ async function getSales(sellerId) {
   const [summary, monthly, commissions] = await Promise.all([
     db.query(
       `SELECT
-         COALESCE(SUM(gross_amount), 0) AS "grossSales",
-         COALESCE(SUM(commission_amount), 0) AS "commissionTotal",
-         COALESCE(SUM(seller_earnings), 0) AS "lifetimeEarnings",
+         COALESCE(SUM(gross_amount) FILTER (WHERE status <> 'refunded'), 0) AS "grossSales",
+         COALESCE(SUM(commission_amount) FILTER (WHERE status <> 'refunded'), 0) AS "commissionTotal",
+         COALESCE(SUM(seller_earnings) FILTER (WHERE status <> 'refunded'), 0) AS "lifetimeEarnings",
          COALESCE(SUM(seller_earnings) FILTER (WHERE status = 'earned'), 0) AS "availableBalance",
          COALESCE(SUM(seller_earnings) FILTER (WHERE status = 'paid'), 0) AS "paidOut",
-         COUNT(*)::int AS "saleLines"
+         COUNT(*) FILTER (WHERE status <> 'refunded')::int AS "saleLines"
        FROM commissions WHERE seller_id = $1`,
       [sellerId]
     ),
@@ -590,6 +901,9 @@ module.exports = {
   deleteImage,
   getOrders,
   updateShipment,
+  listPickupLocations,
+  savePickupLocation,
+  removePickupLocation,
   getShopProfile,
   updateShopProfile,
   getSales

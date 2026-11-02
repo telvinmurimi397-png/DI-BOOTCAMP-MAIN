@@ -17,11 +17,16 @@ import { money, escapeHtml, pluralize } from '../format.js';
 const root = document.getElementById('checkout-root');
 let user = null;
 let cart = null;
+let deliveryAddresses = [];
 let checkoutOrder = null;
 let shippingPhone = '';
-let paymentProvider = 'simulated';
+let paymentProvider = 'mpesa';
 let needsPaymentRetry = false;
 let busy = false;
+let checkoutQuote = null;
+let promotionCode = '';
+let loyaltyPoints = 0;
+let useReferralCredit = false;
 
 const CHECKOUT_FIELDS = {
   shippingName: {
@@ -31,8 +36,12 @@ const CHECKOUT_FIELDS = {
   },
   shippingPhone: {
     id: 'checkout-phone',
-    message: 'Enter a valid delivery phone number.',
-    valid: (value) => /^\+?[0-9 ()-]{7,20}$/.test(value)
+    message: 'Enter a valid Kenyan M-Pesa number, such as 0712345678.',
+    valid: (value) => {
+      if (!/^\+?[0-9 ()-]{7,20}$/.test(value)) return false;
+      if (paymentProvider !== 'mpesa') return true;
+      return /^(?:0[17]\d{8}|[17]\d{8}|254[17]\d{8})$/.test(value.replace(/\D/g, ''));
+    }
   },
   shippingCounty: {
     id: 'checkout-county',
@@ -89,6 +98,15 @@ function checkoutFieldErrors(form) {
 }
 
 function summaryHtml() {
+  const quote = checkoutQuote || {
+    subtotal: cart.summary.subtotal,
+    shippingFee: cart.summary.shippingFee,
+    discount: 0,
+    couponDiscount: 0,
+    pointsDiscount: 0,
+    creditDiscount: 0,
+    total: cart.summary.total
+  };
   return `
     <aside class="checkout-summary">
       <h2>Order summary</h2>
@@ -99,6 +117,8 @@ function summaryHtml() {
               ${img(item.imageUrl, item.name)}
               <div class="grow">
                 <strong>${escapeHtml(item.name)}</strong>
+                ${item.variantAttributes ? `<span>${Object.entries(item.variantAttributes)
+                  .map(([name, value]) => `${escapeHtml(name)}: ${escapeHtml(value)}`).join(' · ')}</span>` : ''}
                 <span>${item.quantity} × ${money(item.price)} · ${escapeHtml(item.shopName)}</span>
               </div>
               <span>${money(item.lineTotal)}</span>
@@ -106,14 +126,17 @@ function summaryHtml() {
           )
           .join('')}
       </div>
-      <div class="summary-line"><span>Subtotal</span><span>${money(cart.summary.subtotal)}</span></div>
+      <div class="summary-line"><span>Subtotal</span><span>${money(quote.subtotal)}</span></div>
       <div class="summary-line"><span>Delivery</span><span>${
-        Number(cart.summary.shippingFee) === 0 ? 'Free' : money(cart.summary.shippingFee)
+        Number(quote.shippingFee) === 0 ? 'Free' : money(quote.shippingFee)
       }</span></div>
+      ${Number(quote.couponDiscount) > 0 ? `<div class="summary-line"><span>Discount code</span><span>−${money(quote.couponDiscount)}</span></div>` : ''}
+      ${Number(quote.pointsDiscount) > 0 ? `<div class="summary-line"><span>Loyalty points</span><span>−${money(quote.pointsDiscount)}</span></div>` : ''}
+      ${Number(quote.creditDiscount) > 0 ? `<div class="summary-line"><span>Referral credit</span><span>−${money(quote.creditDiscount)}</span></div>` : ''}
       <div class="divider" style="margin:5px 0"></div>
-      <div class="summary-line total"><span>Total</span><span>${money(cart.summary.total)}</span></div>
+      <div class="summary-line total"><span>Total</span><span>${money(quote.total)}</span></div>
       <button class="btn btn-shopping btn-lg btn-block" type="submit" form="checkout-form" id="place-order">
-        Place order · ${money(cart.summary.total)}
+        Place order · ${money(quote.total)}
       </button>
       <p class="form-hint" style="text-align:center">You’ll confirm payment on the next step.</p>
       <div class="delivery-note" style="border-top:1px solid var(--line);padding-top:13px">
@@ -124,6 +147,15 @@ function summaryHtml() {
 }
 
 function renderCheckout() {
+  if (!user.emailVerified) {
+    root.innerHTML = emptyState({
+      iconName: 'shield-check',
+      title: 'Verify your email before checkout',
+      text: 'Confirm your email address in account settings to place an order.',
+      action: '<a class="btn btn-primary" href="/account">Verify email</a>'
+    });
+    return;
+  }
   if (!cart || !cart.items.length) {
     root.innerHTML = emptyState({
       iconName: 'cart',
@@ -152,6 +184,15 @@ function renderCheckout() {
           <div class="checkout-section">
             <h2><span class="step-num">1</span> Delivery details</h2>
             <div class="form-grid">
+              ${deliveryAddresses.length ? `<div class="form-group span-2">
+                <label class="form-label" for="saved-address">Use a saved address</label>
+                <select class="select" id="saved-address" name="savedAddress">
+                  <option value="">Enter a new address</option>
+                  ${deliveryAddresses.map((address) => `<option value="${address.id}" ${address.isDefault ? 'selected' : ''}>
+                    ${escapeHtml(address.label)} · ${escapeHtml(address.town)}, ${escapeHtml(address.county)}
+                  </option>`).join('')}
+                </select>
+              </div>` : ''}
               <div class="form-group span-2">
                 <label class="form-label" for="checkout-name">Recipient full name</label>
                 <input class="input" id="checkout-name" name="shippingName" type="text" value="${escapeHtml(
@@ -160,7 +201,7 @@ function renderCheckout() {
                 <span class="form-error" id="checkout-name-error" hidden></span>
               </div>
               <div class="form-group">
-                <label class="form-label" for="checkout-phone">Phone number</label>
+                <label class="form-label" for="checkout-phone">M-Pesa and delivery phone number</label>
                 <input class="input" id="checkout-phone" name="shippingPhone" type="tel" value="${escapeHtml(
                   user.phone || ''
                 )}" placeholder="+254 712 345 678" required autocomplete="tel" aria-describedby="checkout-phone-error">
@@ -193,7 +234,34 @@ function renderCheckout() {
           </div>
 
           <div class="checkout-section">
-            <h2><span class="step-num">2</span> Payment method</h2>
+            <h2><span class="step-num">2</span> Savings & rewards</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="promotion-code">Discount code</label>
+                <div class="input-group">
+                  <input class="input" id="promotion-code" name="promotionCode" maxlength="40"
+                    value="${escapeHtml(promotionCode)}" placeholder="Enter code">
+                  <button class="btn btn-secondary" type="button" id="apply-promotion">Apply</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="loyalty-points">Loyalty points (${plainPoints(checkoutQuote?.pointsBalance) || 0} available)</label>
+                <input class="input" id="loyalty-points" name="loyaltyPoints" type="number" min="0"
+                  max="${Number(checkoutQuote?.pointsBalance || 0)}" step="1" value="${loyaltyPoints}">
+                <span class="form-hint">100 points = KSh 10; redemption is capped at 50% of items.</span>
+              </div>
+              ${Number(checkoutQuote?.creditBalance || 0) > 0 ? `<label class="form-group row" style="gap:8px;align-items:center">
+                <input id="use-referral-credit" type="checkbox" ${useReferralCredit ? 'checked' : ''}>
+                <span>Use referral credit (${money(checkoutQuote.creditBalance)} available)</span>
+              </label>` : ''}
+              <p class="tiny muted span-2" id="promotion-message" aria-live="polite">
+                ${promotionCode ? 'Apply your code to refresh the quote.' : 'Discount codes and rewards are checked at checkout.'}
+              </p>
+            </div>
+          </div>
+
+          <div class="checkout-section">
+            <h2><span class="step-num">3</span> Payment method</h2>
             <div class="payment-method">
               <span class="pay-logo">${icon('smartphone', { size: 22 })}</span>
               <div class="grow">
@@ -219,6 +287,55 @@ function renderCheckout() {
   document.getElementById('checkout-form').addEventListener('submit', placeOrder);
   document.getElementById('checkout-form').addEventListener('input', clearCheckoutFieldError);
   document.getElementById('checkout-form').addEventListener('change', clearCheckoutFieldError);
+  document.getElementById('apply-promotion').addEventListener('click', () => {
+    promotionCode = document.getElementById('promotion-code').value.trim().toUpperCase();
+    refreshCheckoutQuote();
+  });
+  document.getElementById('loyalty-points').addEventListener('change', refreshCheckoutQuote);
+  document.getElementById('use-referral-credit')?.addEventListener('change', refreshCheckoutQuote);
+  const savedAddress = document.getElementById('saved-address');
+  savedAddress?.addEventListener('change', applySavedAddress);
+  if (savedAddress?.value) applySavedAddress({ target: savedAddress });
+}
+
+function plainPoints(value) {
+  return Number.isFinite(Number(value)) ? Math.max(0, Math.floor(Number(value))).toLocaleString('en-KE') : '';
+}
+
+async function refreshCheckoutQuote() {
+  const message = document.getElementById('promotion-message');
+  loyaltyPoints = Number(document.getElementById('loyalty-points')?.value || 0);
+  useReferralCredit = Boolean(document.getElementById('use-referral-credit')?.checked);
+  try {
+    const data = await api.post('/orders/checkout/quote', {
+      code: promotionCode || undefined,
+      loyaltyPoints,
+      useReferralCredit
+    });
+    checkoutQuote = data;
+    renderCheckout();
+    const refreshedMessage = document.getElementById('promotion-message');
+    if (refreshedMessage) {
+      refreshedMessage.textContent = data.code
+        ? `Code ${data.code} applied. You save ${money(data.discount)} total.`
+        : data.discount > 0
+          ? `Rewards applied. You save ${money(data.discount)}.`
+          : 'No discounts or rewards applied.';
+    }
+  } catch (error) {
+    if (message) message.textContent = errorMessage(error);
+    toast(errorMessage(error), 'error');
+  }
+}
+
+function applySavedAddress(event) {
+  const address = deliveryAddresses.find((item) => String(item.id) === event.target.value);
+  if (!address) return;
+  document.getElementById('checkout-name').value = address.fullName;
+  document.getElementById('checkout-phone').value = address.phone;
+  document.getElementById('checkout-county').value = address.county;
+  document.getElementById('checkout-town').value = address.town;
+  document.getElementById('checkout-address').value = address.addressLine;
 }
 
 function clearCheckoutFieldError(event) {
@@ -254,7 +371,10 @@ async function placeOrder(event) {
     shippingCounty: value('shippingCounty'),
     shippingTown: value('shippingTown'),
     shippingAddress: value('shippingAddress'),
-    ...(value('notes') ? { notes: value('notes') } : {})
+    ...(value('notes') ? { notes: value('notes') } : {}),
+    ...(promotionCode ? { promotionCode } : {}),
+    loyaltyPoints,
+    useReferralCredit
   };
 
   const button = document.getElementById('place-order');
@@ -264,7 +384,7 @@ async function placeOrder(event) {
     const data = await api.post('/orders/checkout', payload);
     checkoutOrder = data.order;
     shippingPhone = payload.shippingPhone;
-    paymentProvider = data.payment?.provider || 'simulated';
+    paymentProvider = data.payment?.provider || 'mpesa';
     needsPaymentRetry = false;
     refreshCartBadge();
     renderPaymentStep();
@@ -525,12 +645,17 @@ async function init() {
   if (!user) return;
 
   try {
-    const [cartData, paymentMethod] = await Promise.all([
+    const [cartData, paymentMethod, addressData] = await Promise.all([
       api.get('/cart'),
-      api.get('/payments/method')
+      api.get('/payments/method'),
+      api.get('/addresses')
     ]);
     cart = cartData;
     paymentProvider = paymentMethod.provider;
+    deliveryAddresses = addressData.addresses;
+    if (cart.items.length) {
+      checkoutQuote = await api.post('/orders/checkout/quote', {});
+    }
     renderCheckout();
   } catch (error) {
     root.innerHTML = errorState(errorMessage(error));

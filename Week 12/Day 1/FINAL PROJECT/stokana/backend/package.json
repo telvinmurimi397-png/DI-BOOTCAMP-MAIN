@@ -10,7 +10,8 @@
     "db:seed": "psql \"$DATABASE_URL\" -f ../database/seeds/dev_seed.sql",
     "admin:bootstrap": "node scripts/bootstrap-admin.js",
     "test:smoke": "node tests/smoke.test.js",
-    "test:mpesa": "node --test tests/mpesa.test.js"
+    "test:mpesa": "node --test tests/mpesa.test.js",
+    "test:auth": "node --test tests/totp.test.js"
   },
   "engines": {
     "node": ">=20"
@@ -25,6 +26,7 @@
     "express-session": "^1.18.2",
     "helmet": "^8.1.0",
     "multer": "^2.0.2",
+    "nodemailer": "^10.3.1",
     "pg": "^8.16.3",
     "socket.io": "^4.8.1",
     "zod": "^4.1.12"

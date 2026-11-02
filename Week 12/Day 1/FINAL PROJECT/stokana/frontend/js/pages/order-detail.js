@@ -27,6 +27,7 @@ import {
 const orderNumber = new URLSearchParams(window.location.search).get('order') || '';
 let account = null;
 let order = null;
+let paymentProvider = 'mpesa';
 let busy = false;
 
 function timelineHtml(current) {
@@ -63,21 +64,45 @@ function timelineStep(done, title, detail, danger = false, currentStep = false) 
   </div>`;
 }
 
-function itemHtml(item) {
+function itemHtml(item, renderedShipmentIds) {
+  const activeReturn = item.returnRequests.find((request) =>
+    ['pending', 'approved'].includes(request.status)
+  );
+  const completedReturn = [...item.returnRequests].reverse().find((request) =>
+    request.status === 'refunded'
+  );
+  const previouslyRequested = item.returnRequests
+    .filter((request) => request.status !== 'rejected')
+    .reduce((sum, request) => sum + Number(request.quantity || 0), 0);
+  const canRequestReturn = item.canRequestReturn && previouslyRequested < Number(item.quantity);
+  const shipmentId = String(item.shipmentId || '');
+  const showConfirmDelivery = item.canConfirmDelivery && !renderedShipmentIds.has(shipmentId);
+  if (shipmentId) renderedShipmentIds.add(shipmentId);
   return `<div class="order-line" style="align-items:flex-start">
     ${img(item.imageUrl, item.productName, 'width="58" height="58"')}
     <div class="order-line-main">
       <strong style="display:block;font-size:13px;line-height:1.35">${escapeHtml(item.productName)}</strong>
+      ${item.variantAttributes ? `<span class="muted">${Object.entries(item.variantAttributes)
+        .map(([name, value]) => `${escapeHtml(name)}: ${escapeHtml(value)}`).join(' · ')}</span>` : ''}
       <span>${item.quantity} × ${money(item.unitPrice)} · <a href="/shop/${encodeURIComponent(
     item.shopSlug
   )}" style="display:inline;font-size:inherit;font-weight:600">${escapeHtml(item.shopName || 'Shop')}</a></span>
+      <button class="btn btn-ghost btn-sm" type="button" data-message-seller="${item.sellerId}" style="margin-top:5px">
+        ${icon('message', { size: 13 })} Message this shop about the order
+      </button>
       ${
         item.shipmentId
           ? `<div class="row" style="gap:8px;margin-top:7px;flex-wrap:wrap">
               <span class="badge ${statusMeta(item.shipmentStatus === 'delivered' ? 'delivered' : 'blue').tone}" style="font-size:10px">${escapeHtml(
               shipmentStatusLabel(item.shipmentStatus)
             )}</span>
-              ${item.trackingNumber ? `<span class="muted" style="font-size:10.5px">${escapeHtml(item.carrier || 'Courier')} · ${escapeHtml(item.trackingNumber)}</span>` : ''}
+              ${item.trackingNumber
+                ? `<span class="muted" style="font-size:10.5px">${escapeHtml(item.carrier || 'Courier')} · ${escapeHtml(item.trackingNumber)}${item.trackingUrl ? ` · <a href="${escapeHtml(item.trackingUrl)}" target="_blank" rel="noopener noreferrer">Track shipment</a>` : ''}</span>`
+                : item.trackingUrl
+                  ? `<a href="${escapeHtml(item.trackingUrl)}" target="_blank" rel="noopener noreferrer" class="tiny">Track shipment</a>`
+                  : ''}
+              ${item.pickupLocationLabel ? `<span class="muted tiny">Pickup: ${escapeHtml(item.pickupLocationLabel)}${item.pickupLocationTown ? ` · ${escapeHtml(item.pickupLocationTown)}` : ''}</span>` : ''}
+              ${showConfirmDelivery ? `<button class="btn btn-secondary btn-sm" type="button" data-confirm-delivery="${escapeHtml(shipmentId)}">Confirm delivery</button>` : ''}
             </div>`
           : ''
       }
@@ -91,6 +116,14 @@ function itemHtml(item) {
             )} Write a review</button>`
           : ''
       }
+      ${activeReturn
+        ? `<div class="row" style="gap:6px;margin-top:8px"><span class="tiny muted">Return request · ${statusBadge(activeReturn.status)}</span></div>`
+        : `${completedReturn
+          ? `<div class="tiny muted" style="margin-top:7px">Refund recorded: ${money(completedReturn.refundAmount)}${completedReturn.refundReference ? ` · ${escapeHtml(completedReturn.refundReference)}` : ''}</div>`
+          : ''}
+          ${canRequestReturn
+            ? `<button class="btn btn-ghost btn-sm" type="button" data-request-return="${item.id}" style="margin-top:7px">Request return / refund</button>`
+            : ''}`}
     </div>
     <div class="order-line-total">${money(item.lineTotal)}</div>
   </div>`;
@@ -104,9 +137,10 @@ function paymentHistoryHtml() {
         (payment) => `<div class="info-row">
           <dt>
             <strong style="display:block;color:var(--ink);font-size:12px;font-family:ui-monospace,Menlo,monospace">${escapeHtml(
-              payment.providerRef
+              payment.transactionRef || payment.providerRef
             )}</strong>
             <span style="font-size:11px">${escapeHtml(payment.provider)} · ${formatDateTime(payment.createdAt)}</span>
+            ${payment.transactionRef ? `<span style="display:block;font-size:10.5px;color:var(--muted)">Request: ${escapeHtml(payment.providerRef)}</span>` : ''}
           </dt>
           <dd style="display:grid;justify-items:end;gap:4px">
             <span style="font-size:12.5px">${money(payment.amount)}</span>
@@ -120,6 +154,7 @@ function paymentHistoryHtml() {
 }
 
 function render() {
+  const renderedShipmentIds = new Set();
   account.content.innerHTML = `
     <div id="order-alert"></div>
     <div class="order-detail-head">
@@ -140,7 +175,7 @@ function render() {
       <div>
         <div class="content-card" style="padding:8px 22px">
           <h2 style="padding-top:14px;font-size:17px">Items</h2>
-          ${order.items.map((item) => itemHtml(item)).join('')}
+          ${order.items.map((item) => itemHtml(item, renderedShipmentIds)).join('')}
         </div>
 
         <div class="content-card">
@@ -185,11 +220,17 @@ function render() {
           ${
             order.canRetryPayment
               ? `<div style="display:grid;gap:8px;margin-top:16px">
-                  <button class="btn btn-shopping btn-block" type="button" id="pay-order">Pay now</button>
+                  <button class="btn btn-shopping btn-block" type="button" id="pay-order">${paymentProvider === 'mpesa' ? 'Pay with M-Pesa' : 'Pay now'}</button>
                   <button class="btn btn-ghost btn-block" type="button" id="cancel-order">Cancel order</button>
                 </div>`
               : ''
           }
+          ${order.cancellationRequest
+            ? `<div class="alert info" style="margin-top:12px"><div><strong>Cancellation request</strong><br>${statusBadge(order.cancellationRequest.status)}</div></div>`
+            : ''}
+          ${order.canRequestCancellation
+            ? `<button class="btn btn-ghost btn-block" type="button" id="request-cancellation" style="margin-top:12px">${order.cancellationRequest?.status === 'rejected' ? 'Submit another cancellation request' : 'Request order cancellation'}</button>`
+            : ''}
           <div style="display:grid;gap:8px;margin-top:16px">
             <a class="btn btn-secondary btn-block" href="/account/orders">All orders</a>
             <a class="btn btn-ghost btn-block" href="/explore">Continue shopping</a>
@@ -198,7 +239,7 @@ function render() {
         <div class="content-card">
           <div class="delivery-note" style="border-top:0;padding-top:0">
             <div>${icon('shield-check', { size: 15 })} Buyer protection is active on this order</div>
-            <div>${icon('message', { size: 15 })} Message the seller from the order shop</div>
+            <div>${icon('message', { size: 15 })} Message each shop about its order items</div>
           </div>
         </div>
       </aside>
@@ -210,9 +251,46 @@ function render() {
       if (item) openReviewModal(item);
     });
   });
+  account.content.querySelectorAll('[data-message-seller]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        const data = await api.post('/messages/conversations', {
+          sellerId: Number(button.dataset.messageSeller),
+          orderNumber
+        });
+        window.location.href = `/account/messages?conversation=${data.conversation.id}`;
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+      }
+    });
+  });
+  account.content.querySelectorAll('[data-confirm-delivery]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      try {
+        const result = await api.post(
+          `/orders/${encodeURIComponent(order.orderNumber)}/shipments/${button.dataset.confirmDelivery}/confirm-delivery`
+        );
+        toast(result.message || 'Delivery confirmed.');
+        await loadOrder({ silent: true });
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+        button.disabled = false;
+      }
+    });
+  });
 
   account.content.querySelector('#pay-order')?.addEventListener('click', payOrder);
   account.content.querySelector('#cancel-order')?.addEventListener('click', cancelOrder);
+  account.content.querySelector('#request-cancellation')?.addEventListener('click', () =>
+    openAdjustmentRequest({ requestType: 'cancellation' })
+  );
+  account.content.querySelectorAll('[data-request-return]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const item = order.items.find((entry) => String(entry.id) === button.dataset.requestReturn);
+      if (item) openAdjustmentRequest({ requestType: 'return_refund', item });
+    });
+  });
 
   if (new URLSearchParams(window.location.search).get('paid') === '1') {
     const alertHost = document.getElementById('order-alert');
@@ -226,6 +304,58 @@ function render() {
     url.searchParams.delete('paid');
     window.history.replaceState({}, '', url);
   }
+}
+
+function openAdjustmentRequest({ requestType, item = null }) {
+  const isReturn = requestType === 'return_refund';
+  openModal({
+    title: isReturn ? 'Request a return and refund' : 'Request order cancellation',
+    subtitle: isReturn ? item.productName : order.orderNumber,
+    body: `<form id="adjustment-request-form" style="display:grid;gap:14px">
+      ${isReturn ? `<label class="form-group">
+        <span class="form-label">Quantity to return</span>
+        <input class="input" type="number" name="quantity" min="1" max="${item.quantity}" value="1" required>
+      </label>` : '<p class="muted" style="font-size:12px">The request will pause seller fulfilment while it is reviewed.</p>'}
+      <label class="form-group">
+        <span class="form-label">Reason</span>
+        <textarea class="textarea" name="reason" rows="4" minlength="10" maxlength="2000" required
+          placeholder="${isReturn ? 'Describe the issue with this delivered item.' : 'Tell us why you need to cancel this order.'}"></textarea>
+      </label>
+    </form>`,
+    footer: `<button class="btn btn-secondary" type="button" data-close-modal>Keep order</button>
+      <button class="btn btn-primary" type="button" id="adjustment-request-submit">Submit request</button>`,
+    onMount(modal) {
+      modal.querySelector('#adjustment-request-submit').addEventListener('click', async (event) => {
+        const submit = event.currentTarget;
+        const form = modal.querySelector('#adjustment-request-form');
+        if (!form.reportValidity()) return;
+        const reason = form.elements.namedItem('reason').value.trim();
+        if (reason.length < 10) {
+          form.elements.namedItem('reason').setCustomValidity('Please provide at least 10 characters.');
+          form.reportValidity();
+          form.elements.namedItem('reason').setCustomValidity('');
+          return;
+        }
+        setButtonLoading(submit, true, 'Submitting…');
+        try {
+          await api.post(`/orders/${encodeURIComponent(order.orderNumber)}/requests`, {
+            requestType,
+            reason,
+            ...(isReturn ? {
+              orderItemId: item.id,
+              quantity: Number(form.elements.namedItem('quantity').value)
+            } : {})
+          });
+          closeModal();
+          toast(isReturn ? 'Return request submitted.' : 'Cancellation request submitted.');
+          await loadOrder({ silent: true });
+        } catch (error) {
+          setButtonLoading(submit, false);
+          toast(errorMessage(error), 'error');
+        }
+      });
+    }
+  });
 }
 
 function openReviewModal(item) {
@@ -290,23 +420,60 @@ async function payOrder() {
   if (busy) return;
   busy = true;
   const button = document.getElementById('pay-order');
-  setButtonLoading(button, true, 'Confirming…');
+  const isMpesa = paymentProvider === 'mpesa';
+  setButtonLoading(button, true, isMpesa ? 'Requesting M-Pesa prompt…' : 'Confirming…');
   try {
-    const hasPending = order.payments.some((payment) => payment.status === 'pending');
+    const hasPending = order.payments.some((payment) =>
+      payment.status === 'pending' && payment.provider === paymentProvider
+    );
     if (!hasPending) {
       await api.post(`/orders/${encodeURIComponent(order.orderNumber)}/payment/retry`);
     }
-    await api.post(`/orders/${encodeURIComponent(order.orderNumber)}/payment/simulate`, {
-      outcome: 'success'
-    });
-    const url = new URL(window.location.href);
-    url.searchParams.set('paid', '1');
-    window.location.href = url;
+    if (isMpesa) {
+      const result = await api.post(
+        `/orders/${encodeURIComponent(order.orderNumber)}/payment/mpesa`,
+        { phone: order.shippingPhone }
+      );
+      toast(result.message || 'Check your phone to approve the M-Pesa payment.');
+      await pollMpesaPayment();
+    } else {
+      await api.post(`/orders/${encodeURIComponent(order.orderNumber)}/payment/simulate`, {
+        outcome: 'success'
+      });
+      const url = new URL(window.location.href);
+      url.searchParams.set('paid', '1');
+      window.location.href = url;
+    }
   } catch (error) {
     toast(errorMessage(error), 'error');
-    setButtonLoading(button, false);
     busy = false;
+    await loadOrder({ silent: true });
   }
+}
+
+async function pollMpesaPayment() {
+  const button = document.getElementById('pay-order');
+  setButtonLoading(button, true, 'Waiting for M-Pesa confirmation…');
+  for (let attempt = 0; attempt < 60; attempt += 1) {
+    await new Promise((resolve) => window.setTimeout(resolve, 3000));
+    const data = await api.get(`/orders/${encodeURIComponent(order.orderNumber)}`);
+    order = data.order;
+    if (order.paymentStatus === 'paid' || order.paymentStatus === 'refunded') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('paid', '1');
+      window.location.href = url;
+      return;
+    }
+    if (order.payments.every((payment) => payment.status !== 'pending')) {
+      toast('M-Pesa did not complete. You can try again from this page.', 'error');
+      busy = false;
+      await loadOrder({ silent: true });
+      return;
+    }
+  }
+  toast('Still waiting for M-Pesa. Refresh this page to check the latest payment status.');
+  busy = false;
+  await loadOrder({ silent: true });
 }
 
 async function cancelOrder() {
@@ -366,6 +533,14 @@ async function init() {
     return;
   }
 
+  try {
+    const method = await api.get('/payments/method');
+    paymentProvider = method.provider;
+  } catch (error) {
+    account.content.innerHTML = errorState(errorMessage(error));
+    account.content.querySelector('[data-retry]')?.addEventListener('click', init);
+    return;
+  }
   await loadOrder();
 }
 

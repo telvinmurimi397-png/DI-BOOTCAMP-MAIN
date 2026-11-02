@@ -1,7 +1,7 @@
 import { icon } from './icons.js';
 import { api } from './api.js';
 import { getUser, goToLogin, logout, dashboardFor } from './auth.js';
-import { avatar, toast, errorMessage } from './ui.js';
+import { avatar, toast, errorMessage, setProductSaved, setSavedProductIds } from './ui.js';
 import { escapeHtml } from './format.js';
 import { installImageFallback, installFocusShortcut, installRevealAnimations } from './global.js';
 
@@ -99,6 +99,7 @@ function headerActions(user) {
     accountLinks.push(
       `<a class="dropdown-link" href="/account">${icon('user', { size: 16 })} Account overview</a>`,
       `<a class="dropdown-link" href="/account/orders">${icon('package', { size: 16 })} My orders</a>`,
+      `<a class="dropdown-link" href="/account/wishlist">${icon('heart', { size: 16 })} Wishlist</a>`,
       `<a class="dropdown-link" href="/account/messages">${icon('message', { size: 16 })} Messages</a>`,
       `<a class="dropdown-link" href="/account/reviews">${icon('star', { size: 16 })} My reviews</a>`
     );
@@ -208,6 +209,7 @@ function drawerHtml(user) {
     extra.push(
       '<a href="/account">My account</a>',
       '<a href="/account/orders">My orders</a>',
+      '<a href="/account/wishlist">Wishlist</a>',
       '<a href="/account/messages">Messages</a>',
       '<a href="/account/reviews">My reviews</a>'
     );
@@ -399,11 +401,49 @@ function wireQuickAdd() {
   });
 }
 
+function wireWishlistToggle() {
+  document.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-wishlist-toggle]');
+    if (!button || button.disabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const user = await getUser();
+    if (!user) {
+      toast('Sign in as a buyer to save products.', 'info');
+      window.setTimeout(goToLogin, 600);
+      return;
+    }
+    if (user.role !== 'buyer') {
+      toast('Wishlists are available to buyer accounts.', 'error');
+      return;
+    }
+
+    const productId = Number(button.dataset.wishlistToggle);
+    const saved = button.getAttribute('aria-pressed') === 'true';
+    button.disabled = true;
+    try {
+      if (saved) await api.delete(`/wishlist/${productId}`);
+      else await api.post('/wishlist', { productId });
+      setProductSaved(productId, !saved);
+      toast(saved ? 'Removed from your wishlist.' : 'Saved to your wishlist.', 'success');
+      window.dispatchEvent(new CustomEvent('wishlist:updated', {
+        detail: { productId, saved: !saved }
+      }));
+    } catch (error) {
+      toast(errorMessage(error), 'error');
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
+
 export async function mountSite() {
   installImageFallback();
   installFocusShortcut();
   installRevealAnimations();
   wireQuickAdd();
+  wireWishlistToggle();
 
   const headerHost = document.querySelector('[data-site-header]');
   const footerHost = document.querySelector('[data-site-footer]');
@@ -411,6 +451,15 @@ export async function mountSite() {
 
   document.body.classList.add('site-body');
   const user = await getUser();
+  setSavedProductIds([]);
+  if (user?.role === 'buyer') {
+    try {
+      const { productIds } = await api.get('/wishlist/ids');
+      setSavedProductIds(productIds || []);
+    } catch (error) {
+      toast(errorMessage(error), 'error');
+    }
+  }
   const active = currentActive();
 
   if (headerHost) {

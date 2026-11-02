@@ -10,7 +10,8 @@ import {
   setButtonLoading,
   errorState,
   errorMessage,
-  PLACEHOLDER
+  PLACEHOLDER,
+  isProductSaved
 } from '../ui.js';
 import {
   money,
@@ -20,6 +21,7 @@ import {
   initials,
   pluralize
 } from '../format.js';
+import { recordRecentlyViewed } from '../recently-viewed.js';
 
 const root = document.getElementById('product-page');
 const slug = decodeURIComponent(window.location.pathname.split('/').filter(Boolean).pop() || '');
@@ -31,6 +33,30 @@ let recentReviews = [];
 let reviewPagination = null;
 let quantity = 1;
 let user = null;
+let selectedVariantId = null;
+
+function activeVariant() {
+  return product.variants?.find((variant) => Number(variant.id) === Number(selectedVariantId)) || null;
+}
+
+function availableStock() {
+  const variant = activeVariant();
+  return product.variants?.length ? Number(variant?.stock || 0) : Number(product.stock);
+}
+
+function effectivePrice() {
+  const variant = activeVariant();
+  return Number(variant?.price ?? product.price);
+}
+
+function priceMarkup() {
+  const price = effectivePrice();
+  const variant = activeVariant();
+  const compare = Number(variant ? variant.compareAtPrice : product.compareAtPrice) || 0;
+  const discount = compare > price ? Math.round(((compare - price) / compare) * 100) : 0;
+  return `<span class="price">${money(price)}</span>
+    ${compare > price ? `<span class="price-was">${money(compare)}</span><span class="badge red">Save ${discount}%</span>` : ''}`;
+}
 
 function galleryHtml() {
   const images = product.images?.length
@@ -64,7 +90,7 @@ function galleryHtml() {
 }
 
 function stockLine() {
-  const stock = Number(product.stock);
+  const stock = availableStock();
   if (stock <= 0) {
     return `<span class="stock-out">${icon('alert-circle', { size: 14 })} Sold out</span><span class="muted">${product.shopName}</span>`;
   }
@@ -75,11 +101,29 @@ function stockLine() {
 }
 
 function buyBoxHtml() {
-  const soldOut = Number(product.stock) <= 0;
+  const soldOut = availableStock() <= 0;
   const isOwner = user?.role === 'seller' && user.id === product.sellerId;
+  const options = product.variants?.length
+    ? `<label class="form-group">
+        <span class="form-label">Choose an option</span>
+        <select class="select" id="product-variant">
+          ${product.variants.map((variant) => {
+            const label = Object.entries(variant.attributes || {})
+              .map(([name, value]) => `${escapeHtml(name)}: ${escapeHtml(value)}`)
+              .join(', ');
+            const variantPrice = Number(variant.price ?? product.price);
+            return `<option value="${variant.id}" ${Number(variant.id) === Number(selectedVariantId) ? 'selected' : ''}
+              ${Number(variant.stock) <= 0 ? 'disabled' : ''}>
+              ${label} — ${money(variantPrice)}${Number(variant.stock) <= 0 ? ' (sold out)' : ''}
+            </option>`;
+          }).join('')}
+        </select>
+      </label>`
+    : '';
 
   return `
     <div class="product-buy">
+      ${options}
       <div class="stock-line">${stockLine()}</div>
       <div class="buy-row">
         <div class="qty" data-qty>
@@ -95,6 +139,11 @@ function buyBoxHtml() {
         Buy now
       </button>
       <div class="buy-secondary">
+        <button class="btn btn-ghost${isProductSaved(product.id) ? ' is-saved' : ''}" type="button"
+          data-wishlist-toggle="${product.id}" aria-pressed="${isProductSaved(product.id)}"
+          aria-label="${isProductSaved(product.id) ? 'Remove from wishlist' : 'Save to wishlist'}">
+          ${icon('heart', { size: 15 })} <span data-wishlist-label>${isProductSaved(product.id) ? 'Saved' : 'Save'}</span>
+        </button>
         ${
           isOwner
             ? `<a class="btn btn-ghost" href="/seller/products/edit?slug=${encodeURIComponent(product.slug)}">${icon('edit', { size: 15 })} Manage product</a>`
@@ -186,10 +235,11 @@ function bindQty() {
   if (!host || !valueEl) return;
   host.querySelectorAll('[data-qty-step]').forEach((button) => {
     button.addEventListener('click', () => {
-      quantity = Math.min(Math.max(1, quantity + Number(button.dataset.qtyStep)), Number(product.stock));
+      const stock = availableStock();
+      quantity = Math.min(Math.max(1, quantity + Number(button.dataset.qtyStep)), stock);
       valueEl.textContent = String(quantity);
       host.querySelector('[data-qty-step="-1"]').disabled = quantity <= 1;
-      host.querySelector('[data-qty-step="1"]').disabled = quantity >= Number(product.stock);
+      host.querySelector('[data-qty-step="1"]').disabled = quantity >= stock;
     });
   });
 }
@@ -211,7 +261,11 @@ async function addToCart(button) {
   if (!(await ensureBuyer())) return false;
   setButtonLoading(button, true, 'Adding…');
   try {
-    await api.post('/cart/items', { productId: product.id, quantity });
+    await api.post('/cart/items', {
+      productId: product.id,
+      variantId: product.variants?.length ? Number(selectedVariantId) : undefined,
+      quantity
+    });
     toast(`${product.name} added to your cart.`);
     refreshCartBadge();
     return true;
@@ -225,6 +279,21 @@ async function addToCart(button) {
 
 function bindActions() {
   bindQty();
+  root.querySelector('#product-variant')?.addEventListener('change', (event) => {
+    selectedVariantId = Number(event.target.value);
+    quantity = 1;
+    root.querySelector('[data-qty-value]').textContent = '1';
+    root.querySelector('.stock-line').innerHTML = stockLine();
+    root.querySelector('#product-price-wrap').innerHTML = priceMarkup();
+    const stock = availableStock();
+    const soldOut = stock <= 0;
+    root.querySelectorAll('[data-qty-step]').forEach((button) => {
+      button.disabled = soldOut || (button.dataset.qtyStep === '-1' && quantity <= 1);
+    });
+    root.querySelector('#add-to-cart').disabled = soldOut;
+    root.querySelector('#buy-now').disabled = soldOut;
+    root.querySelector('#add-to-cart').innerHTML = `${icon('cart', { size: 17 })} ${soldOut ? 'Sold out' : 'Add to cart'}`;
+  });
 
   const addButton = document.getElementById('add-to-cart');
   addButton?.addEventListener('click', () => addToCart(addButton));
@@ -240,7 +309,10 @@ function bindActions() {
     if (!(await ensureBuyer())) return;
     setButtonLoading(chatButton, true, 'Opening chat…');
     try {
-      const data = await api.post('/messages/conversations', { sellerId: product.sellerId });
+      const data = await api.post('/messages/conversations', {
+        sellerId: product.sellerId,
+        productId: product.id
+      });
       window.location.href = `/account/messages?conversation=${data.conversation.id}`;
     } catch (error) {
       toast(errorMessage(error), 'error');
@@ -284,10 +356,10 @@ async function loadAllReviews(page) {
 }
 
 function render() {
-  const soldOut = Number(product.stock) <= 0;
-  const compare = Number(product.compareAtPrice) || 0;
-  const price = Number(product.price);
-  const discount = compare > price ? Math.round(((compare - price) / compare) * 100) : 0;
+  if (product.variants?.length && selectedVariantId == null) {
+    selectedVariantId = (product.variants.find((variant) => Number(variant.stock) > 0) || product.variants[0]).id;
+  }
+  const soldOut = availableStock() <= 0;
   const condition = statusMeta(product.condition);
 
   reviews = recentReviews;
@@ -318,8 +390,7 @@ function render() {
           <span class="muted" style="font-size:12px">${escapeHtml(product.location || product.shopTown || 'Kenya')}</span>
         </div>
         <div class="product-info-top">
-          <span class="price">${money(price)}</span>
-          ${compare > price ? `<span class="price-was">${money(compare)}</span><span class="badge red">Save ${discount}%</span>` : ''}
+          <span id="product-price-wrap">${priceMarkup()}</span>
         </div>
         <p class="muted" style="font-size:13px;line-height:1.65">${escapeHtml(
           product.description ? product.description.slice(0, 160) : 'Quality product from a verified STOKANA shop.'
@@ -352,6 +423,14 @@ function render() {
             )}">${escapeHtml(product.shopName)}</a></span></div>
           </div>
         </div>
+        ${Object.keys(product.specifications || {}).length ? `<div class="content-card">
+          <h2>Specifications</h2>
+          <div class="spec-grid">
+            ${Object.entries(product.specifications).map(([name, value]) => `
+              <div class="summary-line"><span>${escapeHtml(name)}</span><span>${escapeHtml(value)}</span></div>
+            `).join('')}
+          </div>
+        </div>` : ''}
         <div class="content-card" id="reviews-card">
           <div id="reviews">
             <h2>Buyer reviews</h2>
@@ -452,6 +531,7 @@ async function init() {
   try {
     const data = await api.get(`/products/${encodeURIComponent(slug)}`);
     product = data.product;
+    recordRecentlyViewed(product.slug);
     related = data.related || [];
     recentReviews = data.recentReviews || [];
     document.title = `${product.name} · ${product.shopName} · STOKANA`;

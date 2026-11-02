@@ -38,8 +38,8 @@ export function buyerOrderCard(order) {
     </div>
     <footer class="order-card-foot">
       <span class="tiny muted">${
-        order.payment?.providerRef
-          ? `Payment ${escapeHtml(order.payment.providerRef)}`
+        order.payment?.transactionRef || order.payment?.providerRef
+          ? `Payment ${escapeHtml(order.payment.transactionRef || order.payment.providerRef)}`
           : awaitingPayment
           ? 'Complete payment to start fulfilment'
           : 'No successful payment yet'

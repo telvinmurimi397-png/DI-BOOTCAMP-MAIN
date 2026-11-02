@@ -61,6 +61,12 @@ function renderShell() {
     <div class="table-toolbar">
       <div id="product-tabs">${tabsHtml(TABS, status, { ariaLabel: 'Filter products' })}</div>
       <div class="toolbar-actions">
+        <a class="btn btn-secondary btn-sm" download="stokana-products-template.csv"
+          href="data:text/csv;charset=utf-8,name%2CcategoryId%2Cdescription%2Cprice%2Cstock%2Ccondition%2Clocation%2CimageUrls%2Cspecifications%2Cvariants%2CcompareAtPrice%0A">
+          CSV template
+        </a>
+        <button class="btn btn-secondary btn-sm" type="button" id="import-products">Import CSV</button>
+        <input type="file" id="bulk-product-file" accept=".csv,text/csv" hidden>
         <div class="input-group">
           <span class="input-icon">${icon('search', { size: 16 })}</span>
           <input class="input" type="search" id="product-search" value="${escapeHtml(search)}"
@@ -68,6 +74,7 @@ function renderShell() {
         </div>
       </div>
     </div>
+    <div id="import-results"></div>
     <div class="card" id="products-card">
       <div id="products-host">${pageLoader()}</div>
       <div id="products-pagination" style="padding:0 16px"></div>
@@ -90,6 +97,37 @@ function renderShell() {
       load();
     }, 350)
   );
+  const fileInput = dash.content.querySelector('#bulk-product-file');
+  dash.content.querySelector('#import-products').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast('CSV files must be 2 MB or smaller.', 'error');
+      fileInput.value = '';
+      return;
+    }
+    const button = dash.content.querySelector('#import-products');
+    const formData = new FormData();
+    formData.append('file', file);
+    setButtonLoading(button, true, 'Importing…');
+    try {
+      const result = await api.post('/seller/products/import', formData);
+      const resultsHost = dash.content.querySelector('#import-results');
+      resultsHost.innerHTML = `<div class="alert ${result.errors.length ? 'warning' : 'success'}" style="margin-bottom:14px">
+        <div><strong>${escapeHtml(result.message)}</strong>
+          ${result.errors.length ? `<ul style="margin:6px 0 0;padding-left:18px">${result.errors.map((error) =>
+    `<li>Row ${error.row}: ${escapeHtml(error.message)}</li>`).join('')}</ul>` : ''}
+        </div>
+      </div>`;
+      await load();
+    } catch (error) {
+      toast(errorMessage(error), 'error');
+    } finally {
+      setButtonLoading(button, false);
+      fileInput.value = '';
+    }
+  });
 }
 
 function rowHtml(product) {
@@ -122,7 +160,9 @@ function rowHtml(product) {
       <span class="cell-main">${money(price)}</span>
       ${compare > price ? `<span class="cell-sub"><s>${money(compare)}</s></span>` : ''}
     </td>
-    <td>${archived ? `<span class="cell-main">${Number(product.stock)}</span>` : stockEditor(product)}</td>
+    <td>${product.variantCount > 0
+      ? `<span class="cell-main">${Number(product.stock)} units</span><span class="cell-sub">${pluralize(product.variantCount, 'variant')}</span>`
+      : archived ? `<span class="cell-main">${Number(product.stock)}</span>` : stockEditor(product)}</td>
     <td>${statusBadge(product.status)}</td>
     <td>
       <span class="cell-main">${pluralize(product.unitsSold, 'unit')}</span>

@@ -1,6 +1,7 @@
 const checkoutService = require('../services/checkoutService');
 const orderService = require('../services/orderService');
 const paymentService = require('../services/paymentService');
+const orderAdjustmentService = require('../services/orderAdjustmentService');
 const env = require('../config/env');
 const mpesaService = require('../services/mpesaService');
 const { ApiError } = require('../utils/errors');
@@ -32,6 +33,15 @@ async function getOrder(req, res) {
   res.json(result);
 }
 
+async function confirmDelivery(req, res) {
+  const result = await orderService.confirmDelivery(
+    req.user.id,
+    req.params.orderNumber,
+    req.params.shipmentId
+  );
+  res.json(result);
+}
+
 async function stats(req, res) {
   const data = await orderService.getBuyerStats(req.user.id);
   res.json(data);
@@ -40,6 +50,15 @@ async function stats(req, res) {
 async function cancelOrder(req, res) {
   const result = await checkoutService.cancelOrder(req.user.id, req.params.orderNumber);
   res.json(result);
+}
+
+async function requestAdjustment(req, res) {
+  const request = await orderAdjustmentService.createRequest(
+    req.user.id,
+    req.params.orderNumber,
+    req.body
+  );
+  res.status(201).json({ message: 'Your order request was submitted.', request });
 }
 
 async function retryPayment(req, res) {
@@ -75,8 +94,10 @@ module.exports = {
   checkout,
   listOrders,
   getOrder,
+  confirmDelivery,
   stats,
   cancelOrder,
+  requestAdjustment,
   retryPayment,
   simulatePayment,
   startMpesaPayment

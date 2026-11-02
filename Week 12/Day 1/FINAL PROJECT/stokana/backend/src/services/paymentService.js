@@ -2,6 +2,8 @@ const db = require('../config/db');
 const env = require('../config/env');
 const mpesa = require('./mpesaService');
 const { ApiError, badRequest, conflict, notFound } = require('../utils/errors');
+const { notifyOrder } = require('./orderNotificationService');
+const rewardService = require('./rewardService');
 
 async function completeOrderPayment(client, orderId) {
   await client.query(
@@ -29,10 +31,11 @@ async function completeOrderPayment(client, orderId) {
      ON CONFLICT (order_id, seller_id) DO NOTHING`,
     [orderId]
   );
+  await rewardService.recordPaidOrderRewards(client, orderId);
 }
 
 async function simulatePayment(buyerId, orderNumber, outcome) {
-  return db.withTransaction(async (client) => {
+  const result = await db.withTransaction(async (client) => {
     const orderResult = await client.query(
       `SELECT id, order_number AS "orderNumber", status, payment_status AS "paymentStatus",
               total, paid_at AS "paidAt"
@@ -115,6 +118,20 @@ async function simulatePayment(buyerId, orderNumber, outcome) {
       payment: { providerRef: payment.providerRef, amount: payment.amount, status: 'success' }
     };
   });
+  if (!result.alreadyProcessed && result.order?.paymentStatus === 'paid') {
+    await notifyOrder(orderNumber, {
+      subject: 'Payment confirmed for your STOKANA order',
+      message: 'Your payment was verified. The seller has been notified to prepare your delivery.',
+      audience: 'all'
+    });
+  } else if (!result.alreadyProcessed && result.order?.paymentStatus === 'failed') {
+    await notifyOrder(orderNumber, {
+      subject: 'Payment was not completed',
+      message: 'Your payment did not complete. You can retry it from your order page without placing a second order.',
+      audience: 'buyer'
+    });
+  }
+  return result;
 }
 
 async function startMpesaPayment(buyerId, orderNumber, phone) {
@@ -281,6 +298,7 @@ async function handleMpesaCallback(callbackToken, body) {
   }
 
   if (Number(callback.ResultCode) !== 0) {
+    let paymentFailed = false;
     await db.withTransaction(async (client) => {
       const locked = await client.query(
         'SELECT id, status FROM payments WHERE id = $1 FOR UPDATE',
@@ -302,7 +320,15 @@ async function handleMpesaCallback(callbackToken, body) {
          WHERE id = $1 AND payment_status <> 'paid'`,
         [payment.orderId]
       );
+      paymentFailed = true;
     });
+    if (paymentFailed) {
+      await notifyOrder(payment.orderNumber, {
+        subject: 'M-PESA payment was not completed',
+        message: 'Your M-PESA payment did not complete. You can retry it from your order page.',
+        audience: 'buyer'
+      });
+    }
     return { accepted: true };
   }
 
@@ -318,38 +344,64 @@ async function handleMpesaCallback(callbackToken, body) {
     throw conflict('The M-PESA payment details did not match the order total.');
   }
 
-  await db.withTransaction(async (client) => {
-    const orderResult = await client.query(
-      `SELECT id, order_number AS "orderNumber", status, payment_status AS "paymentStatus"
-       FROM orders WHERE id = $1 FOR UPDATE`,
-      [payment.orderId]
-    );
-    const order = orderResult.rows[0];
-    if (!order || order.status === 'cancelled') {
-      throw conflict('The order was cancelled before payment confirmation.');
+  let paymentProcessed = false;
+  try {
+    await db.withTransaction(async (client) => {
+      const orderResult = await client.query(
+        `SELECT id, order_number AS "orderNumber", status, payment_status AS "paymentStatus"
+         FROM orders WHERE id = $1 FOR UPDATE`,
+        [payment.orderId]
+      );
+      const order = orderResult.rows[0];
+      if (!order || order.status === 'cancelled') {
+        throw conflict('The order was cancelled before payment confirmation.');
+      }
+      const paymentResult = await client.query(
+        `SELECT id, status FROM payments WHERE id = $1 FOR UPDATE`,
+        [payment.id]
+      );
+      if (paymentResult.rows[0]?.status === 'success' || order.paymentStatus === 'paid') return;
+      if (paymentResult.rows[0]?.status !== 'pending') {
+        throw conflict('This M-PESA payment is no longer pending.');
+      }
+      const duplicateReceipt = await client.query(
+        `SELECT id FROM payments
+         WHERE provider = 'mpesa' AND transaction_ref = $1 AND id <> $2`,
+        [String(receipt).slice(0, 120), payment.id]
+      );
+      if (duplicateReceipt.rowCount) {
+        throw conflict('This M-PESA receipt has already been recorded against another payment.');
+      }
+      await client.query(
+        `UPDATE payments
+         SET status = 'success', transaction_ref = $3, verified_at = now(),
+             raw_payload = raw_payload || $2::jsonb
+         WHERE id = $1`,
+        [
+          payment.id,
+          JSON.stringify({
+            callback,
+            verification: { resultCode: result.ResultCode, resultDescription: result.ResultDesc }
+          }),
+          String(receipt).slice(0, 120)
+        ]
+      );
+      await completeOrderPayment(client, order.id);
+      paymentProcessed = true;
+    });
+  } catch (error) {
+    if (error.code === '23505' && error.constraint === 'uq_payments_transaction_ref') {
+      throw conflict('This M-PESA receipt has already been recorded against another payment.');
     }
-    const paymentResult = await client.query(
-      `SELECT id, status FROM payments WHERE id = $1 FOR UPDATE`,
-      [payment.id]
-    );
-    if (paymentResult.rows[0]?.status === 'success' || order.paymentStatus === 'paid') return;
-    if (paymentResult.rows[0]?.status !== 'pending') {
-      throw conflict('This M-PESA payment is no longer pending.');
-    }
-    await client.query(
-      `UPDATE payments
-       SET status = 'success', verified_at = now(), raw_payload = raw_payload || $2::jsonb
-       WHERE id = $1`,
-      [
-        payment.id,
-        JSON.stringify({
-          callback,
-          verification: { resultCode: result.ResultCode, resultDescription: result.ResultDesc }
-        })
-      ]
-    );
-    await completeOrderPayment(client, order.id);
-  });
+    throw error;
+  }
+  if (paymentProcessed) {
+    await notifyOrder(payment.orderNumber, {
+      subject: 'Payment confirmed for your STOKANA order',
+      message: 'Your M-PESA payment was verified. The seller has been notified to prepare your delivery.',
+      audience: 'all'
+    });
+  }
   return { accepted: true };
 }
 

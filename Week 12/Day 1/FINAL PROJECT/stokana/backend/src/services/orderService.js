@@ -1,5 +1,7 @@
 const db = require('../config/db');
 const { notFound } = require('../utils/errors');
+const { conflict } = require('../utils/errors');
+const { notifyOrder } = require('./orderNotificationService');
 
 const ACTIVE_STATUSES = ['pending_payment', 'paid', 'processing', 'shipped'];
 
@@ -47,6 +49,7 @@ async function getBuyerOrders(buyerId, page = 1, limit = 10, status = 'all') {
            SELECT json_build_object(
              'provider', p.provider,
              'providerRef', p.provider_ref,
+             'transactionRef', p.transaction_ref,
              'verifiedAt', p.verified_at
            )
            FROM payments p
@@ -86,36 +89,69 @@ async function getBuyerOrder(buyerId, orderNumber) {
   const order = orderResult.rows[0];
   if (!order) throw notFound('Order not found.');
 
-  const [itemsResult, paymentsResult] = await Promise.all([
+  const [itemsResult, paymentsResult, requestsResult, refundResult] = await Promise.all([
     db.query(
       `SELECT oi.id, oi.product_id AS "productId", oi.product_name AS "productName",
               oi.product_image_url AS "imageUrl", oi.unit_price AS "unitPrice",
+              oi.variant_sku AS "variantSku", oi.variant_attributes AS "variantAttributes",
               oi.quantity, oi.line_total AS "lineTotal", oi.seller_id AS "sellerId",
               sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
               rv.id AS "reviewId", rv.rating AS "reviewRating",
               s.id AS "shipmentId", s.status AS "shipmentStatus", s.carrier,
-              s.tracking_number AS "trackingNumber", s.updated_at AS "shipmentUpdatedAt"
+              s.tracking_number AS "trackingNumber", s.tracking_url AS "trackingUrl",
+              pl.label AS "pickupLocationLabel", pl.town AS "pickupLocationTown",
+              s.buyer_confirmed_at AS "buyerConfirmedAt",
+              s.updated_at AS "shipmentUpdatedAt",
+              s.delivered_at AS "shipmentDeliveredAt",
+              (s.status = 'delivered' AND s.delivered_at >= now() - INTERVAL '7 days') AS "canRequestReturn"
        FROM order_items oi
        LEFT JOIN seller_profiles sp ON sp.user_id = oi.seller_id
        LEFT JOIN reviews rv ON rv.order_item_id = oi.id
        LEFT JOIN shipments s ON s.order_id = oi.order_id AND s.seller_id = oi.seller_id
+       LEFT JOIN seller_pickup_locations pl ON pl.id = s.pickup_location_id
        WHERE oi.order_id = $1
        ORDER BY oi.id ASC`,
       [order.id]
     ),
     db.query(
-      `SELECT provider, provider_ref AS "providerRef", amount, status,
+      `SELECT provider, provider_ref AS "providerRef",
+              transaction_ref AS "transactionRef", amount, status,
               failure_reason AS "failureReason", verified_at AS "verifiedAt",
               created_at AS "createdAt"
        FROM payments WHERE order_id = $1 ORDER BY id DESC`,
+      [order.id]
+    ),
+    db.query(
+      `SELECT r.id, r.order_item_id AS "orderItemId",
+              r.request_type AS "requestType", r.reason, r.quantity, r.status,
+              r.created_at AS "createdAt", f.amount AS "refundAmount",
+              f.provider_reference AS "refundReference"
+       FROM order_adjustment_requests r
+       LEFT JOIN refunds f ON f.request_id = r.id
+       WHERE r.order_id = $1
+       ORDER BY r.created_at DESC, r.id DESC`,
+      [order.id]
+    ),
+    db.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM shipments s
+         WHERE s.order_id = $1 AND s.status <> 'pending'
+       ) AS "hasDispatchedShipment"`,
       [order.id]
     )
   ]);
 
   const items = itemsResult.rows.map((item) => ({
     ...item,
-    canReview: order.status === 'delivered' && !item.reviewId
+    canReview: order.status === 'delivered' && !item.reviewId,
+    canConfirmDelivery: item.shipmentStatus === 'delivered' && !item.buyerConfirmedAt,
+    returnRequests: requestsResult.rows.filter((request) =>
+      Number(request.orderItemId) === Number(item.id)
+    )
   }));
+  const cancellationRequest = requestsResult.rows.find((request) =>
+    request.requestType === 'cancellation'
+  ) || null;
 
   return {
     order: {
@@ -123,9 +159,52 @@ async function getBuyerOrder(buyerId, orderNumber) {
       currency: 'KES',
       items,
       payments: paymentsResult.rows,
+      requests: requestsResult.rows,
+      cancellationRequest,
       canCancel: order.status === 'pending_payment',
+      canRequestCancellation: order.paymentStatus === 'paid' &&
+        ['paid', 'processing'].includes(order.status) &&
+        !refundResult.rows[0].hasDispatchedShipment &&
+        !['pending', 'approved'].includes(cancellationRequest?.status),
       canRetryPayment: order.status === 'pending_payment' && order.paymentStatus !== 'paid'
     }
+  };
+}
+
+async function confirmDelivery(buyerId, orderNumber, shipmentId) {
+  const result = await db.withTransaction(async (client) => {
+    const orderResult = await client.query(
+      `SELECT id FROM orders WHERE order_number = $1 AND buyer_id = $2 FOR UPDATE`,
+      [orderNumber, buyerId]
+    );
+    if (!orderResult.rowCount) throw notFound('Order not found.');
+    const shipmentResult = await client.query(
+      `SELECT id, buyer_confirmed_at AS "buyerConfirmedAt"
+       FROM shipments WHERE id = $1 AND order_id = $2 AND status = 'delivered'
+       FOR UPDATE`,
+      [shipmentId, orderResult.rows[0].id]
+    );
+    const shipment = shipmentResult.rows[0];
+    if (!shipment) throw conflict('This shipment has not been marked delivered yet.');
+    if (shipment.buyerConfirmedAt) {
+      return { alreadyConfirmed: true };
+    }
+    await client.query(
+      'UPDATE shipments SET buyer_confirmed_at = now() WHERE id = $1',
+      [shipmentId]
+    );
+    return { alreadyConfirmed: false };
+  });
+  if (!result.alreadyConfirmed) {
+    await notifyOrder(orderNumber, {
+      subject: `Delivery confirmed for order ${orderNumber}`,
+      message: 'The buyer confirmed receipt of your shipment.',
+      audience: 'sellers'
+    });
+  }
+  return {
+    message: result.alreadyConfirmed ? 'Delivery was already confirmed.' : 'Delivery confirmed.',
+    ...result
   };
 }
 
@@ -136,7 +215,9 @@ async function getBuyerStats(buyerId) {
          COUNT(*)::int AS "ordersCount",
          COUNT(*) FILTER (WHERE status = ANY($2::text[]))::int AS "activeOrders",
          COUNT(*) FILTER (WHERE status = 'delivered')::int AS "deliveredOrders",
-         COALESCE(SUM(total) FILTER (WHERE payment_status = 'paid' AND status <> 'cancelled'), 0) AS "totalSpent"
+         COALESCE(SUM(total - COALESCE((
+           SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = orders.id
+         ), 0)) FILTER (WHERE payment_status IN ('paid', 'refunded') AND status <> 'cancelled'), 0) AS "totalSpent"
        FROM orders WHERE buyer_id = $1`,
       [buyerId, ACTIVE_STATUSES]
     ),
@@ -162,4 +243,10 @@ async function getBuyerStats(buyerId) {
   };
 }
 
-module.exports = { getBuyerOrders, getBuyerOrder, getBuyerStats, ACTIVE_STATUSES };
+module.exports = {
+  getBuyerOrders,
+  getBuyerOrder,
+  confirmDelivery,
+  getBuyerStats,
+  ACTIVE_STATUSES
+};

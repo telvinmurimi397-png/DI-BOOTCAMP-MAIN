@@ -105,6 +105,9 @@ function userRow(user) {
         <div>
           <span class="cell-main">${escapeHtml(user.fullName)}</span>
           <span class="cell-sub">${escapeHtml(user.email)}</span>
+          <span class="cell-sub">${user.emailVerified ? 'Email verified' : 'Email unverified'} · ${
+            user.phoneVerified ? 'Phone verified' : 'Phone unverified'
+          }</span>
         </div>
       </div>
     </td>

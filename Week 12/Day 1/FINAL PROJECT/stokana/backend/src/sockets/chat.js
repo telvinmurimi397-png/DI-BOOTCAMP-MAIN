@@ -27,14 +27,23 @@ function createChatServer(httpServer, sessionMiddleware) {
 
   io.on('connection', async (socket) => {
     const user = socket.user;
-    socket.join(`user:${user.id}`);
+    const userRoom = `user:${user.id}`;
+    const wasOnline = (await io.in(userRoom).fetchSockets()).length > 0;
+    socket.join(userRoom);
 
     try {
       const { rows } = await db.query(
-        'SELECT id FROM conversations WHERE buyer_id = $1 OR seller_id = $1',
+        `SELECT id, buyer_id AS "buyerId", seller_id AS "sellerId"
+         FROM conversations WHERE buyer_id = $1 OR seller_id = $1`,
         [user.id]
       );
-      for (const row of rows) socket.join(`conversation:${row.id}`);
+      for (const row of rows) {
+        const room = `conversation:${row.id}`;
+        socket.join(room);
+        if (!wasOnline) {
+          io.to(room).emit('presence:changed', { userId: user.id, online: true });
+        }
+      }
     } catch (error) {
       console.error('[socket] failed to load conversations:', error.message);
     }
@@ -76,7 +85,16 @@ function createChatServer(httpServer, sessionMiddleware) {
       }
     });
 
-    socket.on('disconnect', () => {});
+    socket.on('disconnecting', async () => {
+      const conversationRooms = [...socket.rooms].filter((room) => room.startsWith('conversation:'));
+      try {
+        const sockets = await io.in(userRoom).fetchSockets();
+        if (sockets.length > 1) return;
+        for (const room of conversationRooms) io.to(room).emit('presence:changed', { userId: user.id, online: false });
+      } catch (error) {
+        console.error('[socket] presence update failed:', error.message);
+      }
+    });
   });
 
   return io;

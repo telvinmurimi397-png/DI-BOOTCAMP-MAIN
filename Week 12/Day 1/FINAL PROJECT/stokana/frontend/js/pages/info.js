@@ -140,23 +140,23 @@ const PAGES = {
         title: 'How to request a return',
         body: `
           <ol>
-            <li>Open <a href="/account/orders">My orders</a> and select the order.</li>
-            <li>Message the seller with the item, reason and photos.</li>
-            <li>Agree the return method and pickup or drop-off point with the seller.</li>
-            <li>Keep proof of return until your refund is confirmed.</li>
+            <li>Open <a href="/account/orders">My orders</a> and select the delivered order.</li>
+            <li>Choose <strong>Request return / refund</strong> on the item and explain the issue within 7 days of delivery.</li>
+            <li>An administrator reviews the request. Coordinate the return and keep proof until the item is received.</li>
+            <li>After approval and receipt, the refund is issued to the original payment method.</li>
           </ol>
-          <p>Sellers have 2 working days to respond to a return request. If you cannot agree, contact STOKANA support and we will review the case.</p>`
+          <p>For a paid order that has not been dispatched, open its detail page and submit a cancellation request. The seller's fulfilment is paused while the request is reviewed.</p>
+          <p>Refunds are processed by STOKANA support through the payment provider; the demo does not initiate provider refunds automatically.</p>`
       },
       {
         id: 'refunds',
         title: 'Refund timelines',
         body: `
-          <p>Once a return is approved and received, refunds are issued to the original payment method.</p>
+          <p>Once an approved return is received, STOKANA support issues the refund to the original payment method and records the provider reference. The demo records refunds but does not initiate a transfer.</p>
           <ul>
-            <li>M-Pesa or mobile money: 1–5 working days.</li>
-            <li>Card payments: 5–10 working days depending on your bank.</li>
             <li>Order cancelled before payment success: no charge is taken.</li>
             <li>Failed payment attempts: any reserved amount is released by your provider.</li>
+            <li>For paid orders, the payment provider controls how long a refund takes to appear.</li>
           </ul>
           <p>Delivery fees are refunded only when the return is due to a seller error or a damaged or incorrect item.</p>`
       },
@@ -265,6 +265,7 @@ const PAGES = {
             <li><strong>Seller data:</strong> shop name, county, town, description, logo and payout details.</li>
             <li><strong>Order data:</strong> cart contents, delivery address, order history and payment status.</li>
             <li><strong>Communication:</strong> messages exchanged with sellers or buyers.</li>
+            <li><strong>Engagement data:</strong> referral relationships, reward balances, campaign notifications and your email marketing preference.</li>
             <li><strong>Technical data:</strong> session cookies, IP address and basic logs needed to secure the service.</li>
           </ul>`
       },
@@ -279,6 +280,7 @@ const PAGES = {
             <li>Prevent fraud, abuse and duplicate payment processing.</li>
             <li>Provide support, resolve disputes and improve the marketplace.</li>
             <li>Send essential service messages such as password resets and order updates.</li>
+            <li>Send promotional campaigns and abandoned-cart reminders only when you opt in; you can withdraw consent in account settings or through an email unsubscribe link.</li>
           </ul>`
       },
       {

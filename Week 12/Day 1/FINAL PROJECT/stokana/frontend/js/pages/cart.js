@@ -42,6 +42,8 @@ function itemHtml(item) {
       </a>
       <div class="cart-item-main">
         <a href="/product/${encodeURIComponent(item.slug)}">${escapeHtml(item.name)}</a>
+        ${item.variantAttributes ? `<div class="tiny muted">${Object.entries(item.variantAttributes)
+          .map(([name, value]) => `${escapeHtml(name)}: ${escapeHtml(value)}`).join(' · ')}</div>` : ''}
         <div class="shop">from <a href="/shop/${encodeURIComponent(item.shopSlug)}" style="display:inline;font-size:inherit;font-weight:600">${escapeHtml(
     item.shopName
   )}</a></div>
@@ -58,6 +60,7 @@ function itemHtml(item) {
           <button class="remove-btn" type="button" data-remove-item aria-label="Remove ${escapeHtml(
             item.name
           )} from cart">${icon('trash', { size: 16 })}</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-save-for-later>Save for later</button>
           <span class="muted" style="font-size:11px">${soldOut ? 'Sold out' : `${stock} in stock`}</span>
         </div>
         ${unavailable ? `<div class="cart-issue">${icon('alert-circle', { size: 12 })} ${escapeHtml(item.issue)}</div>` : ''}
@@ -67,6 +70,28 @@ function itemHtml(item) {
         <span>${money(item.price)} each</span>
       </div>
     </div>`;
+}
+
+function savedItemsHtml(items) {
+  if (!items.length) return '';
+  return `<section style="border-top:1px solid var(--line);margin-top:18px;padding-top:16px">
+    <h3 style="font-size:15px;margin-bottom:8px">Saved for later (${items.length})</h3>
+    ${items.map((item) => `<div class="cart-item${item.isAvailable ? '' : ' is-unavailable'}" data-saved-item="${item.savedItemId}">
+      <a href="/product/${encodeURIComponent(item.slug)}">${img(item.imageUrl, item.name, 'width="68" height="68"')}</a>
+      <div class="cart-item-main">
+        <a href="/product/${encodeURIComponent(item.slug)}">${escapeHtml(item.name)}</a>
+        ${item.variantAttributes ? `<div class="tiny muted">${Object.entries(item.variantAttributes)
+          .map(([name, value]) => `${escapeHtml(name)}: ${escapeHtml(value)}`).join(' · ')}</div>` : ''}
+        <div class="shop">from ${escapeHtml(item.shopName)}</div>
+        ${item.issue ? `<div class="cart-issue">${escapeHtml(item.issue)}</div>` : ''}
+        <div class="row" style="gap:7px;margin-top:8px">
+          <button class="btn btn-secondary btn-sm" type="button" data-move-saved-to-cart ${item.isAvailable ? '' : 'disabled'}>Move to cart</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-remove-saved>Remove</button>
+        </div>
+      </div>
+      <div class="cart-item-price"><strong>${money(item.lineTotal)}</strong><span>${item.quantity} saved</span></div>
+    </div>`).join('')}
+  </section>`;
 }
 
 function renderSummary(summary) {
@@ -111,8 +136,14 @@ function bindItems() {
       });
     });
     row.querySelector('[data-remove-item]')?.addEventListener('click', () => removeItem(itemId));
+    row.querySelector('[data-save-for-later]')?.addEventListener('click', () => saveForLater(itemId));
   });
 
+  root.querySelectorAll('[data-saved-item]').forEach((row) => {
+    const savedItemId = Number(row.dataset.savedItem);
+    row.querySelector('[data-move-saved-to-cart]')?.addEventListener('click', () => moveSavedToCart(savedItemId));
+    row.querySelector('[data-remove-saved]')?.addEventListener('click', () => removeSavedItem(savedItemId));
+  });
   root.querySelector('[data-clear-cart]')?.addEventListener('click', clearCart);
 }
 
@@ -158,6 +189,50 @@ async function removeItem(itemId) {
   }
 }
 
+async function saveForLater(itemId) {
+  if (busy) return;
+  busy = true;
+  try {
+    const data = await api.post(`/cart/items/${itemId}/save-for-later`);
+    applyCart(data);
+    refreshCartBadge();
+    toast('Item saved for later.');
+  } catch (error) {
+    toast(errorMessage(error), 'error');
+  } finally {
+    busy = false;
+  }
+}
+
+async function moveSavedToCart(savedItemId) {
+  if (busy) return;
+  busy = true;
+  try {
+    const data = await api.post(`/cart/saved/${savedItemId}/move-to-cart`);
+    applyCart(data);
+    refreshCartBadge();
+    toast('Item moved to your cart.');
+  } catch (error) {
+    toast(errorMessage(error), 'error');
+  } finally {
+    busy = false;
+  }
+}
+
+async function removeSavedItem(savedItemId) {
+  if (busy) return;
+  busy = true;
+  try {
+    const data = await api.delete(`/cart/saved/${savedItemId}`);
+    applyCart(data);
+    toast('Saved item removed.');
+  } catch (error) {
+    toast(errorMessage(error), 'error');
+  } finally {
+    busy = false;
+  }
+}
+
 async function clearCart() {
   if (busy) return;
   const confirmed = await confirmDialog({
@@ -192,8 +267,21 @@ function renderEmpty() {
 }
 
 function render() {
-  if (!cart || !cart.items.length) {
+  if (!cart || (!cart.items.length && !cart.savedItems?.length)) {
     renderEmpty();
+    return;
+  }
+
+  if (!cart.items.length) {
+    subtitle.textContent = 'Your cart is waiting to be filled.';
+    root.outerHTML = `<div class="content-card" id="cart-root">${emptyState({
+        iconName: 'cart',
+        title: 'Your cart is empty',
+        text: 'Move a saved item back to your cart whenever you are ready.',
+        action: '<a class="btn btn-primary" href="/explore">Start shopping</a>'
+      })}${savedItemsHtml(cart.savedItems)}</div>`;
+    root = document.getElementById('cart-root');
+    bindItems();
     return;
   }
 
@@ -213,6 +301,7 @@ function render() {
             } unavailable and excluded from your total.</div></div>`
           : ''}
         ${cart.items.map((item) => itemHtml(item)).join('')}
+        ${savedItemsHtml(cart.savedItems || [])}
       </div>
       ${renderSummary(cart.summary)}
     </div>`;

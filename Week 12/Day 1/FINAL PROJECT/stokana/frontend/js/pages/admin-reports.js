@@ -24,6 +24,7 @@ let from = isIsoDate(params.get('from')) ? params.get('from') : isoDaysAgo(29);
 let to = isIsoDate(params.get('to')) ? params.get('to') : isoToday();
 let dash = null;
 let loading = false;
+let messageReportsPage = 1;
 
 function syncUrl() {
   const url = new URL(window.location.href);
@@ -94,7 +95,8 @@ function renderShell() {
         </form>
       </div>
     </div>
-    <div id="reports-host">${pageLoader()}</div>`;
+    <div id="reports-host">${pageLoader()}</div>
+    <div id="message-reports-host" style="margin-top:22px">${pageLoader()}</div>`;
 
   const form = dash.content.querySelector('#reports-filter');
   form.addEventListener('submit', (event) => {
@@ -132,7 +134,15 @@ function applyRange(nextFrom, nextTo) {
 
 function render(data) {
   const host = dash.content.querySelector('#reports-host');
-  const { summary, daily, topProducts, topSellers, topCategories } = data;
+  const {
+    summary,
+    daily,
+    topProducts,
+    topSellers,
+    topCategories,
+    deliveryPerformance,
+    deliveryProviders
+  } = data;
 
   from = data.range.from;
   to = data.range.to;
@@ -182,6 +192,54 @@ function render(data) {
         )} · ${pluralize(summary.orders, 'paid order')}`,
         body: `<div class="card-body">${chart}</div>`
       })}
+    </div>
+
+    <div style="margin-top:16px">
+      ${statGrid([
+        {
+          label: 'Shipments',
+          value: plainNumber(deliveryPerformance.totalShipments),
+          iconName: 'truck',
+          foot: `${plainNumber(deliveryPerformance.inTransit)} in transit`
+        },
+        {
+          label: 'Delivered',
+          value: plainNumber(deliveryPerformance.delivered),
+          iconName: 'check',
+          tone: 'green',
+          foot: `${plainNumber(deliveryPerformance.buyerConfirmed)} buyer-confirmed`
+        },
+        {
+          label: 'Awaiting confirmation',
+          value: plainNumber(deliveryPerformance.awaitingBuyerConfirmation),
+          iconName: 'clock',
+          foot: 'Marked delivered by sellers'
+        },
+        {
+          label: 'Average delivery',
+          value: `${Number(deliveryPerformance.averageDeliveryDays || 0).toFixed(1)} days`,
+          iconName: 'calendar',
+          foot: `${plainNumber(deliveryPerformance.failed)} failed shipments`
+        }
+      ])}
+      <div style="margin-top:16px">
+        ${panel({
+          title: 'Courier performance',
+          subtitle: 'Seller-entered carrier names for shipments on orders paid in this period',
+          body: topList(
+            deliveryProviders,
+            (provider, index) => `<div class="top-list-row">
+              <span class="rank">${index + 1}</span>
+              <div class="grow">
+                <strong>${escapeHtml(provider.carrier)}</strong>
+                <span>${plainNumber(provider.delivered)} delivered · ${plainNumber(provider.failed)} failed · ${Number(provider.averageDeliveryDays || 0).toFixed(1)} day average</span>
+              </div>
+              <span class="amount">${pluralize(provider.shipments, 'shipment')}</span>
+            </div>`,
+            'No shipment data in this period.'
+          )
+        })}
+      </div>
     </div>
 
     <div class="admin-report-grid" style="margin-top:16px">
@@ -242,6 +300,70 @@ function render(data) {
     </div>`;
 }
 
+async function loadMessageReports(page = messageReportsPage) {
+  const host = dash.content.querySelector('#message-reports-host');
+  if (!host) return;
+  try {
+    const data = await api.get(`/admin/message-reports${queryString({ status: 'pending', page, limit: 20 })}`);
+    const pagination = data.pagination;
+    if (page > pagination.totalPages && pagination.totalPages > 0) {
+      return loadMessageReports(pagination.totalPages);
+    }
+    messageReportsPage = pagination.page;
+    const rows = data.reports || [];
+    host.innerHTML = panel({
+      title: 'Buyer–seller conversation reports',
+      subtitle: `${pagination.total} pending report${pagination.total === 1 ? '' : 's'}`,
+      body: rows.length
+        ? `<div class="card-body list-stack">${rows.map((report) => `
+            <article class="content-card" style="padding:14px">
+              <div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px">
+                <div>
+                  <strong>${escapeHtml(report.reporterName)} reported a conversation</strong>
+                  <div class="tiny muted">${escapeHtml(report.buyerName)} · ${escapeHtml(report.shopName || report.sellerName)} · ${escapeHtml(formatDate(report.createdAt))}</div>
+                  ${report.productName ? `<div class="tiny muted">Product: ${escapeHtml(report.productName)}</div>` : ''}
+                  ${report.orderNumber ? `<div class="tiny muted">Order: ${escapeHtml(report.orderNumber)}</div>` : ''}
+                </div>
+                <div class="row" style="gap:6px">
+                  <button class="btn btn-secondary btn-sm" type="button" data-report-status="reviewed" data-report-id="${report.id}">Mark reviewed</button>
+                  <button class="btn btn-ghost btn-sm" type="button" data-report-status="dismissed" data-report-id="${report.id}">Dismiss</button>
+                </div>
+              </div>
+              <p style="margin:10px 0 6px"><strong>Reason:</strong> ${escapeHtml(report.reason)}</p>
+              <details>
+                <summary class="tiny" style="cursor:pointer">Recent conversation messages</summary>
+                <pre style="white-space:pre-wrap;font:inherit;font-size:12px;line-height:1.5;margin:8px 0 0">${escapeHtml(report.recentMessages || 'No messages recorded.')}</pre>
+              </details>
+            </article>`).join('')}
+            ${pagination.totalPages > 1 ? `<div class="row" style="justify-content:space-between">
+              <button class="btn btn-ghost btn-sm" type="button" data-report-page="${pagination.page - 1}" ${pagination.page <= 1 ? 'disabled' : ''}>Previous</button>
+              <span class="tiny muted">Page ${pagination.page} of ${pagination.totalPages}</span>
+              <button class="btn btn-ghost btn-sm" type="button" data-report-page="${pagination.page + 1}" ${pagination.page >= pagination.totalPages ? 'disabled' : ''}>Next</button>
+            </div>` : ''}
+          </div>`
+        : '<div class="card-body"><p class="tiny muted">No pending conversation reports.</p></div>'
+    });
+    host.querySelectorAll('[data-report-status]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        try {
+          await api.patch(`/admin/message-reports/${button.dataset.reportId}`, {
+            status: button.dataset.reportStatus
+          });
+          toast('Conversation report updated.');
+          await loadMessageReports(messageReportsPage);
+        } catch (error) {
+          toast(errorMessage(error), 'error');
+        }
+      });
+    });
+    host.querySelectorAll('[data-report-page]').forEach((button) => {
+      button.addEventListener('click', () => loadMessageReports(Number(button.dataset.reportPage)));
+    });
+  } catch (error) {
+    host.innerHTML = errorState(errorMessage(error));
+  }
+}
+
 async function load() {
   if (loading || !dash) return;
   loading = true;
@@ -273,7 +395,7 @@ async function init() {
 
   syncUrl();
   renderShell();
-  await load();
+  await Promise.all([load(), loadMessageReports()]);
 }
 
 init();

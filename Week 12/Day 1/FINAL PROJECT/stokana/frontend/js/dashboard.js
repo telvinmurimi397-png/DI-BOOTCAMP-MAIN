@@ -11,10 +11,13 @@ const SELLER_NAV = [
   { href: '/seller/products', label: 'Products', icon: 'package', active: '/seller/products' },
   { href: '/seller/products/new', label: 'Add a product', icon: 'plus', active: '/seller/products/new' },
   { href: '/seller/shop', label: 'Shop profile', icon: 'store', active: '/seller/shop' },
+  { href: '/seller/promotions', label: 'Promotions', icon: 'tags', active: '/seller/promotions' },
+  { href: '/seller/plans', label: 'Seller plans', icon: 'tags', active: '/seller/plans' },
   { group: 'Sales' },
   { href: '/seller/orders', label: 'Orders', icon: 'truck', active: '/seller/orders' },
   { href: '/seller/sales', label: 'Sales & payouts', icon: 'wallet', active: '/seller/sales' },
   { group: 'Communication' },
+  { href: '/seller/notifications', label: 'Notifications', icon: 'info', active: '/seller/notifications' },
   { href: '/seller/messages', label: 'Messages', icon: 'message', active: '/seller/messages', badge: 'messages' }
 ];
 
@@ -23,10 +26,13 @@ const ADMIN_NAV = [
   { group: 'Marketplace' },
   { href: '/admin/sellers', label: 'Seller approvals', icon: 'shield-check', active: '/admin/sellers' },
   { href: '/admin/products', label: 'Product approvals', icon: 'package', active: '/admin/products' },
+  { href: '/admin/promotions', label: 'Promotions', icon: 'tags', active: '/admin/promotions' },
+  { href: '/admin/campaigns', label: 'Campaigns', icon: 'message', active: '/admin/campaigns' },
   { href: '/admin/categories', label: 'Categories', icon: 'tags', active: '/admin/categories' },
   { group: 'Operations' },
   { href: '/admin/orders', label: 'Orders', icon: 'list', active: '/admin/orders' },
   { href: '/admin/users', label: 'Users', icon: 'users', active: '/admin/users' },
+  { href: '/admin/notifications', label: 'Notifications', icon: 'info', active: '/admin/notifications' },
   { group: 'Insights' },
   { href: '/admin/reports', label: 'Reports', icon: 'chart', active: '/admin/reports' },
   { href: '/admin/commissions', label: 'Commissions', icon: 'wallet', active: '/admin/commissions' },

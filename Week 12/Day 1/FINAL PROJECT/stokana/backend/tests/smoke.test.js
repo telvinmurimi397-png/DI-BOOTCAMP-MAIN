@@ -123,6 +123,18 @@ function needs(value, label) {
 async function register(client, payload, label) {
   const data = expectStatus(await client.post('/api/auth/register', payload), 201, `${label} registration`);
   assert(data.user?.id, `${label} registration did not return a user.`);
+  if (data.devVerification?.devCode) {
+    expectStatus(
+      await client.post('/api/auth/verification/verify', {
+        channel: 'email',
+        code: data.devVerification.devCode
+      }),
+      200,
+      `${label} email verification`
+    );
+  } else if (!data.user.emailVerified) {
+    throw new Error('The smoke test needs development verification codes to verify its temporary buyer accounts.');
+  }
   return data.user;
 }
 

@@ -29,6 +29,8 @@ const registerSchema = z
     email: emailRule,
     phone: phoneRule,
     password: passwordRule,
+    referralCode: z.string().trim().toUpperCase().regex(/^STK[A-Z0-9]{2,13}$/).optional(),
+    marketingEmailConsent: z.boolean().default(false),
     role: z.enum(['buyer', 'seller'], { message: 'Choose buyer or seller.' }).default('buyer'),
     shopName: z.string().trim().min(3, 'Shop name must be at least 3 characters.').max(120).optional(),
     shopDescription: z.string().trim().max(1000).optional(),
@@ -60,12 +62,28 @@ const resetPasswordSchema = z.object({
 
 const updateProfileSchema = z.object({
   fullName: z.string().trim().min(2, 'Enter your full name.').max(120).optional(),
-  phone: phoneRule
+  phone: phoneRule,
+  marketingEmailConsent: z.boolean().optional()
 });
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Enter your current password.').max(72),
   newPassword: passwordRule
+});
+
+const verificationSendSchema = z.object({ channel: z.enum(['email', 'phone']) });
+const verificationCodeSchema = z.object({
+  channel: z.enum(['email', 'phone']),
+  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit verification code.')
+});
+const twoFactorCodeSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit authenticator code.')
+});
+const twoFactorLoginSchema = twoFactorCodeSchema.extend({
+  challengeToken: z.string().regex(/^[a-f0-9]{64}$/, 'This sign-in challenge is invalid.')
+});
+const twoFactorDisableSchema = twoFactorCodeSchema.extend({
+  password: z.string().min(1).max(72)
 });
 
 module.exports = {
@@ -74,5 +92,10 @@ module.exports = {
   forgotPasswordSchema,
   resetPasswordSchema,
   updateProfileSchema,
-  changePasswordSchema
+  changePasswordSchema,
+  verificationSendSchema,
+  verificationCodeSchema,
+  twoFactorCodeSchema,
+  twoFactorLoginSchema,
+  twoFactorDisableSchema
 };

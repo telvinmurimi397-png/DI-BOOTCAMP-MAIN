@@ -65,6 +65,7 @@ let page = Math.max(1, Number(params.get('page')) || 1);
 let dash = null;
 let loading = false;
 let ordersById = new Map();
+let requestsById = new Map();
 
 function syncUrl() {
   const url = new URL(window.location.href);
@@ -85,6 +86,16 @@ function shipmentBadge(value) {
 
 function renderShell() {
   dash.content.innerHTML = `
+    <section class="card" style="padding:16px;margin-bottom:16px">
+      <div class="row-between" style="gap:12px;margin-bottom:12px">
+        <div>
+          <h3 style="font-size:15px">Cancellation and return requests</h3>
+          <p class="tiny muted" style="margin-top:3px">Approve or reject buyer requests. Refunds must first be issued through the payment provider; record the provider reference to close a request.</p>
+        </div>
+        <span class="tiny muted">Latest 50</span>
+      </div>
+      <div id="order-requests-host">${pageLoader()}</div>
+    </section>
     <div id="orders-summary"></div>
     <div class="table-toolbar">
       <div id="order-tabs">${tabsHtml(TABS, status, { ariaLabel: 'Filter orders by status' })}</div>
@@ -146,6 +157,78 @@ function renderSummary(summary) {
       tone: 'blue'
     }
   ]);
+}
+
+function renderRequests(requests) {
+  const host = dash.content.querySelector('#order-requests-host');
+  requestsById = new Map(requests.map((request) => [Number(request.id), request]));
+  const visible = requests.filter((request) => ['pending', 'approved'].includes(request.status));
+  if (!visible.length) {
+    host.innerHTML = '<p class="tiny muted">No open cancellation or return requests.</p>';
+    return;
+  }
+  host.innerHTML = `<div style="display:grid;gap:10px">${visible.map((request) => {
+    const type = request.requestType === 'cancellation'
+      ? 'Order cancellation'
+      : `Return / refund · ${request.productName} · ${request.quantity} unit(s)`;
+    const expectedRefund = request.requestType === 'cancellation'
+      ? Number(request.orderTotal)
+      : Number(request.unitPrice) * request.quantity;
+    const maximumRefund = expectedRefund + (request.requestType === 'return_refund' ? Number(request.shippingFee || 0) : 0);
+    const actions = request.status === 'pending'
+      ? `<div class="row" style="gap:6px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" type="button" data-request-action="approve" data-request-id="${request.id}">Approve</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-request-action="reject" data-request-id="${request.id}">Reject</button>
+        </div>`
+      : `<div class="row" style="gap:6px;flex-wrap:wrap;align-items:end">
+          <label class="form-group" style="min-width:190px">
+            <span class="form-label">M-Pesa refund receipt</span>
+            <input class="input" type="text" maxlength="120" data-refund-reference="${request.id}" placeholder="M-Pesa transaction ID">
+          </label>
+          <label class="form-group" style="min-width:150px">
+            <span class="form-label">Refund amount (KES)</span>
+            <input class="input" type="number" min="${expectedRefund.toFixed(2)}" max="${maximumRefund.toFixed(2)}" step="0.01" value="${expectedRefund.toFixed(2)}" data-refund-amount="${request.id}" ${request.requestType === 'cancellation' ? 'readonly' : ''}>
+          </label>
+          <button class="btn btn-secondary btn-sm" type="button" data-request-action="refund" data-request-id="${request.id}">Record refund</button>
+        </div>`;
+    return `<article class="content-card" style="padding:12px 14px">
+      <div class="row-between" style="gap:12px;align-items:flex-start">
+        <div>
+          <strong>${escapeHtml(type)}</strong>
+          <div class="tiny muted" style="margin-top:3px">
+            <a href="/admin/orders?q=${encodeURIComponent(request.orderNumber)}">${escapeHtml(request.orderNumber)}</a>
+            · ${escapeHtml(request.buyerName)} · ${escapeHtml(request.buyerEmail)}
+            · ${escapeHtml(request.shopName || 'All sellers')} · ${formatDate(request.createdAt)}
+          </div>
+          <p class="tiny" style="margin-top:6px">${escapeHtml(request.reason)}</p>
+          <div style="margin-top:6px">${statusBadge(request.status)}</div>
+        </div>
+        ${actions}
+      </div>
+    </article>`;
+  }).join('')}</div>`;
+
+  host.querySelectorAll('[data-request-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const requestId = Number(button.dataset.requestId);
+      const request = requestsById.get(requestId);
+      if (!request) return;
+      const action = button.dataset.requestAction;
+      const refundReference = host.querySelector(`[data-refund-reference="${requestId}"]`)?.value.trim();
+      const refundAmount = Number(host.querySelector(`[data-refund-amount="${requestId}"]`)?.value);
+      if (action === 'refund' && !refundReference) {
+        toast('Enter the refund transaction reference.', 'error');
+        host.querySelector(`[data-refund-reference="${requestId}"]`)?.focus();
+        return;
+      }
+      if (action === 'refund' && (!Number.isFinite(refundAmount) || refundAmount <= 0)) {
+        toast('Enter a valid refund amount.', 'error');
+        host.querySelector(`[data-refund-amount="${requestId}"]`)?.focus();
+        return;
+      }
+      reviewRequest(requestId, action, button, refundReference, refundAmount);
+    });
+  });
 }
 
 function statusControls(order) {
@@ -290,6 +373,22 @@ async function applyStatus(order, nextStatus, button) {
   }
 }
 
+async function reviewRequest(requestId, action, button, refundReference, refundAmount) {
+  setButtonLoading(button, true, '');
+  try {
+    const result = await api.patch(`/admin/order-requests/${requestId}`, {
+      action,
+      ...(refundReference ? { refundReference } : {}),
+      ...(refundAmount ? { refundAmount } : {})
+    });
+    toast(result.message || 'Order request updated.');
+    await load();
+  } catch (error) {
+    toast(errorMessage(error), 'error');
+    setButtonLoading(button, false);
+  }
+}
+
 async function load() {
   if (loading || !dash) return;
   loading = true;
@@ -299,15 +398,19 @@ async function load() {
   if (paginationHost) paginationHost.innerHTML = '';
 
   try {
-    const data = await api.get(
-      `/admin/orders${queryString({
-        status: status === 'all' ? undefined : status,
-        q: search || undefined,
-        page,
-        limit: 15
-      })}`
-    );
+    const [data, requests] = await Promise.all([
+      api.get(
+        `/admin/orders${queryString({
+          status: status === 'all' ? undefined : status,
+          q: search || undefined,
+          page,
+          limit: 15
+        })}`
+      ),
+      api.get('/admin/order-requests?status=all&limit=50')
+    ]);
     renderOrders(data);
+    renderRequests(requests.requests);
   } catch (error) {
     if (host) {
       host.innerHTML = errorState(errorMessage(error));

@@ -6,6 +6,16 @@ async function listProducts(req, res) {
   res.json(result);
 }
 
+async function recentlyViewed(req, res) {
+  const products = await catalogueService.getProductsBySlugs(req.query.slugs);
+  res.json({ products });
+}
+
+async function recommendations(req, res) {
+  const products = await catalogueService.getRecommendations(req.user?.id);
+  res.json({ products, personalized: Boolean(req.user?.id) });
+}
+
 async function getProduct(req, res) {
   const result = await catalogueService.getProductBySlug(req.params.slug);
   if (!result) throw notFound('That product could not be found.');
@@ -40,4 +50,14 @@ async function stats(req, res) {
   res.json(data);
 }
 
-module.exports = { listProducts, getProduct, listProductReviews, listCategories, listShops, getShop, stats };
+module.exports = {
+  listProducts,
+  recentlyViewed,
+  recommendations,
+  getProduct,
+  listProductReviews,
+  listCategories,
+  listShops,
+  getShop,
+  stats
+};

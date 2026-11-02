@@ -110,6 +110,10 @@ function actionsFor(seller) {
   if (seller.status === 'approved') {
     base.push(`<button class="btn btn-secondary btn-sm" type="button" data-action="suspend"
       data-id="${seller.id}" data-shop="${escapeHtml(seller.shopName)}">Suspend</button>`);
+    base.push(`<button class="btn btn-secondary btn-sm" type="button" data-action="feature"
+      data-id="${seller.id}" data-featured="${seller.isFeatured}">
+      ${seller.isFeatured ? 'Remove featured' : 'Feature shop'}
+    </button>`);
   }
   return base.join('');
 }
@@ -208,6 +212,18 @@ function renderSellers(data) {
 
 async function review(button) {
   const action = button.dataset.action;
+  if (action === 'feature') {
+    try {
+      await api.patch(`/admin/sellers/${button.dataset.id}/featured`, {
+        isFeatured: button.dataset.featured !== 'true'
+      });
+      toast('Featured seller placement updated.');
+      await load();
+    } catch (error) {
+      toast(errorMessage(error), 'error');
+    }
+    return;
+  }
   let reason;
   if (action === 'reject' || action === 'suspend') {
     reason = await promptDialog({

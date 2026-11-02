@@ -21,6 +21,8 @@ const countEl = document.getElementById('results-count');
 const sortSelect = document.getElementById('sort-select');
 const priceMin = document.getElementById('price-min');
 const priceMax = document.getElementById('price-max');
+const sellerInput = document.getElementById('filter-seller');
+const locationInput = document.getElementById('filter-location');
 const inStock = document.getElementById('in-stock');
 const featuredOnly = document.getElementById('featured-only');
 const filterPanel = document.getElementById('filter-panel');
@@ -33,6 +35,8 @@ function params() {
   return {
     q: search.get('q') || '',
     category: search.get('category') || '',
+    seller: search.get('seller') || '',
+    location: search.get('location') || '',
     minPrice: search.get('minPrice') || '',
     maxPrice: search.get('maxPrice') || '',
     inStock: search.get('inStock') === 'true',
@@ -68,7 +72,9 @@ function renderCategories(current) {
         (category) => `<a href="/explore?category=${encodeURIComponent(category.slug)}" class="${
           current.category === category.slug ? 'active' : ''
         }" data-category="${escapeHtml(category.slug)}">
-          <span>${escapeHtml(category.name)}</span>
+          <span>${category.parentCategoryId
+            ? `${escapeHtml(categories.find((parent) => Number(parent.id) === Number(category.parentCategoryId))?.name || '')} / `
+            : ''}${escapeHtml(category.name)}</span>
           <span class="count">${plainNumber(category.productCount)}</span>
         </a>`
       )
@@ -96,6 +102,8 @@ function renderActive(current) {
   if (current.category) {
     chips.push(filterChip(categoryFor(current.category)?.name || current.category, 'category'));
   }
+  if (current.seller) chips.push(filterChip(`Seller: ${current.seller}`, 'seller'));
+  if (current.location) chips.push(filterChip(`Location: ${current.location}`, 'location'));
   if (current.minPrice || current.maxPrice) {
     const label =
       current.minPrice && current.maxPrice
@@ -123,6 +131,8 @@ function syncControls(current) {
   sortSelect.value = current.sort;
   priceMin.value = current.minPrice;
   priceMax.value = current.maxPrice;
+  locationInput.value = current.location;
+  sellerInput.value = current.seller;
   inStock.checked = current.inStock;
   featuredOnly.checked = current.featured;
 }
@@ -174,6 +184,8 @@ async function load() {
       `/products${queryString({
         q: current.q,
         category: current.category,
+        seller: current.seller,
+        location: current.location,
         minPrice: current.minPrice,
         maxPrice: current.maxPrice,
         inStock: current.inStock ? 'true' : '',
@@ -227,6 +239,14 @@ async function init() {
   featuredOnly.addEventListener('change', (event) => {
     setParams({ featured: event.target.checked ? 'true' : null });
   });
+  document.getElementById('seller-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    setParams({ seller: sellerInput.value.trim() || null });
+  });
+  document.getElementById('location-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+    setParams({ location: locationInput.value.trim() || null });
+  });
   document.getElementById('price-form').addEventListener('submit', (event) => {
     event.preventDefault();
     const min = priceMin.value.trim();
@@ -246,12 +266,11 @@ async function init() {
   });
   window.addEventListener('popstate', load);
 
-  try {
-    const data = await api.get('/categories');
-    categories = data.categories || [];
-  } catch {
-    categories = [];
-  }
+  const categoryData = await api.get('/categories').catch((error) => {
+    toast(errorMessage(error), 'error');
+    return { categories: [] };
+  });
+  categories = categoryData.categories || [];
 
   await load();
 }

@@ -2481,6 +2481,38 @@ checkout,
   color: var(--muted);
 }
 
+.chat-online-label {
+  display: inline-block !important;
+  color: #15803d !important;
+  font-size: 10px !important;
+}
+
+.chat-attachment {
+  display: block;
+  max-width: min(280px, 60vw);
+  max-height: 260px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.chat-block-notice {
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+  background: #f8fafc;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.chat-composer [data-chat-attach] {
+  flex: 0 0 auto;
+}
+
+.chat-composer [data-chat-attach].is-selected {
+  color: var(--blue-600);
+  border-color: var(--blue-600);
+}
+
 .chat-back {
   display: none;
 }

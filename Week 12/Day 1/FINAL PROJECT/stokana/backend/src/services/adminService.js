@@ -3,6 +3,7 @@ const settingsService = require('../services/settingsService');
 const catalogueService = require('../services/catalogueService');
 const { slugify } = require('../utils/slug');
 const { badRequest, conflict, notFound } = require('../utils/errors');
+const { notifyOrder } = require('./orderNotificationService');
 
 async function getOverview() {
   const [
@@ -25,10 +26,13 @@ async function getOverview() {
     ),
     db.query(
       `SELECT
-         COALESCE((SELECT SUM(total) FROM orders
-                   WHERE payment_status = 'paid' AND status <> 'cancelled'), 0) AS "grossRevenue",
-         COALESCE((SELECT SUM(commission_total) FROM orders
-                   WHERE payment_status = 'paid' AND status <> 'cancelled'), 0) AS "commissionEarned",
+         COALESCE((SELECT SUM(o.total - COALESCE((
+                     SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = o.id
+                   ), 0))
+                   FROM orders o
+                   WHERE o.payment_status = 'paid' AND o.status <> 'cancelled'), 0) AS "grossRevenue",
+         COALESCE((SELECT SUM(commission_amount) FROM commissions
+                   WHERE status <> 'refunded'), 0) AS "commissionEarned",
          COALESCE((SELECT SUM(seller_earnings) FROM commissions WHERE status = 'earned'), 0) AS "pendingPayouts",
          COALESCE((SELECT SUM(seller_earnings) FROM commissions WHERE status = 'paid'), 0) AS "paidOut"`
     ),
@@ -41,9 +45,9 @@ async function getOverview() {
     ),
     db.query(
       `SELECT u.id AS "sellerId", sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
-              COALESCE(SUM(c.gross_amount), 0) AS "grossSales",
-              COALESCE(SUM(c.commission_amount), 0) AS "commission",
-              COUNT(DISTINCT c.order_id)::int AS "orders"
+              COALESCE(SUM(c.gross_amount) FILTER (WHERE c.status <> 'refunded'), 0) AS "grossSales",
+              COALESCE(SUM(c.commission_amount) FILTER (WHERE c.status <> 'refunded'), 0) AS "commission",
+              COUNT(DISTINCT c.order_id) FILTER (WHERE c.status <> 'refunded')::int AS "orders"
        FROM commissions c
        JOIN users u ON u.id = c.seller_id
        JOIN seller_profiles sp ON sp.user_id = u.id
@@ -58,8 +62,13 @@ async function getOverview() {
        )
        SELECT to_char(months.month, 'YYYY-MM') AS month,
               to_char(months.month, 'Mon') AS label,
-              COALESCE(SUM(o.total), 0) AS revenue,
-              COALESCE(SUM(o.commission_total), 0) AS commission
+              COALESCE(SUM(o.total - COALESCE((
+                SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = o.id
+              ), 0)), 0) AS revenue,
+              COALESCE(SUM((
+                SELECT COALESCE(SUM(c.commission_amount), 0) FROM commissions c
+                WHERE c.order_id = o.id AND c.status <> 'refunded'
+              )), 0) AS commission
        FROM months
        LEFT JOIN orders o ON o.paid_at >= months.month
         AND o.paid_at < months.month + interval '1 month'
@@ -97,7 +106,8 @@ async function listUsers({ role = 'all', q, page = 1, limit = 20 }) {
   );
   const { rows } = await db.query(
     `SELECT u.id, u.full_name AS "fullName", u.email, u.phone, u.role,
-            u.is_active AS "isActive", u.created_at AS "createdAt", u.last_login_at AS "lastLoginAt",
+            u.is_active AS "isActive", u.email_verified AS "emailVerified",
+            u.phone_verified AS "phoneVerified", u.created_at AS "createdAt", u.last_login_at AS "lastLoginAt",
             sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
             sp.status AS "sellerStatus",
             (SELECT COUNT(*)::int FROM orders o WHERE o.buyer_id = u.id) AS "orderCount"
@@ -125,7 +135,15 @@ async function setUserActive(adminId, userId, isActive) {
   if (!user) throw notFound('User not found.');
   if (user.role === 'admin') throw conflict('Admin accounts cannot be deactivated from this screen.');
 
-  await db.query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, userId]);
+  await db.withTransaction(async (client) => {
+    await client.query('UPDATE users SET is_active = $1 WHERE id = $2', [isActive, userId]);
+    if (!isActive) {
+      await client.query(
+        `DELETE FROM "session" WHERE (sess->>'userId')::bigint = $1`,
+        [userId]
+      );
+    }
+  });
   return { ...user, isActive };
 }
 
@@ -153,13 +171,14 @@ async function listSellers({ status = 'all', q, page = 1, limit = 20 }) {
     `SELECT sp.id, sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug", sp.description,
             sp.logo_url AS "logoUrl", sp.banner_url AS "bannerUrl", sp.county, sp.town, sp.phone,
             sp.status, sp.rejection_reason AS "rejectionReason", sp.created_at AS "createdAt",
-            sp.approved_at AS "approvedAt",
+            sp.approved_at AS "approvedAt", sp.is_featured AS "isFeatured",
             u.id AS "userId", u.full_name AS "ownerName", u.email, u.phone AS "ownerPhone",
             (SELECT COUNT(*)::int FROM products p WHERE p.seller_id = u.id) AS "productCount",
             (SELECT COUNT(DISTINCT oi.order_id)::int FROM order_items oi
              JOIN orders o ON o.id = oi.order_id
              WHERE oi.seller_id = u.id AND o.payment_status = 'paid') AS "orderCount",
-            COALESCE((SELECT SUM(c.gross_amount) FROM commissions c WHERE c.seller_id = u.id), 0) AS "grossSales"
+            COALESCE((SELECT SUM(c.gross_amount) FROM commissions c
+                      WHERE c.seller_id = u.id AND c.status <> 'refunded'), 0) AS "grossSales"
      FROM seller_profiles sp
      JOIN users u ON u.id = sp.user_id
      WHERE ${where.join(' AND ')}
@@ -208,6 +227,31 @@ async function reviewSeller(adminId, sellerProfileId, { action, reason }) {
   return updated[0];
 }
 
+async function setSellerFeatured(sellerProfileId, isFeatured) {
+  const { rows } = await db.query(
+    `UPDATE seller_profiles
+     SET is_featured = $2
+     WHERE id = $1 AND status = 'approved'
+     RETURNING id, shop_name AS "shopName", is_featured AS "isFeatured"`,
+    [sellerProfileId, isFeatured]
+  );
+  if (!rows[0]) throw conflict('Only approved shops can be featured.');
+  return rows[0];
+}
+
+async function setProductFeatured(productId, isFeatured) {
+  const { rows } = await db.query(
+    `UPDATE products p SET is_featured = $2
+     FROM seller_profiles sp
+     WHERE p.id = $1 AND sp.user_id = p.seller_id
+       AND p.status = 'approved' AND sp.status = 'approved'
+     RETURNING p.id, p.name, p.is_featured AS "isFeatured"`,
+    [productId, isFeatured]
+  );
+  if (!rows[0]) throw conflict('Only approved products from approved shops can be featured.');
+  return rows[0];
+}
+
 async function listProducts({ status = 'pending', q, page = 1, limit = 20 }) {
   const params = [];
   const where = ['1 = 1'];
@@ -238,6 +282,7 @@ async function listProducts({ status = 'pending', q, page = 1, limit = 20 }) {
     ),
     db.query(
       `SELECT p.id, p.name, p.slug, p.price, p.stock, p.status, p.condition,
+              p.is_featured AS "isFeatured",
               p.rejection_reason AS "rejectionReason", p.created_at AS "createdAt",
               p.description,
               c.name AS "categoryName", c.slug AS "categorySlug",
@@ -317,6 +362,13 @@ async function listCategories() {
 
 async function createCategory(input) {
   const slug = slugify(input.name);
+  if (input.parentCategoryId != null) {
+    const parent = await db.query(
+      'SELECT id FROM categories WHERE id = $1 AND parent_category_id IS NULL AND is_active = TRUE',
+      [input.parentCategoryId]
+    );
+    if (!parent.rowCount) throw badRequest('Choose a top-level category as the parent.');
+  }
   const exists = await db.query(
     'SELECT 1 FROM categories WHERE slug = $1 OR lower(name) = lower($2)',
     [slug, input.name]
@@ -324,9 +376,11 @@ async function createCategory(input) {
   if (exists.rowCount) throw conflict('A category with that name already exists.');
 
   const { rows } = await db.query(
-    `INSERT INTO categories (name, slug, description, icon, image_url, sort_order, is_active)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO categories
+       (name, slug, description, icon, image_url, parent_category_id, sort_order, is_active)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id, name, slug, description, icon, image_url AS "imageUrl",
+               parent_category_id AS "parentCategoryId",
                sort_order AS "sortOrder", is_active AS "isActive"`,
     [
       input.name,
@@ -334,6 +388,7 @@ async function createCategory(input) {
       input.description || null,
       input.icon || null,
       input.imageUrl || null,
+      input.parentCategoryId || null,
       input.sortOrder || 0,
       input.isActive !== false
     ]
@@ -342,6 +397,34 @@ async function createCategory(input) {
 }
 
 async function updateCategory(categoryId, input) {
+  if (input.isActive === true) {
+    const categoryParent = await db.query(
+      'SELECT parent_category_id AS "parentCategoryId" FROM categories WHERE id = $1',
+      [categoryId]
+    );
+    if (!categoryParent.rowCount) throw notFound('Category not found.');
+    if (categoryParent.rows[0].parentCategoryId != null) {
+      const activeParent = await db.query(
+        'SELECT 1 FROM categories WHERE id = $1 AND is_active = TRUE',
+        [categoryParent.rows[0].parentCategoryId]
+      );
+      if (!activeParent.rowCount) throw badRequest('Reactivate the parent category first.');
+    }
+  }
+  if (input.parentCategoryId !== undefined && input.parentCategoryId != null) {
+    if (Number(input.parentCategoryId) === Number(categoryId)) {
+      throw badRequest('A category cannot be its own parent.');
+    }
+    const [parent, children] = await Promise.all([
+      db.query(
+        'SELECT id FROM categories WHERE id = $1 AND parent_category_id IS NULL AND is_active = TRUE',
+        [input.parentCategoryId]
+      ),
+      db.query('SELECT 1 FROM categories WHERE parent_category_id = $1 LIMIT 1', [categoryId])
+    ]);
+    if (!parent.rowCount) throw badRequest('Choose a top-level category as the parent.');
+    if (children.rowCount) throw badRequest('A category with subcategories cannot become a subcategory.');
+  }
   const updates = [];
   const params = [];
   const set = (column, value) => {
@@ -352,25 +435,36 @@ async function updateCategory(categoryId, input) {
   if (input.description !== undefined) set('description', input.description || null);
   if (input.icon !== undefined) set('icon', input.icon || null);
   if (input.imageUrl !== undefined) set('image_url', input.imageUrl || null);
+  if (input.parentCategoryId !== undefined) set('parent_category_id', input.parentCategoryId);
   if (input.sortOrder !== undefined) set('sort_order', input.sortOrder);
   if (input.isActive !== undefined) set('is_active', input.isActive);
   if (!updates.length) throw badRequest('Nothing to update.');
 
   params.push(categoryId);
-  const { rows } = await db.query(
-    `UPDATE categories SET ${updates.join(', ')} WHERE id = $${params.length}
-     RETURNING id, name, slug, description, icon, image_url AS "imageUrl",
-               sort_order AS "sortOrder", is_active AS "isActive"`,
-    params
-  );
-  if (!rows[0]) throw notFound('Category not found.');
-  return rows[0];
+  return db.withTransaction(async (client) => {
+    const { rows } = await client.query(
+      `UPDATE categories SET ${updates.join(', ')} WHERE id = $${params.length}
+       RETURNING id, name, slug, description, icon, image_url AS "imageUrl",
+                 parent_category_id AS "parentCategoryId",
+                 sort_order AS "sortOrder", is_active AS "isActive"`,
+      params
+    );
+    if (!rows[0]) throw notFound('Category not found.');
+    if (input.isActive === false) {
+      await client.query('UPDATE categories SET is_active = FALSE WHERE parent_category_id = $1', [categoryId]);
+    }
+    return rows[0];
+  });
 }
 
 async function deactivateCategory(categoryId) {
   const { rows } = await db.query(
-    `UPDATE categories SET is_active = FALSE WHERE id = $1
-     RETURNING id, name, is_active AS "isActive"`,
+    `WITH updated AS (
+       UPDATE categories SET is_active = FALSE
+       WHERE id = $1 OR parent_category_id = $1
+       RETURNING id, name, is_active
+     )
+     SELECT id, name, is_active AS "isActive" FROM updated WHERE id = $1`,
     [categoryId]
   );
   if (!rows[0]) throw notFound('Category not found.');
@@ -401,7 +495,9 @@ async function listOrders({ status = 'all', q, page = 1, limit = 20 }) {
          COUNT(*)::int AS "totalOrders",
          COUNT(*) FILTER (WHERE status = 'delivered')::int AS delivered,
          COUNT(*) FILTER (WHERE status = 'pending_payment')::int AS unpaid,
-         COALESCE(SUM(total) FILTER (WHERE payment_status = 'paid' AND status <> 'cancelled'), 0) AS "paidValue"
+         COALESCE(SUM(total - COALESCE((
+           SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = orders.id
+         ), 0)) FILTER (WHERE payment_status IN ('paid', 'refunded') AND status <> 'cancelled'), 0) AS "paidValue"
        FROM orders`
     ),
     db.query(
@@ -433,7 +529,7 @@ async function listOrders({ status = 'all', q, page = 1, limit = 20 }) {
 }
 
 async function updateOrderStatus(orderId, status) {
-  return db.withTransaction(async (client) => {
+  const result = await db.withTransaction(async (client) => {
     const orderResult = await client.query(
       `SELECT id, order_number AS "orderNumber", status, payment_status AS "paymentStatus"
        FROM orders WHERE id = $1 FOR UPDATE`,
@@ -449,7 +545,29 @@ async function updateOrderStatus(orderId, status) {
       }
       await client.query(
         `UPDATE products p SET stock = p.stock + oi.quantity
-         FROM order_items oi WHERE oi.order_id = $1 AND p.id = oi.product_id`,
+         FROM order_items oi
+         WHERE oi.order_id = $1 AND p.id = oi.product_id
+           AND oi.variant_id IS NULL AND oi.variant_sku IS NULL`,
+        [order.id]
+      );
+      await client.query(
+        `UPDATE product_variants pv SET stock = pv.stock + oi.quantity
+         FROM order_items oi
+         WHERE oi.order_id = $1 AND (
+           oi.variant_id = pv.id OR
+           (oi.variant_id IS NULL AND oi.product_id = pv.product_id AND oi.variant_sku = pv.sku)
+         )`,
+        [order.id]
+      );
+      await client.query(
+        `UPDATE products p
+         SET stock = (SELECT COALESCE(SUM(pv.stock), 0)::int
+                      FROM product_variants pv WHERE pv.product_id = p.id)
+         WHERE EXISTS (
+           SELECT 1 FROM order_items oi
+           WHERE oi.order_id = $1 AND oi.product_id = p.id
+             AND (oi.variant_id IS NOT NULL OR oi.variant_sku IS NOT NULL)
+         )`,
         [order.id]
       );
       await client.query(
@@ -466,6 +584,17 @@ async function updateOrderStatus(orderId, status) {
 
     if (order.paymentStatus !== 'paid') {
       throw conflict('Only paid orders can move into fulfilment.');
+    }
+    if (['shipped', 'delivered'].includes(status)) {
+      const cancellation = await client.query(
+        `SELECT 1 FROM order_adjustment_requests
+         WHERE order_id = $1 AND request_type = 'cancellation'
+           AND status IN ('pending', 'approved') LIMIT 1`,
+        [order.id]
+      );
+      if (cancellation.rowCount) {
+        throw conflict('Fulfilment is paused while a cancellation request is being reviewed.');
+      }
     }
 
     if (status === 'shipped') {
@@ -489,6 +618,14 @@ async function updateOrderStatus(orderId, status) {
     await client.query('UPDATE orders SET status = $1 WHERE id = $2', [status, order.id]);
     return { ...order, status };
   });
+  if (status === 'cancelled') {
+    await notifyOrder(result.orderNumber, {
+      subject: 'Your STOKANA order was cancelled',
+      message: 'An administrator cancelled your unpaid order and released its reserved stock.',
+      audience: 'buyer'
+    });
+  }
+  return result;
 }
 
 function defaultRange(from, to) {
@@ -511,13 +648,31 @@ async function getReports({ from, to }) {
   const baseWhere = `o.payment_status = 'paid' AND o.status <> 'cancelled'
                      AND o.paid_at >= $1::date AND o.paid_at < ($2::date + interval '1 day')`;
 
-  const [summary, daily, topProducts, topSellers, topCategories] = await Promise.all([
+  const [
+    summary,
+    daily,
+    topProducts,
+    topSellers,
+    topCategories,
+    deliveryPerformance,
+    deliveryProviders
+  ] = await Promise.all([
     db.query(
       `SELECT COUNT(*)::int AS "orders",
-              COALESCE(SUM(o.total), 0) AS "grossSales",
-              COALESCE(SUM(o.commission_total), 0) AS "commission",
-              COALESCE(SUM(o.seller_earnings_total), 0) AS "sellerEarnings",
-              COALESCE(ROUND(AVG(o.total), 2), 0) AS "averageOrderValue"
+              COALESCE(SUM(o.total - COALESCE((
+                SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = o.id
+              ), 0)), 0) AS "grossSales",
+              COALESCE(SUM((
+                SELECT COALESCE(SUM(c.commission_amount), 0) FROM commissions c
+                WHERE c.order_id = o.id AND c.status <> 'refunded'
+              )), 0) AS "commission",
+              COALESCE(SUM((
+                SELECT COALESCE(SUM(c.seller_earnings), 0) FROM commissions c
+                WHERE c.order_id = o.id AND c.status <> 'refunded'
+              )), 0) AS "sellerEarnings",
+              COALESCE(ROUND(AVG(o.total - COALESCE((
+                SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = o.id
+              ), 0)), 2), 0) AS "averageOrderValue"
        FROM orders o WHERE ${baseWhere}`,
       [range.from, range.to]
     ),
@@ -526,7 +681,10 @@ async function getReports({ from, to }) {
          SELECT generate_series($1::date, $2::date, '1 day')::date AS day
        ),
        agg AS (
-         SELECT o.paid_at::date AS day, COUNT(*) AS orders, SUM(o.total) AS gross
+         SELECT o.paid_at::date AS day, COUNT(*) AS orders,
+                SUM(o.total - COALESCE((
+                  SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = o.id
+                ), 0)) AS gross
          FROM orders o WHERE ${baseWhere} GROUP BY o.paid_at::date
        )
        SELECT to_char(days.day, 'YYYY-MM-DD') AS day,
@@ -537,9 +695,16 @@ async function getReports({ from, to }) {
       [range.from, range.to]
     ),
     db.query(
-      `SELECT oi.product_name AS "productName", SUM(oi.quantity)::int AS units,
-              SUM(oi.line_total) AS revenue
+      `SELECT oi.product_name AS "productName",
+              SUM(GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0))::int AS units,
+              SUM(oi.unit_price * GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0)) AS revenue
        FROM order_items oi JOIN orders o ON o.id = oi.order_id
+       LEFT JOIN LATERAL (
+         SELECT SUM(r.quantity)::int AS quantity
+         FROM order_adjustment_requests r
+         JOIN refunds f ON f.request_id = r.id
+         WHERE r.order_item_id = oi.id
+       ) refunded ON TRUE
        WHERE ${baseWhere}
        GROUP BY oi.product_name
        ORDER BY revenue DESC LIMIT 5`,
@@ -547,27 +712,76 @@ async function getReports({ from, to }) {
     ),
     db.query(
       `SELECT sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
-              SUM(oi.line_total) AS revenue,
-              SUM(oi.commission_amount) AS commission,
+              SUM(oi.unit_price * GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0)) AS revenue,
+              SUM(COALESCE(cm.commission_amount, 0)) AS commission,
               COUNT(DISTINCT o.id)::int AS orders
        FROM order_items oi
        JOIN orders o ON o.id = oi.order_id
        JOIN seller_profiles sp ON sp.user_id = oi.seller_id
+       LEFT JOIN commissions cm ON cm.order_item_id = oi.id AND cm.status <> 'refunded'
+       LEFT JOIN LATERAL (
+         SELECT SUM(r.quantity)::int AS quantity
+         FROM order_adjustment_requests r
+         JOIN refunds f ON f.request_id = r.id
+         WHERE r.order_item_id = oi.id
+       ) refunded ON TRUE
        WHERE ${baseWhere}
        GROUP BY sp.shop_name, sp.shop_slug
        ORDER BY revenue DESC LIMIT 5`,
       [range.from, range.to]
     ),
     db.query(
-      `SELECT c.name AS "categoryName", SUM(oi.quantity)::int AS units,
-              SUM(oi.line_total) AS revenue
+      `SELECT c.name AS "categoryName",
+              SUM(GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0))::int AS units,
+              SUM(oi.unit_price * GREATEST(oi.quantity - COALESCE(refunded.quantity, 0), 0)) AS revenue
        FROM order_items oi
        JOIN orders o ON o.id = oi.order_id
        JOIN products p ON p.id = oi.product_id
        JOIN categories c ON c.id = p.category_id
+       LEFT JOIN LATERAL (
+         SELECT SUM(r.quantity)::int AS quantity
+         FROM order_adjustment_requests r
+         JOIN refunds f ON f.request_id = r.id
+         WHERE r.order_item_id = oi.id
+       ) refunded ON TRUE
        WHERE ${baseWhere}
        GROUP BY c.name
        ORDER BY revenue DESC LIMIT 5`,
+      [range.from, range.to]
+    ),
+    db.query(
+      `SELECT COUNT(*)::int AS "totalShipments",
+              COUNT(*) FILTER (WHERE s.status = 'delivered')::int AS delivered,
+              COUNT(*) FILTER (WHERE s.status = 'failed')::int AS failed,
+              COUNT(*) FILTER (WHERE s.status IN ('dispatched', 'in_transit'))::int AS inTransit,
+              COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (s.delivered_at - s.shipped_at)) / 86400)
+                FILTER (WHERE s.status = 'delivered' AND s.shipped_at IS NOT NULL), 2), 0)
+                AS "averageDeliveryDays",
+              COUNT(*) FILTER (
+                WHERE s.status = 'delivered' AND s.buyer_confirmed_at IS NOT NULL
+              )::int AS "buyerConfirmed",
+              COUNT(*) FILTER (
+                WHERE s.status = 'delivered' AND s.buyer_confirmed_at IS NULL
+              )::int AS "awaitingBuyerConfirmation"
+       FROM shipments s
+       JOIN orders o ON o.id = s.order_id
+       WHERE ${baseWhere}`,
+      [range.from, range.to]
+    ),
+    db.query(
+      `SELECT COALESCE(NULLIF(s.carrier, ''), 'Courier not recorded') AS "carrier",
+              COUNT(*)::int AS shipments,
+              COUNT(*) FILTER (WHERE s.status = 'delivered')::int AS delivered,
+              COUNT(*) FILTER (WHERE s.status = 'failed')::int AS failed,
+              COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (s.delivered_at - s.shipped_at)) / 86400)
+                FILTER (WHERE s.status = 'delivered' AND s.shipped_at IS NOT NULL), 2), 0)
+                AS "averageDeliveryDays"
+       FROM shipments s
+       JOIN orders o ON o.id = s.order_id
+       WHERE ${baseWhere}
+       GROUP BY COALESCE(NULLIF(s.carrier, ''), 'Courier not recorded')
+       ORDER BY shipments DESC, "carrier" ASC
+       LIMIT 10`,
       [range.from, range.to]
     )
   ]);
@@ -578,7 +792,9 @@ async function getReports({ from, to }) {
     daily: daily.rows,
     topProducts: topProducts.rows,
     topSellers: topSellers.rows,
-    topCategories: topCategories.rows
+    topCategories: topCategories.rows,
+    deliveryPerformance: deliveryPerformance.rows[0],
+    deliveryProviders: deliveryProviders.rows
   };
 }
 
@@ -593,8 +809,8 @@ async function getCommissions(status = 'all') {
   const [totals, sellers, recent] = await Promise.all([
     db.query(
       `SELECT
-         COALESCE(SUM(commission_amount), 0) AS "platformCommission",
-         COALESCE(SUM(seller_earnings), 0) AS "sellerEarnings",
+         COALESCE(SUM(commission_amount) FILTER (WHERE status <> 'refunded'), 0) AS "platformCommission",
+         COALESCE(SUM(seller_earnings) FILTER (WHERE status <> 'refunded'), 0) AS "sellerEarnings",
          COALESCE(SUM(seller_earnings) FILTER (WHERE status = 'earned'), 0) AS "availableBalance",
          COALESCE(SUM(seller_earnings) FILTER (WHERE status = 'paid'), 0) AS "paidOut"
        FROM commissions`
@@ -603,8 +819,8 @@ async function getCommissions(status = 'all') {
       `SELECT u.id AS "sellerId", sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
               u.email,
               COALESCE(SUM(c.gross_amount), 0) AS "grossSales",
-              COALESCE(SUM(c.commission_amount), 0) AS "platformCommission",
-              COALESCE(SUM(c.seller_earnings), 0) AS "lifetimeEarnings",
+              COALESCE(SUM(c.commission_amount) FILTER (WHERE c.status <> 'refunded'), 0) AS "platformCommission",
+              COALESCE(SUM(c.seller_earnings) FILTER (WHERE c.status <> 'refunded'), 0) AS "lifetimeEarnings",
               COALESCE(SUM(c.seller_earnings) FILTER (WHERE c.status = 'earned'), 0) AS "availableBalance",
               COALESCE(SUM(c.seller_earnings) FILTER (WHERE c.status = 'paid'), 0) AS "paidOut",
               MAX(c.paid_at) AS "lastPayoutAt"
@@ -635,6 +851,100 @@ async function getCommissions(status = 'all') {
     totals: totals.rows[0],
     sellers: sellers.rows,
     recent: recent.rows
+  };
+}
+
+async function getPaymentReconciliation({ status = 'all', page = 1, limit = 30 } = {}) {
+  const params = [];
+  const where = [];
+  if (status !== 'all') {
+    params.push(status);
+    where.push(`p.status = $${params.length}`);
+  }
+  const offset = (page - 1) * limit;
+  const count = await db.query(
+    `SELECT COUNT(*)::int AS total
+     FROM payments p
+     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}`,
+    params
+  );
+  const [summary, rows] = await Promise.all([
+    db.query(
+      `WITH payment_checks AS (
+         SELECT p.id, p.status, p.amount, o.total AS "orderTotal",
+                p.provider, p.transaction_ref AS "transactionRef",
+                o.payment_status AS "paymentStatus",
+                (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS "itemCount",
+                (SELECT COUNT(*) FROM commissions c WHERE c.order_id = o.id) AS "commissionCount"
+         FROM payments p
+         JOIN orders o ON o.id = p.order_id
+       )
+       SELECT COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+              COUNT(*) FILTER (WHERE status = 'failed')::int AS failed,
+              COUNT(*) FILTER (WHERE status = 'success')::int AS successful,
+              COUNT(*) FILTER (
+                WHERE status = 'success' AND (
+                  amount <> "orderTotal"
+                  OR "paymentStatus" NOT IN ('paid', 'refunded')
+                  OR "commissionCount" < "itemCount"
+                  OR (provider = 'mpesa' AND "transactionRef" IS NULL)
+                )
+              )::int AS "paymentMismatches",
+              (SELECT COUNT(*)::int FROM orders o
+               WHERE o.payment_status IN ('paid', 'refunded')
+                 AND NOT EXISTS (
+                   SELECT 1 FROM payments p
+                   WHERE p.order_id = o.id AND p.status = 'success'
+                 )) AS "paidOrdersWithoutPayment",
+              COALESCE((SELECT SUM(amount) FROM refunds), 0) AS "refundedAmount"
+       FROM payment_checks`
+    ),
+    db.query(
+      `WITH payment_rows AS (
+         SELECT p.id, p.provider, p.provider_ref AS "providerRef",
+                p.transaction_ref AS "transactionRef", p.amount, p.status,
+                p.failure_reason AS "failureReason", p.verified_at AS "verifiedAt",
+                p.created_at AS "createdAt", o.order_number AS "orderNumber",
+                o.total AS "orderTotal", o.payment_status AS "paymentStatus",
+                buyer.full_name AS "buyerName", buyer.email AS "buyerEmail",
+                (SELECT COUNT(*)::int FROM order_items oi WHERE oi.order_id = o.id) AS "itemCount",
+                (SELECT COUNT(*)::int FROM commissions c WHERE c.order_id = o.id) AS "commissionCount",
+                COALESCE((SELECT SUM(f.amount) FROM refunds f WHERE f.order_id = o.id), 0) AS "refundedAmount",
+                COALESCE((
+                  SELECT STRING_AGG(f.provider_reference, ', ' ORDER BY f.created_at)
+                  FROM refunds f WHERE f.order_id = o.id
+                ), '') AS "refundReferences"
+         FROM payments p
+         JOIN orders o ON o.id = p.order_id
+         JOIN users buyer ON buyer.id = o.buyer_id
+         ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       )
+       SELECT *,
+              CASE
+                WHEN status = 'success' AND (
+                  amount <> "orderTotal"
+                  OR "paymentStatus" NOT IN ('paid', 'refunded')
+                  OR "commissionCount" < "itemCount"
+                  OR (provider = 'mpesa' AND "transactionRef" IS NULL)
+                ) THEN 'mismatch'
+                WHEN status = 'success' THEN 'matched'
+                ELSE status
+              END AS "reconciliationStatus"
+       FROM payment_rows
+       ORDER BY "createdAt" DESC, id DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    )
+  ]);
+  return {
+    summary: summary.rows[0],
+    payments: rows.rows,
+    pagination: {
+      page,
+      limit,
+      total: count.rows[0].total,
+      totalPages: Math.max(1, Math.ceil(count.rows[0].total / limit))
+    }
   };
 }
 
@@ -692,6 +1002,8 @@ module.exports = {
   setUserActive,
   listSellers,
   reviewSeller,
+  setSellerFeatured,
+  setProductFeatured,
   listProducts,
   reviewProduct,
   listCategories,
@@ -702,6 +1014,7 @@ module.exports = {
   updateOrderStatus,
   getReports,
   getCommissions,
+  getPaymentReconciliation,
   paySeller,
   getSettings,
   updateSettings

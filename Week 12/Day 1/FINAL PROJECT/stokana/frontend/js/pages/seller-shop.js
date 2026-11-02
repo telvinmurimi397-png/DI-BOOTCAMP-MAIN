@@ -14,6 +14,7 @@ import {
 
 let dash = null;
 let shop = null;
+let pickupLocations = [];
 
 function statusMessage() {
   if (shop.status === 'approved') {
@@ -167,6 +168,74 @@ function formPanel() {
   });
 }
 
+function pickupPanel() {
+  const rows = pickupLocations.length
+    ? pickupLocations.map((location) => `<article class="status-row" style="align-items:flex-start">
+        <div class="grow">
+          <strong>${escapeHtml(location.label)}${location.isDefault ? ' · Default' : ''}</strong>
+          <span>${escapeHtml(location.addressLine)}, ${escapeHtml(location.town)}, ${escapeHtml(location.county)}</span>
+          ${location.contactName ? `<span>${escapeHtml(location.contactName)}${location.phone ? ` · ${escapeHtml(location.phone)}` : ''}</span>` : ''}
+          ${location.instructions ? `<span>${escapeHtml(location.instructions)}</span>` : ''}
+        </div>
+        <div class="row wrap" style="gap:6px">
+          <button class="btn btn-ghost btn-sm" type="button" data-pickup-edit="${location.id}">Edit</button>
+          ${location.isDefault ? '' : `<button class="btn btn-ghost btn-sm" type="button" data-pickup-default="${location.id}">Make default</button>`}
+          <button class="btn btn-ghost btn-sm" type="button" data-pickup-delete="${location.id}">Remove</button>
+        </div>
+      </article>`).join('')
+    : '<p class="tiny muted">Add a pickup address to choose an origin when arranging a courier.</p>';
+
+  return panel({
+    title: 'Seller pickup locations',
+    subtitle: 'Private shop addresses used as shipment origins. Buyers only see the delivery address they provided.',
+    body: `<div class="card-body">
+      <div id="pickup-list" class="status-list">${rows}</div>
+      <form id="pickup-form" class="form-grid" style="margin-top:20px">
+        <input type="hidden" name="locationId">
+        <label class="form-group">
+          <span class="form-label">Location label</span>
+          <input class="input" name="label" required minlength="2" maxlength="80" placeholder="Main shop / Warehouse">
+        </label>
+        <label class="form-group">
+          <span class="form-label">County</span>
+          <select class="select" name="county" required>
+            <option value="">Choose a county</option>
+            ${COUNTIES.map((county) => `<option value="${escapeHtml(county)}">${escapeHtml(county)}</option>`).join('')}
+          </select>
+        </label>
+        <label class="form-group">
+          <span class="form-label">Town or area</span>
+          <input class="input" name="town" required minlength="2" maxlength="80">
+        </label>
+        <label class="form-group">
+          <span class="form-label">Street address and landmark</span>
+          <input class="input" name="addressLine" required minlength="5" maxlength="500">
+        </label>
+        <label class="form-group">
+          <span class="form-label">Pickup contact</span>
+          <input class="input" name="contactName" maxlength="120">
+        </label>
+        <label class="form-group">
+          <span class="form-label">Contact phone</span>
+          <input class="input" name="phone" type="tel" maxlength="30">
+        </label>
+        <label class="form-group span-2">
+          <span class="form-label">Courier instructions <span class="optional">(optional)</span></span>
+          <textarea class="textarea" name="instructions" rows="2" maxlength="500"></textarea>
+        </label>
+        <label class="form-group span-2 row" style="gap:8px">
+          <input type="checkbox" name="isDefault">
+          <span class="form-label" style="margin:0">Use as default pickup location</span>
+        </label>
+        <div class="form-actions span-2">
+          <button class="btn btn-primary" type="submit" id="save-pickup">Save pickup location</button>
+          <button class="btn btn-secondary" type="button" data-pickup-cancel hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>`
+  });
+}
+
 function render() {
   dash.content.innerHTML = `
     ${statusMessage()}
@@ -175,6 +244,7 @@ function render() {
       ${statusPanel()}
     </div>
     ${formPanel()}
+    <div style="margin-top:16px" id="pickup-host">${pickupPanel()}</div>
     <div class="card" style="margin-top:16px">
       <div class="card-body">
         <div class="settings-note">
@@ -190,6 +260,87 @@ function render() {
 
   bindPreview();
   bindSave();
+  bindPickupLocations();
+}
+
+function bindPickupLocations() {
+  const form = dash.content.querySelector('#pickup-form');
+  const cancel = form.querySelector('[data-pickup-cancel]');
+  const reset = () => {
+    form.reset();
+    form.elements.locationId.value = '';
+    form.querySelector('#save-pickup').textContent = 'Save pickup location';
+    cancel.hidden = true;
+  };
+  cancel.addEventListener('click', reset);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(form));
+    const id = values.locationId;
+    const payload = {
+      label: String(values.label).trim(),
+      county: String(values.county).trim(),
+      town: String(values.town).trim(),
+      addressLine: String(values.addressLine).trim(),
+      contactName: String(values.contactName || '').trim(),
+      phone: String(values.phone || '').trim(),
+      instructions: String(values.instructions || '').trim(),
+      isDefault: form.elements.isDefault.checked
+    };
+    const submit = form.querySelector('#save-pickup');
+    setButtonLoading(submit, true, 'Saving…');
+    try {
+      const result = await (id
+        ? api.patch(`/seller/pickup-locations/${id}`, payload)
+        : api.post('/seller/pickup-locations', payload));
+      pickupLocations = result.locations;
+      toast(result.message);
+      render();
+    } catch (error) {
+      toast(errorMessage(error), 'error');
+      setButtonLoading(submit, false);
+    }
+  });
+  dash.content.querySelectorAll('[data-pickup-edit]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const location = pickupLocations.find((item) => Number(item.id) === Number(button.dataset.pickupEdit));
+      if (!location) return;
+      form.elements.locationId.value = location.id;
+      for (const field of ['label', 'county', 'town', 'addressLine', 'contactName', 'phone', 'instructions']) {
+        form.elements[field].value = location[field] || '';
+      }
+      form.elements.isDefault.checked = location.isDefault;
+      form.querySelector('#save-pickup').textContent = 'Update pickup location';
+      cancel.hidden = false;
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+  dash.content.querySelectorAll('[data-pickup-default]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const location = pickupLocations.find((item) => Number(item.id) === Number(button.dataset.pickupDefault));
+      if (!location) return;
+      try {
+        const result = await api.patch(`/seller/pickup-locations/${location.id}`, { isDefault: true });
+        pickupLocations = result.locations;
+        render();
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+      }
+    });
+  });
+  dash.content.querySelectorAll('[data-pickup-delete]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      if (!window.confirm('Remove this pickup location? Existing shipments will retain their history.')) return;
+      try {
+        await api.delete(`/seller/pickup-locations/${button.dataset.pickupDelete}`);
+        pickupLocations = (await api.get('/seller/pickup-locations')).locations;
+        toast('Pickup location removed.');
+        render();
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+      }
+    });
+  });
 }
 
 function applyBanner(url) {
@@ -320,8 +471,12 @@ async function init() {
 
   dash.content.innerHTML = pageLoader();
   try {
-    const data = await api.get('/seller/shop');
+    const [data, pickupData] = await Promise.all([
+      api.get('/seller/shop'),
+      api.get('/seller/pickup-locations')
+    ]);
     shop = data.shop;
+    pickupLocations = pickupData.locations;
     render();
   } catch (error) {
     dash.content.innerHTML = errorState(errorMessage(error));

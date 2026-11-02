@@ -21,12 +21,16 @@ const CONDITIONS = [
 ];
 
 function categoryOptions(selected) {
+  const parentIds = new Set(categories.map((category) => Number(category.parentCategoryId)).filter(Boolean));
   return categories
+    .filter((category) => !parentIds.has(Number(category.id)))
     .map(
       (category) =>
-        `<option value="${category.id}" ${Number(category.id) === Number(selected) ? 'selected' : ''}>${escapeHtml(
-          category.name
-        )}</option>`
+        `<option value="${category.id}" ${Number(category.id) === Number(selected) ? 'selected' : ''}>${
+          category.parentCategoryId
+            ? `${escapeHtml(categories.find((parent) => Number(parent.id) === Number(category.parentCategoryId))?.name || '')} / `
+            : ''
+        }${escapeHtml(category.name)}</option>`
     )
     .join('');
 }
@@ -183,6 +187,22 @@ function formPanel() {
                   <input class="input" name="name" type="text" required minlength="3" maxlength="180"
                     value="${escapeHtml(product?.name || '')}" placeholder="e.g. Anker 20,000mAh power bank">
                 </label>
+                <label class="form-group span-2">
+                  <span class="form-label">Product specifications (JSON)</span>
+                  <textarea class="textarea" name="specificationsJson" rows="4"
+                    placeholder='{"Material":"Cotton","Weight":"250 g"}'>${escapeHtml(
+                      JSON.stringify(product?.specifications || {}, null, 2)
+                    )}</textarea>
+                  <span class="form-hint">Add named product details as a JSON object of text values.</span>
+                </label>
+                <label class="form-group span-2">
+                  <span class="form-label">Product variations (JSON)</span>
+                  <textarea class="textarea" name="variantsJson" rows="7"
+                    placeholder='[{"sku":"SHIRT-BLK-M","attributes":{"Color":"Black","Size":"M"},"price":null,"stock":10}]'>${escapeHtml(
+                      JSON.stringify(product?.variants || [], null, 2)
+                    )}</textarea>
+                  <span class="form-hint">Optional array, up to 100 variants. Each needs a unique SKU, attributes object and stock. Omit price or use null to use the base price. Use [] for no variants.</span>
+                </label>
                 <label class="form-group">
                   <span class="form-label">Category</span>
                   <select class="select" name="categoryId" required>
@@ -274,6 +294,14 @@ function renderForm() {
 function readFields() {
   const form = dash.content.querySelector('#product-form');
   const data = Object.fromEntries(new FormData(form));
+  let specifications;
+  let variants;
+  try {
+    specifications = JSON.parse(String(data.specificationsJson || '{}'));
+    variants = JSON.parse(String(data.variantsJson || '[]'));
+  } catch {
+    throw new Error('Specifications and variations must contain valid JSON.');
+  }
   return {
     name: String(data.name || '').trim(),
     categoryId: Number(data.categoryId),
@@ -282,7 +310,9 @@ function readFields() {
     compareAtPrice: data.compareAtPrice === '' ? null : Number(data.compareAtPrice),
     stock: Number(data.stock),
     condition: data.condition,
-    location: String(data.location || '').trim()
+    location: String(data.location || '').trim(),
+    specifications,
+    variants
   };
 }
 
@@ -464,7 +494,13 @@ function bindEvents() {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     clearFormErrors();
-    const fields = readFields();
+    let fields;
+    try {
+      fields = readFields();
+    } catch (error) {
+      showFormError(error.message);
+      return;
+    }
 
     if (isEdit) {
       const submit = dash.content.querySelector('#submit-product');

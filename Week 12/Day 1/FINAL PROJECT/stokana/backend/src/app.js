@@ -12,6 +12,7 @@ const { attachUser } = require('./middleware/auth');
 const verifyOrigin = require('./middleware/verifyOrigin');
 const { notFoundApi, errorHandler } = require('./middleware/error');
 const createChatServer = require('./sockets/chat');
+const { startAbandonedCartReminderWorker } = require('./services/abandonedCartReminderService');
 
 const app = express();
 const server = http.createServer(app);
@@ -101,21 +102,28 @@ const PAGE_ROUTES = new Map([
   ['/privacy', 'pages/privacy.html'],
   ['/account', 'pages/account.html'],
   ['/account/orders', 'pages/account-orders.html'],
+  ['/account/wishlist', 'pages/account-wishlist.html'],
   ['/account/order', 'pages/order-detail.html'],
   ['/account/messages', 'pages/messages.html'],
   ['/account/reviews', 'pages/account-reviews.html'],
   ['/seller', 'pages/seller-dashboard.html'],
   ['/seller/products', 'pages/seller-products.html'],
+  ['/seller/promotions', 'pages/seller-promotions.html'],
   ['/seller/products/new', 'pages/seller-product-form.html'],
   ['/seller/products/edit', 'pages/seller-product-form.html'],
   ['/seller/orders', 'pages/seller-orders.html'],
   ['/seller/messages', 'pages/seller-messages.html'],
+  ['/seller/notifications', 'pages/dashboard-notifications.html'],
   ['/seller/sales', 'pages/seller-sales.html'],
+  ['/seller/plans', 'pages/seller-plans.html'],
   ['/seller/shop', 'pages/seller-shop.html'],
   ['/admin', 'pages/admin-dashboard.html'],
   ['/admin/users', 'pages/admin-users.html'],
   ['/admin/sellers', 'pages/admin-sellers.html'],
   ['/admin/products', 'pages/admin-products.html'],
+  ['/admin/promotions', 'pages/admin-promotions.html'],
+  ['/admin/campaigns', 'pages/admin-campaigns.html'],
+  ['/admin/notifications', 'pages/dashboard-notifications.html'],
   ['/admin/categories', 'pages/admin-categories.html'],
   ['/admin/orders', 'pages/admin-orders.html'],
   ['/admin/reports', 'pages/admin-reports.html'],
@@ -223,6 +231,7 @@ async function start() {
     if (!env.isProduction) {
       console.log(`[app] demo accounts (after seeding): admin@stokana.co.ke / Admin@2026`);
     }
+    startAbandonedCartReminderWorker();
   });
 }
 

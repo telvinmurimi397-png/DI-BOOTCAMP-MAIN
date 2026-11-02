@@ -43,7 +43,7 @@ function shipmentBadge(status) {
   return `<span class="badge ${tone}">${escapeHtml(shipmentStatusLabel(status))}</span>`;
 }
 
-function shipmentForm(order) {
+function shipmentForm(order, pickupLocations) {
   if (!order.shipmentId) {
     return `<div class="shipment-block">
       <div class="shipment-head">
@@ -76,6 +76,8 @@ function shipmentForm(order) {
       </div>
     </div>`;
   }
+  const inactivePickup = order.pickupLocationId &&
+    !pickupLocations.some((location) => Number(location.id) === Number(order.pickupLocationId));
 
   const current = order.shipmentStatus || 'pending';
   const options = ['dispatched', 'in_transit', 'delivered', 'failed'];
@@ -88,7 +90,12 @@ function shipmentForm(order) {
     </div>
     <div class="shipment-meta">
       <span>${icon('truck', { size: 13 })} ${escapeHtml(order.carrier || 'Courier not set')}</span>
-      <span>Tracking ${escapeHtml(order.trackingNumber || '—')}</span>
+      <span>${order.trackingUrl
+        ? `<a href="${escapeHtml(order.trackingUrl)}" target="_blank" rel="noopener noreferrer">Track ${escapeHtml(order.trackingNumber || 'shipment')}</a>`
+        : `Tracking ${escapeHtml(order.trackingNumber || '—')}`}</span>
+      ${order.pickupLocationId
+        ? `<span>Pickup ${escapeHtml(order.pickupLocationLabel || pickupLocations.find((location) => Number(location.id) === Number(order.pickupLocationId))?.label || '')}${order.pickupLocationTown ? ` · ${escapeHtml(order.pickupLocationTown)}` : ''}</span>`
+        : ''}
       <span>Updated ${formatDateTime(order.shipmentUpdatedAt)}</span>
     </div>
     <form class="order-shipment-form" data-shipment-form="${order.shipmentId}">
@@ -114,6 +121,23 @@ function shipmentForm(order) {
         <input class="input" name="trackingNumber" type="text" maxlength="120"
           value="${escapeHtml(order.trackingNumber || '')}" placeholder="e.g. PM-48211">
       </label>
+      <label class="form-group">
+        <span class="form-label">Tracking link <span class="optional">(optional, HTTPS)</span></span>
+        <input class="input" name="trackingUrl" type="url" maxlength="500"
+          value="${escapeHtml(order.trackingUrl || '')}" placeholder="https://courier.example/track/…">
+      </label>
+      <label class="form-group">
+        <span class="form-label">Pickup location <span class="optional">(optional)</span></span>
+        <select class="select" name="pickupLocationId">
+          <option value="" ${order.pickupLocationId ? '' : 'selected'}>Not assigned</option>
+          ${inactivePickup ? `<option value="${order.pickupLocationId}" selected>
+            ${escapeHtml(order.pickupLocationLabel || 'Saved pickup location')} · inactive
+          </option>` : ''}
+          ${pickupLocations.map((location) => `<option value="${location.id}" ${Number(location.id) === Number(order.pickupLocationId) ? 'selected' : ''}>
+            ${escapeHtml(location.label)} · ${escapeHtml(location.town)}
+          </option>`).join('')}
+        </select>
+      </label>
       <button class="btn btn-primary btn-sm" type="submit" data-shipment-submit>
         ${icon('truck', { size: 15 })} Update shipment
       </button>
@@ -122,7 +146,7 @@ function shipmentForm(order) {
   </div>`;
 }
 
-function orderCard(order) {
+function orderCard(order, pickupLocations) {
   const commission = Math.max(0, Number(order.sellerSubtotal) - Number(order.sellerEarnings));
   const address = [order.shippingAddress, order.shippingTown, order.shippingCounty]
     .filter(Boolean)
@@ -148,6 +172,8 @@ function orderCard(order) {
               loading="lazy" width="58" height="58">
             <div class="order-line-main">
               <strong style="display:block;font-size:13px;color:var(--ink)">${escapeHtml(item.productName)}</strong>
+              ${item.variantAttributes ? `<span class="muted">${Object.entries(item.variantAttributes)
+                .map(([name, value]) => `${escapeHtml(name)}: ${escapeHtml(value)}`).join(' · ')}</span>` : ''}
               <span>${Number(item.quantity)} × ${money(item.unitPrice)}</span>
             </div>
             <div class="order-line-total">${money(item.lineTotal)}</div>
@@ -182,7 +208,7 @@ function orderCard(order) {
         </div>
       </div>
     </div>
-    ${shipmentForm(order)}
+    ${shipmentForm(order, pickupLocations)}
   </article>`;
 }
 
@@ -204,7 +230,9 @@ async function saveShipment(form) {
     const result = await api.patch(`/seller/shipments/${form.dataset.shipmentForm}`, {
       status,
       carrier: carrier || undefined,
-      trackingNumber: trackingNumber || undefined
+      trackingNumber: trackingNumber || undefined,
+      trackingUrl: String(data.trackingUrl || '').trim() || undefined,
+      pickupLocationId: data.pickupLocationId ? Number(data.pickupLocationId) : null
     });
     toast(result.message || 'Shipment updated.');
     await load({ quiet: true });
@@ -241,7 +269,7 @@ function renderOrders(data) {
     return;
   }
 
-  host.innerHTML = `<div class="orders-list">${data.orders.map(orderCard).join('')}</div>`;
+  host.innerHTML = `<div class="orders-list">${data.orders.map((order) => orderCard(order, data.pickupLocations || [])).join('')}</div>`;
   bindCards();
 
   attachPagination(paginationHost, data.pagination, (next) => {

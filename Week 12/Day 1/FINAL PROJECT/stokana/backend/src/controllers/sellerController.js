@@ -1,6 +1,7 @@
 const sellerService = require('../services/sellerService');
 const reviewService = require('../services/reviewService');
 const imageService = require('../services/imageService');
+const bulkProductService = require('../services/bulkProductService');
 const { badRequest } = require('../utils/errors');
 
 async function overview(req, res) {
@@ -23,6 +24,18 @@ async function createProduct(req, res) {
   res.status(201).json({
     message: 'Product submitted for review. It will appear in the catalogue once approved.',
     product
+  });
+}
+
+async function importProducts(req, res) {
+  if (!req.file) throw badRequest('Choose a CSV file to import.');
+  const result = await bulkProductService.importProducts(
+    req.user,
+    req.file.buffer.toString('utf8')
+  );
+  res.json({
+    message: `${result.created.length} product${result.created.length === 1 ? '' : 's'} submitted for review.`,
+    ...result
   });
 }
 
@@ -112,6 +125,30 @@ async function updateShop(req, res) {
   res.json({ message: 'Shop profile updated.', shop });
 }
 
+async function pickupLocations(req, res) {
+  const locations = await sellerService.listPickupLocations(req.user.id);
+  res.json({ locations });
+}
+
+async function savePickupLocation(req, res) {
+  const id = await sellerService.savePickupLocation(
+    req.user.id,
+    req.body,
+    req.params.pickupLocationId || null
+  );
+  const locations = await sellerService.listPickupLocations(req.user.id);
+  res.status(req.params.pickupLocationId ? 200 : 201).json({
+    message: req.params.pickupLocationId ? 'Pickup location updated.' : 'Pickup location added.',
+    location: locations.find((location) => Number(location.id) === Number(id)),
+    locations
+  });
+}
+
+async function deletePickupLocation(req, res) {
+  await sellerService.removePickupLocation(req.user.id, req.params.pickupLocationId);
+  res.json({ message: 'Pickup location removed.' });
+}
+
 async function reviews(req, res) {
   const data = await reviewService.getSellerReviews(req.user.id, 10);
   res.json({ reviews: data });
@@ -122,6 +159,7 @@ module.exports = {
   listProducts,
   getProduct,
   createProduct,
+  importProducts,
   updateProduct,
   updateStock,
   archiveProduct,
@@ -135,5 +173,8 @@ module.exports = {
   sales,
   shop,
   updateShop,
+  pickupLocations,
+  savePickupLocation,
+  deletePickupLocation,
   reviews
 };

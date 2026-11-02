@@ -11,8 +11,10 @@ function bool(value, fallback = false) {
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProduction = nodeEnv === 'production';
 const sessionSecret = process.env.SESSION_SECRET || '';
+const totpEncryptionKey = process.env.TOTP_ENCRYPTION_KEY || sessionSecret;
 const databaseUrl = process.env.DATABASE_URL || '';
-const paymentProvider = process.env.PAYMENT_PROVIDER || 'simulated';
+const paymentProvider = process.env.PAYMENT_PROVIDER || 'mpesa';
+const africaTalkingEnvironment = process.env.AFRICASTALKING_ENVIRONMENT || 'production';
 
 const missing = [];
 if (!databaseUrl) missing.push('DATABASE_URL');
@@ -26,18 +28,43 @@ if (missing.length) {
 if (isProduction && sessionSecret.length < 32) {
   throw new Error('SESSION_SECRET must be at least 32 characters in production.');
 }
+if (isProduction && (!process.env.TOTP_ENCRYPTION_KEY || totpEncryptionKey.length < 32)) {
+  throw new Error('TOTP_ENCRYPTION_KEY must be set to at least 32 characters in production.');
+}
+if (isProduction) {
+  const missingDelivery = [
+    'SMTP_HOST',
+    'SMTP_PORT',
+    'SMTP_USER',
+    'SMTP_PASSWORD',
+    'SMTP_FROM',
+    'AFRICASTALKING_USERNAME',
+    'AFRICASTALKING_API_KEY'
+  ].filter((key) => !process.env[key]);
+  if (missingDelivery.length) {
+    throw new Error(
+      `Missing required production verification delivery settings: ${missingDelivery.join(', ')}.`
+    );
+  }
+}
 
 const appUrl =
   process.env.APP_URL ||
   process.env.RENDER_EXTERNAL_URL ||
   `http://localhost:${process.env.PORT || 4000}`;
 if (!['simulated', 'mpesa'].includes(paymentProvider)) {
-  throw new Error('PAYMENT_PROVIDER must be either "simulated" or "mpesa".');
+  throw new Error('PAYMENT_PROVIDER must be either "mpesa" or the development-only "simulated" provider.');
+}
+if (paymentProvider === 'simulated' && isProduction) {
+  throw new Error('PAYMENT_PROVIDER=simulated is only allowed outside production. Use M-PESA for live payments.');
 }
 
 const mpesaEnvironment = process.env.MPESA_ENVIRONMENT || 'sandbox';
 if (!['sandbox', 'production'].includes(mpesaEnvironment)) {
   throw new Error('MPESA_ENVIRONMENT must be either "sandbox" or "production".');
+}
+if (!['sandbox', 'production'].includes(africaTalkingEnvironment)) {
+  throw new Error('AFRICASTALKING_ENVIRONMENT must be either "sandbox" or "production".');
 }
 
 const env = {
@@ -48,6 +75,19 @@ const env = {
   databaseUrl,
   pgSsl: bool(process.env.PGSSL, isProduction),
   sessionSecret,
+  totpEncryptionKey,
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT) || 587,
+    user: process.env.SMTP_USER || '',
+    password: process.env.SMTP_PASSWORD || '',
+    from: process.env.SMTP_FROM || ''
+  },
+  africaTalking: {
+    username: process.env.AFRICASTALKING_USERNAME || '',
+    apiKey: process.env.AFRICASTALKING_API_KEY || '',
+    environment: africaTalkingEnvironment
+  },
   cookieSecure: bool(process.env.COOKIE_SECURE, isProduction),
   trustProxy: bool(process.env.TRUST_PROXY, isProduction),
   paymentProvider,

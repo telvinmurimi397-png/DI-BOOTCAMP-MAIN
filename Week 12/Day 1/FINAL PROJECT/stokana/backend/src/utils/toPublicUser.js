@@ -7,6 +7,10 @@ function toPublicUser(row) {
     phone: row.phone,
     role: row.role,
     isActive: row.isActive,
+    emailVerified: row.emailVerified,
+    phoneVerified: row.phoneVerified,
+    marketingEmailConsent: row.marketingEmailConsent,
+    twoFactorEnabled: row.twoFactorEnabled,
     createdAt: row.createdAt,
     sellerProfile: row.sellerProfileId
       ? {

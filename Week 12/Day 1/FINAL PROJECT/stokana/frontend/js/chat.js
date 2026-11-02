@@ -122,6 +122,7 @@ export function mountChat(container, { user, role = 'buyer' }) {
           <div class="grow">
             <strong>${escapeHtml(conversation.title || 'Conversation')}</strong>
             <p>${escapeHtml(truncate(lastMessageText(conversation), 64))}</p>
+            ${conversation.isOnline ? '<span class="chat-online-label">Online</span>' : ''}
           </div>
           <div class="chat-meta">
             <time>${conversation.lastMessageCreatedAt ? chatTime(conversation.lastMessageCreatedAt) : ''}</time>
@@ -194,7 +195,10 @@ export function mountChat(container, { user, role = 'buyer' }) {
   function messageHtml(message) {
     const mine = message.senderId === user.id;
     return `<div class="msg${mine ? ' mine' : ''}" data-message-id="${message.id}">
-      <div class="msg-bubble">${escapeHtml(message.body)}</div>
+      <div class="msg-bubble">
+        ${message.attachmentUrl ? `<a href="${escapeHtml(message.attachmentUrl)}" target="_blank" rel="noopener noreferrer"><img class="chat-attachment" src="${escapeHtml(message.attachmentUrl)}" alt="Image attachment" loading="lazy"></a>` : ''}
+        ${message.body && message.body !== 'Image attachment' ? `<span>${escapeHtml(message.body)}</span>` : ''}
+      </div>
       <span class="msg-time">${clockTime(message.createdAt)}</span>
     </div>`;
   }
@@ -261,7 +265,9 @@ export function mountChat(container, { user, role = 'buyer' }) {
     clearTimeout(typingHideTimer);
     panel.querySelector('[data-typing]')?.remove();
     const status = panel.querySelector('[data-chat-status]');
-    if (status && state.active) status.textContent = state.active.subtitle || '';
+    if (status && state.active) {
+      status.textContent = state.active.isOnline ? 'Online now' : state.active.subtitle || '';
+    }
   }
 
   function emitTyping() {
@@ -287,6 +293,18 @@ export function mountChat(container, { user, role = 'buyer' }) {
       return;
     }
 
+    const composer = conversation.blockedByMe || conversation.blockedByOther
+      ? `<div class="chat-block-notice">${
+          conversation.blockedByMe
+            ? 'You blocked this participant. Unblock them to send messages.'
+            : 'You cannot send messages in this conversation.'
+        }</div>`
+      : `<div class="chat-composer">
+          <input type="file" accept="image/jpeg,image/png,image/webp" data-chat-image hidden>
+          <button class="icon-btn" type="button" data-chat-attach aria-label="Attach image" title="Attach image">${icon('image', { size: 18 })}</button>
+          <textarea rows="1" maxlength="4000" placeholder="Write a message…" aria-label="Message" data-chat-input></textarea>
+          <button class="btn btn-primary btn-icon" type="button" data-chat-send aria-label="Send message">${icon('send', { size: 18 })}</button>
+        </div>`;
     panel.innerHTML = `
       <div class="chat-panel-head">
         <button class="icon-btn chat-back" type="button" data-chat-back aria-label="Back to conversations">
@@ -295,8 +313,15 @@ export function mountChat(container, { user, role = 'buyer' }) {
         ${conversationAvatar(conversation)}
         <div class="grow">
           <strong>${escapeHtml(conversation.title || 'Conversation')}</strong>
-          <span data-chat-status>${escapeHtml(conversation.subtitle || '')}</span>
+          <span data-chat-status>${conversation.isOnline ? 'Online now' : escapeHtml(conversation.subtitle || '')}</span>
         </div>
+        ${
+          typeof Notification !== 'undefined' && Notification.permission === 'default'
+            ? '<button class="icon-btn" type="button" data-chat-notifications title="Enable browser notifications">Notify</button>'
+            : ''
+        }
+        <button class="icon-btn" type="button" data-chat-report aria-label="Report conversation" title="Report conversation">Report</button>
+        <button class="icon-btn" type="button" data-chat-block>${conversation.blockedByMe ? 'Unblock' : 'Block'}</button>
         ${
           !isSeller && conversation.shopSlug
             ? `<a class="icon-btn" href="/shop/${encodeURIComponent(
@@ -306,22 +331,19 @@ export function mountChat(container, { user, role = 'buyer' }) {
         }
       </div>
       <div class="chat-messages" data-chat-messages></div>
-      <div class="chat-composer">
-        <textarea rows="1" maxlength="4000" placeholder="Write a message…" aria-label="Message" data-chat-input></textarea>
-        <button class="btn btn-primary btn-icon" type="button" data-chat-send aria-label="Send message">${icon(
-          'send',
-          { size: 18 }
-        )}</button>
-      </div>`;
+      ${composer}`;
 
     renderMessages();
     bindComposer();
+    bindConversationActions();
   }
 
   function bindComposer() {
     const input = panel.querySelector('[data-chat-input]');
     const send = panel.querySelector('[data-chat-send]');
-    if (!input || !send) return;
+    const imageInput = panel.querySelector('[data-chat-image]');
+    const attach = panel.querySelector('[data-chat-attach]');
+    if (!input || !send || !imageInput || !attach) return;
 
     const grow = () => {
       input.style.height = 'auto';
@@ -339,16 +361,66 @@ export function mountChat(container, { user, role = 'buyer' }) {
       }
     });
     send.addEventListener('click', sendMessage);
+    attach.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        toast('Choose a JPEG, PNG or WebP image up to 5 MB.', 'error');
+        imageInput.value = '';
+        return;
+      }
+      attach.title = file.name;
+      attach.classList.add('is-selected');
+    });
     input.focus({ preventScroll: true });
     grow();
+  }
+
+  function bindConversationActions() {
+    panel.querySelector('[data-chat-notifications]')?.addEventListener('click', async () => {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') toast('Browser message notifications enabled.');
+        else toast('Browser notifications were not enabled.', 'error');
+        renderPanel();
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+      }
+    });
+    panel.querySelector('[data-chat-block]')?.addEventListener('click', async (event) => {
+      const blocked = !state.active.blockedByMe;
+      if (blocked && !window.confirm('Block this participant? They will not be able to send messages to you.')) return;
+      try {
+        await api.patch(`/messages/conversations/${state.activeId}/block`, { blocked });
+        state.active.blockedByMe = blocked;
+        const item = state.conversations.find((entry) => entry.id === state.activeId);
+        if (item) item.blockedByMe = blocked;
+        renderPanel();
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+      }
+    });
+    panel.querySelector('[data-chat-report]')?.addEventListener('click', async () => {
+      const reason = window.prompt('Why are you reporting this conversation?');
+      if (!reason) return;
+      try {
+        const data = await api.post(`/messages/conversations/${state.activeId}/reports`, { reason });
+        toast(data.message || 'Report submitted.');
+      } catch (error) {
+        toast(errorMessage(error), 'error');
+      }
+    });
   }
 
   async function sendMessage() {
     if (state.sending || !state.activeId) return;
     const input = panel.querySelector('[data-chat-input]');
     const send = panel.querySelector('[data-chat-send]');
-    const body = input?.value.trim();
-    if (!body) {
+    const imageInput = panel.querySelector('[data-chat-image]');
+    const file = imageInput?.files[0];
+    const body = input?.value.trim() || '';
+    if (!body && !file) {
       input?.focus();
       return;
     }
@@ -360,12 +432,20 @@ export function mountChat(container, { user, role = 'buyer' }) {
     }
 
     try {
-      const data = await api.post(`/messages/conversations/${state.activeId}/messages`, { body });
+      let payload = { body };
+      if (file) {
+        payload = new FormData();
+        payload.append('body', body);
+        payload.append('image', file);
+      }
+      const data = await api.post(`/messages/conversations/${state.activeId}/messages`, payload);
       if (input) {
         input.value = '';
         input.style.height = 'auto';
         input.focus();
       }
+      if (imageInput) imageInput.value = '';
+      panel.querySelector('[data-chat-attach]')?.classList.remove('is-selected');
       appendMessage(data.message);
       updateConversationPreview(data.message);
       socket?.emit('typing:stop', { conversationId: state.activeId });
@@ -399,10 +479,11 @@ export function mountChat(container, { user, role = 'buyer' }) {
       if (token !== state.openToken) return;
 
       state.active = data.conversation;
+      const conversation = state.conversations.find((entry) => Number(entry.id) === id);
+      state.active.isOnline = conversation?.isOnline || false;
       state.messages = data.messages || [];
       state.active.unreadCount = 0;
 
-      const conversation = state.conversations.find((entry) => entry.id === id);
       if (conversation) {
         conversation.unreadCount = 0;
         conversation.title = state.active.title || conversation.title;
@@ -474,6 +555,42 @@ export function mountChat(container, { user, role = 'buyer' }) {
 
     socket.on('typing:stop', ({ conversationId }) => {
       if (Number(conversationId) === Number(state.activeId)) hideTyping();
+    });
+
+    socket.on('presence:changed', ({ userId, online }) => {
+      const conversation = state.conversations.find(
+        (entry) => Number(entry.otherUserId) === Number(userId)
+      );
+      if (conversation) {
+        conversation.isOnline = online;
+        renderList();
+      }
+      if (state.active && Number(state.active.otherUserId) === Number(userId)) {
+        state.active.isOnline = online;
+        const status = panel.querySelector('[data-chat-status]');
+        if (status) status.textContent = online ? 'Online now' : state.active.subtitle || '';
+      }
+    });
+
+    socket.on('conversation:block-changed', ({ userId, blocked }) => {
+      if (!state.active || Number(state.active.otherUserId) !== Number(userId)) return;
+      state.active.blockedByOther = blocked;
+      const item = state.conversations.find((entry) => Number(entry.id) === Number(state.activeId));
+      if (item) item.blockedByOther = blocked;
+      renderPanel();
+    });
+
+    socket.on('message:new', ({ conversationId, message }) => {
+      if (!message || message.senderId === user.id || document.visibilityState === 'visible') return;
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      const notification = new Notification('New STOKANA message', {
+        body: truncate(message.body || 'Sent an image', 100),
+        tag: `conversation-${conversationId}`
+      });
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = `/account/messages?conversation=${conversationId}`;
+      };
     });
   }
 

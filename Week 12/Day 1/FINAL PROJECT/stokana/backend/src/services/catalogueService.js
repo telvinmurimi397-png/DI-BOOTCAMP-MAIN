@@ -1,20 +1,38 @@
 const db = require('../config/db');
+const promotionService = require('./promotionService');
+
+const PRODUCT_BASE_PRICE = `COALESCE((
+  SELECT MIN(COALESCE(pv.price, p.price))
+  FROM product_variants pv WHERE pv.product_id = p.id
+), p.price)`;
+const PRODUCT_PRICE_SQL = `COALESCE((
+  SELECT MIN(${promotionService.activePriceExpression('p', 'COALESCE(pv.price, p.price)')})
+  FROM product_variants pv WHERE pv.product_id = p.id
+), ${promotionService.activePriceExpression('p', 'p.price')})`;
+const PRODUCT_ACTIVE_PRICE = promotionService.activePriceExpression('p', 'p.price');
+const PRODUCT_COMPARE_PRICE = `CASE
+  WHEN (${PRODUCT_PRICE_SQL}) < (${PRODUCT_BASE_PRICE})
+    THEN GREATEST(COALESCE(p.compare_at_price, ${PRODUCT_BASE_PRICE}), ${PRODUCT_BASE_PRICE})
+  ELSE p.compare_at_price
+END`;
 
 const PRODUCT_CARD_SELECT = `
   SELECT
     p.id,
     p.name,
     p.slug,
-    p.price,
-    p.compare_at_price AS "compareAtPrice",
+    ${PRODUCT_PRICE_SQL} AS price,
+    ${PRODUCT_COMPARE_PRICE} AS "compareAtPrice",
     p.stock,
     p.condition,
+    EXISTS (SELECT 1 FROM product_variants options WHERE options.product_id = p.id) AS "hasVariants",
     p.is_featured AS "isFeatured",
     p.views_count AS "viewsCount",
     p.created_at AS "createdAt",
     c.id AS "categoryId",
     c.name AS "categoryName",
     c.slug AS "categorySlug",
+    c.parent_category_id AS "parentCategoryId",
     u.id AS "sellerId",
     sp.shop_name AS "shopName",
     sp.shop_slug AS "shopSlug",
@@ -64,10 +82,20 @@ function buildProductFilters(filters, params) {
     searchParam = params.length;
     where.push(`(p.name ILIKE ${term} ESCAPE '\\' OR p.description ILIKE ${term} ESCAPE '\\' OR c.name ILIKE ${term} ESCAPE '\\' OR sp.shop_name ILIKE ${term} ESCAPE '\\')`);
   }
-  if (filters.category) where.push(`c.slug = ${add(filters.category)}`);
+  if (filters.category) {
+    const categoryParam = add(filters.category);
+    where.push(`(c.slug = ${categoryParam} OR c.parent_category_id = (SELECT id FROM categories WHERE slug = ${categoryParam}))`);
+  }
   if (filters.shop) where.push(`sp.shop_slug = ${add(filters.shop)}`);
-  if (filters.minPrice !== undefined) where.push(`p.price >= ${add(filters.minPrice)}`);
-  if (filters.maxPrice !== undefined) where.push(`p.price <= ${add(filters.maxPrice)}`);
+  if (filters.seller) where.push(`sp.shop_name ILIKE ${add(`%${escapeLike(filters.seller)}%`)} ESCAPE '\\'`);
+  if (filters.location) {
+    const location = add(`%${escapeLike(filters.location)}%`);
+    where.push(`(p.location ILIKE ${location} ESCAPE '\\'
+      OR sp.county ILIKE ${location} ESCAPE '\\'
+      OR sp.town ILIKE ${location} ESCAPE '\\')`);
+  }
+  if (filters.minPrice !== undefined) where.push(`${PRODUCT_PRICE_SQL} >= ${add(filters.minPrice)}`);
+  if (filters.maxPrice !== undefined) where.push(`${PRODUCT_PRICE_SQL} <= ${add(filters.maxPrice)}`);
   if (filters.inStock === 'true') where.push('p.stock > 0');
   if (filters.featured === 'true') where.push('p.is_featured = TRUE');
 
@@ -76,8 +104,8 @@ function buildProductFilters(filters, params) {
 
 const SORTS = {
   newest: 'p.created_at DESC, p.id DESC',
-  price_asc: 'p.price ASC, p.id DESC',
-  price_desc: 'p.price DESC, p.id DESC',
+  price_asc: `${PRODUCT_PRICE_SQL} ASC, p.id DESC`,
+  price_desc: `${PRODUCT_PRICE_SQL} DESC, p.id DESC`,
   popular: 'p.views_count DESC, p.created_at DESC',
   rating: 'r.rating_average DESC NULLS LAST, r.rating_count DESC, p.created_at DESC'
 };
@@ -128,12 +156,16 @@ async function listProducts(filters) {
 }
 
 async function getProductBySlug(slug) {
+  const variantActivePrice = promotionService.activePriceExpression('p', 'COALESCE(pv.price, p.price)');
   const { rows } = await db.query(
     `SELECT
-       p.id, p.name, p.slug, p.description, p.price, p.compare_at_price AS "compareAtPrice",
-       p.stock, p.condition, p.location, p.is_featured AS "isFeatured",
+       p.id, p.name, p.slug, p.description, ${PRODUCT_ACTIVE_PRICE} AS price,
+       ${PRODUCT_COMPARE_PRICE} AS "compareAtPrice",
+       p.stock, p.condition, p.location, p.specifications,
+       p.is_featured AS "isFeatured",
        p.views_count AS "viewsCount", p.created_at AS "createdAt", p.updated_at AS "updatedAt",
        c.id AS "categoryId", c.name AS "categoryName", c.slug AS "categorySlug",
+       c.parent_category_id AS "parentCategoryId",
        u.id AS "sellerId", sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
        sp.description AS "shopDescription", sp.county AS "shopCounty", sp.town AS "shopTown",
        sp.logo_url AS "shopLogoUrl", sp.created_at AS "shopSince",
@@ -144,6 +176,19 @@ async function getProductBySlug(slug) {
                          ORDER BY pi.is_primary DESC, pi.sort_order ASC, pi.id ASC)
          FROM product_images pi WHERE pi.product_id = p.id
        ), '[]'::json) AS images,
+       COALESCE((
+         SELECT json_agg(json_build_object(
+           'id', pv.id, 'sku', pv.sku, 'attributes', pv.attributes,
+           'price', ${variantActivePrice},
+           'compareAtPrice', CASE
+             WHEN (${variantActivePrice}) < COALESCE(pv.price, p.price)
+               THEN GREATEST(COALESCE(p.compare_at_price, COALESCE(pv.price, p.price)), COALESCE(pv.price, p.price))
+             ELSE p.compare_at_price
+           END,
+           'stock', pv.stock
+         ) ORDER BY pv.id)
+         FROM product_variants pv WHERE pv.product_id = p.id
+       ), '[]'::json) AS variants,
        (
          SELECT COUNT(*)::int FROM products p2
          WHERE p2.seller_id = p.seller_id AND p2.status = 'approved'
@@ -210,12 +255,59 @@ async function getProductReviews(productId, page, limit) {
   };
 }
 
+async function getRecommendations(buyerId) {
+  const { rows } = await db.query(
+    `WITH category_affinity AS (
+       SELECT category_id, SUM(weight)::int AS score
+       FROM (
+         SELECT p.category_id, 3 AS weight
+         FROM wishlists w JOIN products p ON p.id = w.product_id
+         WHERE $1::bigint IS NOT NULL AND w.buyer_id = $1
+         UNION ALL
+         SELECT p.category_id, 5 AS weight
+         FROM order_items oi JOIN products p ON p.id = oi.product_id
+         JOIN orders o ON o.id = oi.order_id
+         WHERE $1::bigint IS NOT NULL AND o.buyer_id = $1
+           AND o.payment_status IN ('paid', 'refunded')
+       ) signals
+       GROUP BY category_id
+     )
+     ${PRODUCT_CARD_SELECT}
+     WHERE p.status = 'approved'
+       AND ($1::bigint IS NULL OR (
+         NOT EXISTS (SELECT 1 FROM wishlists w WHERE w.buyer_id = $1 AND w.product_id = p.id)
+         AND NOT EXISTS (
+           SELECT 1 FROM order_items oi JOIN orders o ON o.id = oi.order_id
+           WHERE o.buyer_id = $1 AND oi.product_id = p.id
+         )
+       ))
+     ORDER BY COALESCE((
+                SELECT ca.score FROM category_affinity ca WHERE ca.category_id = p.category_id
+              ), 0) DESC,
+              p.is_featured DESC, p.views_count DESC, p.created_at DESC
+     LIMIT 8`,
+    [buyerId || null]
+  );
+  return rows;
+}
+
 async function getProductSummaryBySlug(slug) {
   const { rows } = await db.query(
     'SELECT id, slug FROM products WHERE status = $1 AND slug = $2',
     ['approved', slug]
   );
   return rows[0] || null;
+}
+
+async function getProductsBySlugs(slugs) {
+  if (!slugs.length) return [];
+  const { rows } = await db.query(
+    `${PRODUCT_CARD_SELECT}
+     WHERE p.status = 'approved' AND p.slug = ANY($1::varchar[])
+     ORDER BY array_position($1::varchar[], p.slug)`,
+    [slugs]
+  );
+  return rows;
 }
 
 async function listCategories({ includeInactive = false } = {}) {
@@ -228,10 +320,14 @@ async function listCategories({ includeInactive = false } = {}) {
        WHERE p.status = 'approved'
      )
      SELECT c.id, c.name, c.slug, c.description, c.icon, c.image_url AS "imageUrl",
+            c.parent_category_id AS "parentCategoryId",
             c.sort_order AS "sortOrder", c.is_active AS "isActive",
             COALESCE(COUNT(l.id), 0)::int AS "productCount"
      FROM categories c
      LEFT JOIN live l ON l.category_id = c.id
+       OR l.category_id IN (
+         SELECT child.id FROM categories child WHERE child.parent_category_id = c.id
+       )
      WHERE ($1::boolean = TRUE OR c.is_active = TRUE)
      GROUP BY c.id
      ORDER BY c.sort_order ASC, c.name ASC`,
@@ -267,7 +363,8 @@ async function listShops({ q, limit = 12 }) {
   const { rows } = await db.query(
     `SELECT sp.id, sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
             sp.description, sp.logo_url AS "logoUrl", sp.banner_url AS "bannerUrl",
-            sp.county, sp.town, sp.created_at AS "createdAt",
+            sp.county, sp.town, sp.is_featured AS "isFeatured",
+            sp.created_at AS "createdAt",
             COUNT(DISTINCT p.id)::int AS "productCount",
             COALESCE(AVG(r.rating), 0)::float AS "ratingAverage",
             COUNT(DISTINCT r.id)::int AS "reviewCount"
@@ -277,7 +374,7 @@ async function listShops({ q, limit = 12 }) {
      LEFT JOIN reviews r ON r.seller_id = sp.user_id
      WHERE ${where.join(' AND ')}
      GROUP BY sp.id
-     ORDER BY "productCount" DESC, sp.created_at ASC
+     ORDER BY sp.is_featured DESC, "productCount" DESC, sp.created_at ASC
      LIMIT $${params.length}`,
     params
   );
@@ -289,6 +386,7 @@ async function getShopBySlug(slug) {
     `SELECT sp.id, sp.user_id AS "sellerId", sp.shop_name AS "shopName",
             sp.shop_slug AS "shopSlug", sp.description, sp.logo_url AS "logoUrl",
             sp.banner_url AS "bannerUrl", sp.county, sp.town, sp.phone,
+            sp.is_featured AS "isFeatured",
             sp.created_at AS "createdAt",
             (SELECT COUNT(*)::int FROM products p
              WHERE p.seller_id = sp.user_id AND p.status = 'approved') AS "productCount",
@@ -307,7 +405,9 @@ module.exports = {
   listProducts,
   getProductBySlug,
   getProductReviews,
+  getRecommendations,
   getProductSummaryBySlug,
+  getProductsBySlugs,
   listCategories,
   getCatalogueStats,
   listShops,

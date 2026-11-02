@@ -75,6 +75,7 @@ function categoryIcon(category) {
 }
 
 function categoryCard(category) {
+  const parent = categories.find((entry) => Number(entry.id) === Number(category.parentCategoryId));
   const viewLink = category.isActive
     ? `<a class="btn btn-ghost btn-sm" href="/explore?category=${encodeURIComponent(category.slug)}"
          target="_blank" rel="noopener">${icon('globe', { size: 15 })} View catalogue</a>`
@@ -85,7 +86,7 @@ function categoryCard(category) {
       <div class="seller-card-head">
         ${categoryIcon(category)}
         <div class="grow">
-          <h3>${escapeHtml(category.name)}</h3>
+          <h3>${parent ? `${escapeHtml(parent.name)} / ` : ''}${escapeHtml(category.name)}</h3>
           <div class="seller-contact">
             <span>${icon('tags', { size: 12 })} /${escapeHtml(category.slug)}</span>
             <span>${icon('list', { size: 12 })} Position ${category.sortOrder}</span>
@@ -199,6 +200,18 @@ function openCategoryForm(category = null) {
             value="${escapeHtml(category?.name || '')}" placeholder="e.g. Home & Living">
         </div>
         <div class="form-group">
+          <label class="form-label" for="category-parent">Parent category <span class="optional">(optional)</span></label>
+          <select class="select" id="category-parent" name="parentCategoryId">
+            <option value="">Top-level category</option>
+            ${categories
+              .filter((entry) => !entry.parentCategoryId && Number(entry.id) !== Number(category?.id))
+              .map((entry) => `<option value="${entry.id}" ${
+                Number(entry.id) === Number(category?.parentCategoryId) ? 'selected' : ''
+              }>${escapeHtml(entry.name)}</option>`)
+              .join('')}
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label" for="category-description">Description <span class="optional">(optional)</span></label>
           <textarea class="textarea" id="category-description" name="description" rows="3" maxlength="500"
             placeholder="Short description shown on the categories page.">${escapeHtml(
@@ -259,6 +272,9 @@ function openCategoryForm(category = null) {
           description: modal.querySelector('#category-description').value.trim(),
           icon: modal.querySelector('#category-icon').value.trim(),
           imageUrl: modal.querySelector('#category-image').value.trim(),
+          parentCategoryId: modal.querySelector('#category-parent').value
+            ? Number(modal.querySelector('#category-parent').value)
+            : null,
           isActive: modal.querySelector('#category-active').checked
         };
         if (sortValue !== '') payload.sortOrder = Number(sortValue);

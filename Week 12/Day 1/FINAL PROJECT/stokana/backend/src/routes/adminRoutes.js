@@ -1,8 +1,11 @@
 const express = require('express');
 const adminController = require('../controllers/adminController');
+const promotionController = require('../controllers/promotionController');
+const marketingController = require('../controllers/marketingController');
 const asyncHandler = require('../utils/asyncHandler');
 const validate = require('../middleware/validate');
 const { requireAdmin } = require('../middleware/auth');
+const messageController = require('../controllers/messageController');
 const {
   adminUsersQuerySchema,
   adminSellersQuerySchema,
@@ -15,17 +18,38 @@ const {
   categoryIdParamsSchema,
   orderIdParamsSchema,
   updateUserStatusSchema,
+  updateFeaturedSchema,
   categorySchema,
   updateCategorySchema,
   adminOrdersQuerySchema,
   reportsQuerySchema,
   commissionsQuerySchema,
+  paymentReconciliationQuerySchema,
   payoutSchema,
   updateSettingsSchema,
   updateOrderStatusSchema
 } = require('../validators/adminValidators');
+const {
+  orderRequestParamsSchema,
+  orderRequestsQuerySchema,
+  reviewOrderRequestSchema
+} = require('../validators/orderValidators');
+const {
+  messageReportsQuerySchema,
+  messageReportParamsSchema,
+  reviewMessageReportSchema
+} = require('../validators/messageValidators');
 
 const router = express.Router();
+const {
+  createPromotionSchema,
+  promotionParamsSchema,
+  promotionActiveSchema
+} = require('../validators/promotionValidators');
+const {
+  createCampaignSchema,
+  campaignParamsSchema
+} = require('../validators/marketingValidators');
 
 router.use(requireAdmin);
 
@@ -45,8 +69,35 @@ router.patch(
   validate(reviewSellerSchema),
   asyncHandler(adminController.reviewSeller)
 );
+router.patch(
+  '/sellers/:sellerId/featured',
+  validate(sellerIdParamsSchema, 'params'),
+  validate(updateFeaturedSchema),
+  asyncHandler(adminController.setSellerFeatured)
+);
 
 router.get('/products', validate(adminProductsQuerySchema, 'query'), asyncHandler(adminController.products));
+router.patch(
+  '/products/:productId/featured',
+  validate(adminProductIdParamsSchema, 'params'),
+  validate(updateFeaturedSchema),
+  asyncHandler(adminController.setProductFeatured)
+);
+router.get('/promotions', asyncHandler(promotionController.listAdmin));
+router.post('/promotions', validate(createPromotionSchema), asyncHandler(promotionController.createAdmin));
+router.patch(
+  '/promotions/:promotionId',
+  validate(promotionParamsSchema, 'params'),
+  validate(promotionActiveSchema),
+  asyncHandler(promotionController.setAdminActive)
+);
+router.get('/campaigns', asyncHandler(marketingController.listCampaigns));
+router.post('/campaigns', validate(createCampaignSchema), asyncHandler(marketingController.createCampaign));
+router.post(
+  '/campaigns/:campaignId/send',
+  validate(campaignParamsSchema, 'params'),
+  asyncHandler(marketingController.sendCampaign)
+);
 router.patch(
   '/products/:productId/review',
   validate(adminProductIdParamsSchema, 'params'),
@@ -75,12 +126,39 @@ router.patch(
   validate(updateOrderStatusSchema),
   asyncHandler(adminController.updateOrderStatus)
 );
+router.get(
+  '/order-requests',
+  validate(orderRequestsQuerySchema, 'query'),
+  asyncHandler(adminController.orderRequests)
+);
+router.patch(
+  '/order-requests/:requestId',
+  validate(orderRequestParamsSchema, 'params'),
+  validate(reviewOrderRequestSchema),
+  asyncHandler(adminController.reviewOrderRequest)
+);
 
 router.get('/reports', validate(reportsQuerySchema, 'query'), asyncHandler(adminController.reports));
+router.get(
+  '/message-reports',
+  validate(messageReportsQuerySchema, 'query'),
+  asyncHandler(messageController.messageReports)
+);
+router.patch(
+  '/message-reports/:reportId',
+  validate(messageReportParamsSchema, 'params'),
+  validate(reviewMessageReportSchema),
+  asyncHandler(messageController.reviewMessageReport)
+);
 router.get(
   '/commissions',
   validate(commissionsQuerySchema, 'query'),
   asyncHandler(adminController.commissions)
+);
+router.get(
+  '/payments',
+  validate(paymentReconciliationQuerySchema, 'query'),
+  asyncHandler(adminController.paymentReconciliation)
 );
 router.post('/payouts', validate(payoutSchema), asyncHandler(adminController.paySeller));
 

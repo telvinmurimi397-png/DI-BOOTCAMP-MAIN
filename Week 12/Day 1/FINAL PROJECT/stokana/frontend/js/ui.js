@@ -11,6 +11,32 @@ import {
 
 export const PLACEHOLDER = '/assets/placeholder.svg';
 
+let savedProductIds = new Set();
+
+export function setSavedProductIds(productIds) {
+  savedProductIds = new Set(productIds.map((id) => Number(id)));
+  document.querySelectorAll('[data-wishlist-toggle]').forEach((button) => {
+    const saved = savedProductIds.has(Number(button.dataset.wishlistToggle));
+    button.classList.toggle('is-saved', saved);
+    button.setAttribute('aria-pressed', String(saved));
+    button.setAttribute('aria-label', saved ? 'Remove from wishlist' : 'Save to wishlist');
+    button.title = saved ? 'Remove from wishlist' : 'Save to wishlist';
+    const label = button.querySelector('[data-wishlist-label]');
+    if (label) label.textContent = saved ? 'Saved' : 'Save';
+  });
+}
+
+export function isProductSaved(productId) {
+  return savedProductIds.has(Number(productId));
+}
+
+export function setProductSaved(productId, saved) {
+  const id = Number(productId);
+  if (saved) savedProductIds.add(id);
+  else savedProductIds.delete(id);
+  setSavedProductIds([...savedProductIds]);
+}
+
 export function img(url, alt = '', attrs = '') {
   return `<img src="${escapeHtml(url || PLACEHOLDER)}" alt="${escapeHtml(alt)}" loading="lazy" ${attrs}>`;
 }
@@ -38,7 +64,7 @@ export function productCard(product, { quickAdd = true } = {}) {
   const featured = product.isFeatured ? '<span class="badge blue">Featured</span>' : '';
   const soldBadge = soldOut ? '<span class="badge red">Sold out</span>' : '';
   const discountBadge = discount > 0 ? `<span class="badge red">-${discount}%</span>` : '';
-  const quantityButton = quickAdd
+  const quantityButton = quickAdd && !product.hasVariants
     ? `<button class="quick-add" type="button" data-add-to-cart="${product.id}" ${
         soldOut ? 'disabled' : ''
       } aria-label="Add ${escapeHtml(product.name)} to cart" title="${soldOut ? 'Sold out' : 'Add to cart'}">${icon(
@@ -46,6 +72,11 @@ export function productCard(product, { quickAdd = true } = {}) {
         { size: 18 }
       )}</button>`
     : '';
+  const saved = isProductSaved(product.id);
+  const wishlistButton = `<button class="wishlist-toggle${saved ? ' is-saved' : ''}" type="button"
+    data-wishlist-toggle="${product.id}" aria-pressed="${saved}"
+    aria-label="${saved ? 'Remove from wishlist' : 'Save to wishlist'}"
+    title="${saved ? 'Remove from wishlist' : 'Save to wishlist'}">${icon('heart', { size: 18 })}</button>`;
 
   return `
     <article class="product-card${soldOut ? ' is-sold-out' : ''}" data-product-card>
@@ -54,6 +85,7 @@ export function productCard(product, { quickAdd = true } = {}) {
         <span class="product-flags">${soldBadge}${discountBadge}${condition}${featured}</span>
         ${quantityButton}
       </a>
+      ${wishlistButton}
       <div class="product-body">
         <span class="product-cat">${escapeHtml(product.categoryName || 'Marketplace')}</span>
         <h3 class="product-name"><a href="/product/${encodeURIComponent(product.slug)}">${escapeHtml(product.name)}</a></h3>
@@ -129,6 +161,7 @@ export function shopCard(shop) {
           <strong>${escapeHtml(shop.shopName)}</strong>
           <span>${escapeHtml(shop.town || shop.county || 'Kenya')}</span>
         </span>
+        ${shop.isFeatured ? '<span class="badge blue">Featured</span>' : ''}
         ${icon('arrow-up-right', { size: 17, className: 'muted' })}
       </div>
       <p>${escapeHtml(shop.description || 'A trusted STOKANA shop serving customers across Kenya.')}</p>

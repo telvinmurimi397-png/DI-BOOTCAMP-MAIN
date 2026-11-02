@@ -52,12 +52,19 @@ const orderIdParamsSchema = z.object({ orderId: z.coerce.number().int().positive
 const updateUserStatusSchema = z.object({
   isActive: z.boolean({ message: 'Provide true or false.' })
 });
+const updateFeaturedSchema = z.object({
+  isFeatured: z.boolean({ message: 'Provide true or false.' })
+});
 
 const categorySchema = z.object({
   name: z.string().trim().min(2, 'Category name is too short.').max(100),
   description: z.string().trim().max(500).optional(),
   icon: z.string().trim().max(40).optional(),
   imageUrl: z.string().trim().max(500).optional(),
+  parentCategoryId: z.preprocess(
+    (value) => value === '' || value === undefined ? null : value,
+    z.union([z.coerce.number().int().positive(), z.null()])
+  ).optional(),
   sortOrder: z.coerce.number().int().min(0).max(999).optional(),
   isActive: z.boolean().optional()
 });
@@ -86,6 +93,12 @@ const reportsQuerySchema = z
 
 const commissionsQuerySchema = z.object({
   status: z.enum(['all', 'earned', 'paid']).default('all')
+});
+
+const paymentReconciliationQuerySchema = z.object({
+  status: z.enum(['all', 'pending', 'success', 'failed']).default('all'),
+  page: z.coerce.number().int().min(1).max(1000).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(30)
 });
 
 const payoutSchema = z.object({
@@ -131,11 +144,13 @@ module.exports = {
   categoryIdParamsSchema,
   orderIdParamsSchema,
   updateUserStatusSchema,
+  updateFeaturedSchema,
   categorySchema,
   updateCategorySchema,
   adminOrdersQuerySchema,
   reportsQuerySchema,
   commissionsQuerySchema,
+  paymentReconciliationQuerySchema,
   payoutSchema,
   updateSettingsSchema,
   updateOrderStatusSchema

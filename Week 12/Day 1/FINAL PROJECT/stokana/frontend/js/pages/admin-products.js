@@ -114,6 +114,12 @@ function actionsFor(product) {
     buttons.push(`<button class="btn btn-secondary btn-sm" type="button" data-action="archive"
       data-id="${product.id}" data-name="${escapeHtml(product.name)}">Archive</button>`);
   }
+  if (product.status === 'approved' && product.sellerStatus === 'approved') {
+    buttons.push(`<button class="btn btn-secondary btn-sm" type="button" data-action="feature"
+      data-id="${product.id}" data-featured="${product.isFeatured}">
+      ${product.isFeatured ? 'Remove featured' : 'Feature product'}
+    </button>`);
+  }
   return buttons.join('');
 }
 
@@ -232,6 +238,18 @@ function renderProducts(data) {
 async function review(button) {
   const action = button.dataset.action;
   const name = button.dataset.name;
+  if (action === 'feature') {
+    try {
+      await api.patch(`/admin/products/${button.dataset.id}/featured`, {
+        isFeatured: button.dataset.featured !== 'true'
+      });
+      toast('Featured product placement updated.');
+      await load();
+    } catch (error) {
+      toast(errorMessage(error), 'error');
+    }
+    return;
+  }
   let reason;
 
   if (action === 'reject') {

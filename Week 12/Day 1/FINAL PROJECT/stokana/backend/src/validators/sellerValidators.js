@@ -9,6 +9,27 @@ const imageUrlRule = z
     'Image URLs must start with https://, http:// or /.'
   );
 
+const specificationsRule = z.record(
+  z.string().trim().min(1).max(60),
+  z.string().trim().max(500)
+).default({});
+
+const variantsRule = z.array(z.object({
+  sku: z.string().trim().min(1).max(80),
+  attributes: z.record(
+    z.string().trim().min(1).max(40),
+    z.string().trim().min(1).max(100)
+  ).refine((attributes) => Object.keys(attributes).length > 0, 'Add at least one variant option.'),
+  price: z.union([
+    z.coerce.number().positive().max(10_000_000).refine(
+      (value) => /^\d+(\.\d{1,2})?$/.test(String(value)),
+      'Variant prices can have at most two decimal places.'
+    ),
+    z.null()
+  ]).optional(),
+  stock: z.coerce.number().int().min(0).max(100_000)
+})).max(100).optional();
+
 const productFields = {
   name: z.string().trim().min(3, 'Product name must be at least 3 characters.').max(180),
   categoryId: z.coerce.number().int().positive('Choose a category.'),
@@ -17,6 +38,8 @@ const productFields = {
     .trim()
     .min(20, 'Describe the product in at least 20 characters.')
     .max(5000, 'Description is too long.'),
+  specifications: specificationsRule,
+  variants: variantsRule,
   price: z.coerce
     .number()
     .positive('Price must be greater than zero.')
@@ -31,21 +54,38 @@ const productFields = {
   stock: z.coerce.number().int('Stock must be a whole number.').min(0, 'Stock cannot be negative.').max(100_000),
   condition: z.enum(['new', 'used', 'refurbished']).default('new'),
   location: z.string().trim().max(120).optional(),
-  imageUrls: z.array(imageUrlRule).min(1, 'Add at least one product image.').max(5, 'Use up to 5 images.')
+  imageUrls: z.array(imageUrlRule)
+    .min(1, 'Add at least one product image.')
+    .max(5, 'Use up to 5 images.')
+    .refine((urls) => new Set(urls).size === urls.length, 'Product images must be unique.')
 };
 
-const createProductSchema = z
+const productWithVariantsSchema = (schema) => schema.superRefine((data, ctx) => {
+  if (!data.variants) return;
+  const skus = new Set();
+  data.variants.forEach((variant, index) => {
+    const sku = variant.sku.toLowerCase();
+    if (skus.has(sku)) {
+      ctx.addIssue({ code: 'custom', path: ['variants', index, 'sku'], message: 'Variant SKUs must be unique.' });
+    }
+    skus.add(sku);
+  });
+});
+
+const createProductSchema = productWithVariantsSchema(z
   .object(productFields)
   .refine(
     (data) => data.compareAtPrice == null || data.compareAtPrice > data.price,
     { message: 'Compare-at price must be higher than the selling price.', path: ['compareAtPrice'] }
-  );
+  ));
 
-const updateProductSchema = z
+const updateProductSchema = productWithVariantsSchema(z
   .object({
     name: productFields.name.optional(),
     categoryId: productFields.categoryId.optional(),
     description: productFields.description.optional(),
+    specifications: specificationsRule.optional(),
+    variants: variantsRule,
     price: productFields.price.optional(),
     compareAtPrice: productFields.compareAtPrice,
     stock: productFields.stock.optional(),
@@ -55,7 +95,7 @@ const updateProductSchema = z
   .refine(
     (data) => Object.values(data).some((value) => value !== undefined),
     { message: 'Provide at least one field to update.' }
-  );
+  ));
 
 const stockSchema = z.object({
   stock: z.coerce.number().int('Stock must be a whole number.').min(0).max(100_000)
@@ -80,11 +120,46 @@ const shipmentParamsSchema = z.object({
   shipmentId: z.coerce.number().int().positive()
 });
 
+const pickupLocationParamsSchema = z.object({
+  pickupLocationId: z.coerce.number().int().positive()
+});
+
+const pickupLocationFields = {
+  label: z.string().trim().min(2, 'Enter a pickup location label.').max(80),
+  county: z.string().trim().min(2, 'Choose a county.').max(80),
+  town: z.string().trim().min(2, 'Enter a town or area.').max(80),
+  addressLine: z.string().trim().min(5, 'Enter the pickup street address.').max(500),
+  contactName: z.string().trim().max(120).optional(),
+  phone: z.string().trim().max(30).refine(
+    (value) => !value || /^\+?[0-9 ()-]{7,20}$/.test(value),
+    'Enter a valid contact phone number.'
+  ).optional(),
+  instructions: z.string().trim().max(500).optional(),
+  isDefault: z.boolean().optional()
+};
+
+const createPickupLocationSchema = z.object(pickupLocationFields);
+const updatePickupLocationSchema = z.object(pickupLocationFields).partial().refine(
+  (data) => Object.values(data).some((value) => value !== undefined),
+  { message: 'Provide at least one field to update.' }
+);
+
 const shipmentUpdateSchema = z
   .object({
     status: z.enum(['dispatched', 'in_transit', 'delivered', 'failed']),
     carrier: z.string().trim().max(80).optional(),
-    trackingNumber: z.string().trim().max(120).optional()
+    trackingNumber: z.string().trim().max(120).optional(),
+    trackingUrl: z.string().trim().url().max(500).refine(
+      (value) => {
+        try {
+          return new URL(value).protocol === 'https:';
+        } catch {
+          return false;
+        }
+      },
+      'Tracking links must use HTTPS.'
+    ).optional(),
+    pickupLocationId: z.coerce.number().int().positive().nullable().optional()
   })
   .superRefine((data, ctx) => {
     if (data.status === 'dispatched' && !data.carrier && !data.trackingNumber) {
@@ -146,8 +221,13 @@ module.exports = {
   imageIdParamsSchema,
   productIdParamsSchema,
   shipmentParamsSchema,
+  pickupLocationParamsSchema,
+  createPickupLocationSchema,
+  updatePickupLocationSchema,
   shipmentUpdateSchema,
   sellerOrdersQuerySchema,
   sellerProductsQuerySchema,
-  updateShopSchema
+  updateShopSchema,
+  specificationsRule,
+  variantsRule
 };

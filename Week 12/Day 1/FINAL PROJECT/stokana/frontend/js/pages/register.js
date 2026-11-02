@@ -14,6 +14,7 @@ const submitButton = document.getElementById('register-submit');
 const sellerFields = document.getElementById('seller-fields');
 const countySelect = document.getElementById('register-county');
 const shopNameInput = document.getElementById('register-shop-name');
+const referralCode = document.getElementById('referral-code');
 
 let role = new URLSearchParams(window.location.search).get('role') === 'seller' ? 'seller' : 'buyer';
 
@@ -38,6 +39,7 @@ function populateCounties() {
 async function init() {
   populateCounties();
   bindPasswordToggles();
+  referralCode.value = (new URLSearchParams(window.location.search).get('ref') || '').trim().toUpperCase();
 
   const existing = await getUser();
   if (existing) {
@@ -77,6 +79,8 @@ async function init() {
       email,
       password,
       role,
+      referralCode: referralCode.value || undefined,
+      marketingEmailConsent: form.marketingEmailConsent.checked,
       ...(phone ? { phone } : {})
     };
 
@@ -95,6 +99,9 @@ async function init() {
     setButtonLoading(submitButton, true, 'Creating account…');
     try {
       const data = await api.post('/auth/register', payload);
+      if (data.devVerification) {
+        sessionStorage.setItem('stokana.devVerification', JSON.stringify(data.devVerification));
+      }
       setUser(data.user);
       const fallback = data.user.role === 'seller' ? '/seller' : '/account';
       window.location.replace(nextPath(fallback));

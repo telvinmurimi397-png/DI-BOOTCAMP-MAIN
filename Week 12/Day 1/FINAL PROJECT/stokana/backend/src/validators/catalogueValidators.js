@@ -10,6 +10,8 @@ const productsQuerySchema = z
     q: z.string().trim().max(100).optional(),
     category: z.string().trim().max(120).optional(),
     shop: z.string().trim().max(150).optional(),
+    seller: z.string().trim().max(120).optional(),
+    location: z.string().trim().max(120).optional(),
     minPrice: optionalNumberQuery,
     maxPrice: optionalNumberQuery,
     inStock: z.enum(['true', 'false']).optional(),
@@ -43,6 +45,12 @@ const shopsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(24).default(12)
 });
 
+const recentlyViewedQuerySchema = z.object({
+  slugs: z.string().trim().min(1).max(8 * 221)
+    .transform((value) => value.split(','))
+    .pipe(z.array(z.string().trim().min(1).max(220).regex(/^[a-z0-9-]+$/)).min(1).max(8))
+});
+
 const productReviewsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).max(1000).default(1),
   limit: z.coerce.number().int().min(1).max(20).default(5)
@@ -54,5 +62,6 @@ module.exports = {
   shopParamsSchema,
   shopProductsQuerySchema,
   shopsQuerySchema,
+  recentlyViewedQuerySchema,
   productReviewsQuerySchema
 };

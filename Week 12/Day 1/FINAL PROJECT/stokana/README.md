@@ -2,7 +2,7 @@
 
 A complete multi-vendor marketplace for Kenya. Buyers discover products from verified shops, chat with sellers, check out securely and track delivery. Sellers run their shop, catalogue, stock, orders and conversations. Admins approve shops and products and monitor orders, commissions and platform settings.
 
-Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Express and PostgreSQL on the back end, server-side sessions, Socket.IO chat and a simulated payment sandbox.
+Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Express and PostgreSQL on the back end, server-side sessions, Socket.IO chat and Safaricom M-PESA Daraja payments.
 
 ---
 
@@ -28,38 +28,53 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 
 **Public storefront**
 - Home page with live catalogue stats, featured products, categories and verified shops
-- Explore/search with keyword search, category, shop, price, stock and sort filters
+- Explore/search with keyword, category, seller, location, price, stock and sort filters
 - Category directory, shop directory and individual shop pages
 - Product pages with image gallery, stock state, seller card, related products and paginated reviews
+- Recently viewed products on the home page (stored in the browser)
 - Help, refunds, terms and privacy pages, custom 404, responsive navigation
 - Locally hosted product photography for the seeded catalogue
 
 **Buyers**
 - Register, sign in, sign out, edit profile and change password
 - Persistent cart with availability warnings and stock-aware quantities
+- Save-for-later items that retain variant and quantity
+- Account wishlist for saving products across visits
+- Discount codes, scheduled flash sales and featured product/shop placements
+- Loyalty points (1 per KSh 100; 100 points redeem for KSh 10) and KSh 200 referral credit for both users after a referred buyer's first paid, non-refunded order
+- Promotional email consent controls, one-click unsubscribe, admin email/in-app campaigns and opt-in abandoned-cart reminders
 - Checkout with delivery details, shipping fee and free-shipping threshold
-- Simulated payment success/failure, retry payment and cancel an unpaid order
-- Order history, order detail, per-seller shipment tracking and buyer protection copy
-- Start conversations with sellers, exchange messages and see unread counts
+- One checkout and order number for items from multiple sellers, with separate seller shipments
+- M-PESA STK Push, verified payment receipts, retry handling and failed-payment history
+- Server-calculated per-item commissions and M-PESA seller payout records
+- Admin payment reconciliation for payment/order mismatches, missing successful payments and refunds
+- Order history, order confirmation, per-seller tracking, cancellation requests and 7-day return/refund requests
+- Email notifications for order receipt, payment confirmation, request updates and seller delivery updates (SMTP required)
+- Product-specific and seller-specific order conversations, real-time chat, typing/read status, unread badges, opt-in browser notifications and seller online indicators
+- JPEG/PNG/WebP chat image attachments (5 MB maximum), buyer/seller blocking and reporting, plus an admin report-review queue
 - Review delivered order items; reviews appear on product pages and seller dashboards
 
 **Sellers**
 - Create a shop at registration; it stays pending until an admin approves it
 - Shop profile editor (description, logo, banner, county, town, phone)
-- Product creation/editing with category, price, compare-at price, stock, condition, location and up to five images
+- Product creation/editing with subcategories, specifications, up to 100 SKU-backed variants with per-variant prices and inventory, and up to five images
+- CSV bulk product import (100 rows / 2 MB per upload); imported listings enter the moderation queue
 - Image uploads through the server or direct image URLs
 - Stock editor, product archiving and review statuses/rejection reasons
-- Paid-order queue, shipment updates (dispatched, in transit, delivered, failed) with courier/tracking
+- Paid-order queue, seller pickup locations, shipment updates (dispatched, in transit, delivered, failed), HTTPS tracking links and buyer delivery confirmation
 - Sales and earnings breakdown, commission totals, recent reviews, message inbox
+- Informational seller plan catalogue (no billing or plan-based access restrictions)
 
 **Admins**
 - Dashboard overview of users, shops, products, orders and recent activity
 - Shop applications: approve, reject or suspend with a reason
 - Product moderation: approve, reject or archive
 - User management and account deactivation
+- Email and phone verification, saved delivery addresses and optional authenticator-app two-factor sign-in
 - Category management (create, edit, deactivate)
 - Order monitoring and manual status updates
-- Reports over a date range, commission ledger and seller payouts
+- Cancellation and return request review; record the payment provider reference after issuing a refund
+- Reports over a date range, commission ledger, seller payouts and payment reconciliation
 - Platform settings for commission rate, shipping fee and free-shipping threshold
 
 **Platform**
@@ -68,7 +83,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 - Zod request validation, rate limiting, parameterised SQL and role guards
 - Multi-vendor order snapshots so historical prices, commission rates and earnings never change
 - Transactional checkout with product row locks and guarded stock decrements
-- Simulated payment provider with idempotency and duplicate-payment protection
+- Idempotent M-PESA callback handling with duplicate receipt/payment protection
 - Structured API errors and a health endpoint at `/api/health`
 
 ---
@@ -85,7 +100,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 | Realtime | Socket.IO |
 | Images | Local uploads by default; optional Cloudinary (server-side only) |
 | Validation | Zod |
-| Payments | Simulated sandbox (M-Pesa-ready server-side boundary) |
+| Payments | Safaricom M-PESA Daraja STK Push (development simulation is test-only) |
 | Tests | Node HTTP smoke test covering the ten business rules |
 
 ---
@@ -163,6 +178,20 @@ psql "postgresql://postgres:YOUR_PASSWORD@localhost:5432/stokana_db" -f database
 ```
 
 The schema requires the `pgcrypto` extension (used by the seed passwords); `schema.sql` enables it automatically.
+For an existing installation, apply these migrations before deploying the updated server:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_account_security_and_addresses.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_product_catalogue_features.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_wishlist_saved_items.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_payment_reconciliation.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_messaging_features.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261103_order_lifecycle_workflows.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_delivery_features.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f database/migrations/20261102_growth_features.sql
+```
+
+Seller CSV imports require `name`, `categoryId`, `description`, `price`, `stock`, `condition` and `imageUrls` columns. Separate image URLs with `|`. Optional `specifications` and `variants` columns contain JSON; quote CSV cells containing commas or line breaks. The seller products page provides a header template.
 
 ### 4. Configure the backend
 
@@ -180,9 +209,10 @@ APP_URL=http://localhost:4000
 DATABASE_URL=postgres://postgres:YOUR_PASSWORD@localhost:5432/stokana_db
 PGSSL=false
 SESSION_SECRET=replace-with-a-long-random-secret
+TOTP_ENCRYPTION_KEY=replace-with-a-separate-long-random-secret
 COOKIE_SECURE=false
 TRUST_PROXY=false
-PAYMENT_PROVIDER=simulated
+PAYMENT_PROVIDER=mpesa
 ```
 
 Generate a strong session secret, for example:
@@ -218,13 +248,17 @@ The convenience scripts `npm run db:schema` and `npm run db:seed` rely on a shel
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | PostgreSQL connection string. Keep it only in `backend/.env`. |
 | `SESSION_SECRET` | Yes | Signs session cookies. Use 32+ random characters in production. |
+| `TOTP_ENCRYPTION_KEY` | Production | Separate 32+ character key used to encrypt authenticator secrets at rest. |
 | `PORT` | No | API/server port, default `4000`. |
 | `NODE_ENV` | No | `development` or `production`. |
 | `APP_URL` | No | Public origin used for links, allowed origins and cookies. |
 | `PGSSL` | No | Set `true` when the database requires TLS. Defaults to on in production. |
 | `COOKIE_SECURE` | No | Send session cookie only over HTTPS. Defaults to on in production. |
 | `TRUST_PROXY` | No | Trust one reverse-proxy hop. Enable behind Nginx/Heroku/Render. |
-| `PAYMENT_PROVIDER` | No | `simulated` (default) or `mpesa` for Safaricom Daraja STK Push. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Production | SMTP credentials used for verification, password recovery and order lifecycle notifications. |
+| `AFRICASTALKING_USERNAME`, `AFRICASTALKING_API_KEY` | Production | Africa's Talking credentials used to deliver phone verification codes. |
+| `AFRICASTALKING_ENVIRONMENT` | No | `sandbox` or `production` for SMS delivery. |
+| `PAYMENT_PROVIDER` | No | `mpesa` (default). `simulated` is limited to explicit non-production test runs; cards are not supported. |
 | `MPESA_ENVIRONMENT` | No | `sandbox` (default) or `production`. |
 | `MPESA_CONSUMER_KEY` | When using M-PESA | Daraja app consumer key. Keep it server-side in `backend/.env`. |
 | `MPESA_CONSUMER_SECRET` | When using M-PESA | Daraja app consumer secret. Keep it server-side in `backend/.env`. |
@@ -238,6 +272,7 @@ The convenience scripts `npm run db:schema` and `npm run db:seed` rely on a shel
 | `CLOUDINARY_FOLDER` | No | Upload folder, default `stokana/products`. |
 
 Never commit `backend/.env`. The repository ignores it and all other `.env.*` files except `.env.example`.
+In development, verification codes are returned to the browser instead of requiring external delivery credentials. In production, configure both email and SMS delivery before starting the service; verification codes expire after ten minutes and are rate-limited.
 
 ---
 
@@ -266,20 +301,24 @@ The seed also creates 15 approved products, two pending products, demo orders, r
 ### Order and money flow
 
 1. A buyer adds products from one or more sellers to the cart.
-2. Checkout locks the cart items and products, validates that products, shops and categories are still active, and checks stock inside one transaction.
+2. Checkout locks the cart items and products, validates that products, shops and categories are still active, and checks product or selected-variant stock inside one transaction.
 3. The server calculates subtotal, shipping and commission from the current **server-side** settings; the browser never supplies prices or commission.
-4. The order is created as `pending_payment` / `unpaid`, stock is decremented, a pending payment is created for the configured provider, and the cart is cleared.
-5. In simulated mode the buyer can simulate a successful or failed payment. In M-PESA mode the server sends an STK Push to the buyer's phone and waits for the callback. A successful callback is checked against the Daraja STK Query API and the exact order amount before the payment is marked successful and the order `processing` / `paid`; commissions and shipments are then created once.
+4. The order is created as `pending_payment` / `unpaid`, stock is decremented, a pending M-PESA payment is created, and the cart is cleared.
+5. The server sends an M-PESA STK Push to the buyer's phone and waits for the callback. A successful callback is checked against the Daraja STK Query API and exact order amount; the M-PESA receipt is stored and the order marked `processing` / `paid`. Commissions and shipments are then created once.
 6. Sellers see paid orders only, update shipments and can deliver the order.
-7. The buyer can review delivered items. Cancelling an unpaid order restores stock and fails its pending payments.
+7. The buyer can review delivered items. Cancelling an unpaid order restores stock and fails its pending payments. A paid order can be cancellation-requested before dispatch; delivered items can be returned within seven days.
+8. Admins approve or reject requests. Refunds are issued manually through M-PESA, then recorded in the admin order queue with the M-PESA reference; the application does not initiate provider refunds.
+9. Order receipt, verified payment, request decisions and seller-specific shipment changes trigger email notifications when SMTP is configured. Delivery errors are logged by the backend.
 
 ### Multi-vendor snapshots
 
-`order_items` stores the seller, product name, image, unit price, quantity, commission rate, commission amount and seller earnings at the time of purchase. Later edits to products or platform settings never change historical orders or payouts.
+`order_items` stores the seller, product name, image, selected variant SKU/options, unit price, quantity, commission rate, commission amount and seller earnings at the time of purchase. Later edits to products or platform settings never change historical orders or payouts.
 
-### Payment simulation
+### Local payment test mode
 
-The order detail page exposes simulated payment actions. Equivalent API calls:
+For local smoke tests only, set `PAYMENT_PROVIDER=simulated` while `NODE_ENV` is not `production`. This test adapter is not a supported customer payment method and production startup rejects it. Restore `PAYMENT_PROVIDER=mpesa` to use Daraja.
+
+The test-only API endpoint is:
 
 ```bash
 # Successful payment
@@ -297,7 +336,7 @@ curl -X POST http://localhost:4000/api/orders/STK-YYYYMMDD-XXXXXX/cancel ...
 
 ### M-PESA Daraja STK Push
 
-The simulator remains the default. To enable real Daraja sandbox requests, add the Daraja app credentials, shortcode, passkey and a publicly reachable HTTPS callback URL to `backend/.env`, then set:
+M-PESA is the only supported customer payment method. Add the Daraja app credentials, shortcode, passkey and a publicly reachable HTTPS callback URL to `backend/.env`:
 
 ```dotenv
 PAYMENT_PROVIDER=mpesa
@@ -310,7 +349,9 @@ Restart the backend after changing environment variables. Checkout sends an STK 
 
 Run the focused phone-number and timestamp checks with `npm run test:mpesa` from `backend`.
 
-Repeating a successful callback returns `alreadyProcessed: true` and creates no additional payment or commission. Failed payments leave the order reserved so the buyer can retry. Before enabling production payments, complete sandbox tests for successful, declined, cancelled and timed-out prompts; verify callback reachability, retries and order totals; and obtain Safaricom production approval. The configured credentials and callback still need an end-to-end test in the environment where the application will run.
+Successful callbacks store the Safaricom receipt as the transaction reference; the buyer sees payment attempts and receipts in order history, and admins can review the reconciliation ledger under **Commissions & payouts**. Repeating a successful callback returns `alreadyProcessed: true` and creates no additional payment or commission. Failed payments leave the order reserved so the buyer can retry. Seller commission calculations are stored per order item; admins record seller payouts with the M-PESA payout receipt. Payouts and refunds are recorded manually; the application does not move funds to sellers or initiate refunds.
+
+Before enabling production payments, complete sandbox tests for successful, declined, cancelled and timed-out prompts; verify callback reachability, retries and order totals; and obtain Safaricom production approval. The configured credentials and callback still need an end-to-end test in the environment where the application will run.
 
 ---
 
@@ -379,7 +420,7 @@ What the test creates and cleans up:
 1. Sign in as `alpine@stokana.co.ke` and confirm product creation is blocked with a clear approval message.
 2. Sign in as admin, approve Alpine Outdoor KE, then approve its product.
 3. Confirm the product appears in the correct category with imagery and opens its product page.
-4. Sign in as buyer, open chat from the product page and exchange messages with the seller.
+4. Sign in as buyer, open chat from a product page, exchange text and image messages, and verify unread/presence updates for the seller.
 5. Set the product stock to zero in the seller dashboard; the product shows Sold out and cannot be added to a cart.
 6. Restore stock, buy through checkout, simulate payment, accept the order as the seller, dispatch and deliver it, then leave a review.
 
@@ -400,15 +441,15 @@ Import both files from `docs/`:
 - `docs/STOKANA.postman_collection.json`
 - `docs/STOKANA.postman_environment.json`
 
-Select the **STOKANA local** environment and adjust `baseUrl` and credentials if needed. Postman stores the session cookie automatically after each login request.
+Select the **STOKANA local** environment and adjust `baseUrl` and credentials if needed. Postman stores the session cookie automatically after each login request. The collection's order-payment examples use the local test adapter; set `PAYMENT_PROVIDER=simulated` before starting a non-production backend to run those examples without Daraja credentials.
 
 The collection contains 76 requests in nine folders. Run them in this order:
 
 1. **Setup & auth** — health, marketplace stats, optional buyer/seller registration, login as admin/buyer/seller, inspect `/auth/me`.
 2. **Public catalogue** — categories, search, category browse, product detail, reviews, shop directory and shop detail.
 3. **Seller** — overview, shop profile, product creation/update, stock, image URL add/primary/delete, sales and reviews.
-4. **Admin** — overview, approve the newly registered shop and the new product, sellers, users, orders, reports, commissions and settings.
-5. **Buyer cart & orders** — cart, checkout, retry, successful simulated payment, duplicate callback, order detail, history and stats.
+4. **Admin** — overview, approve the newly registered shop and the new product, sellers, users, orders, reports, M-Pesa reconciliation, commissions and payouts.
+5. **Buyer cart & orders** — cart, checkout, retry, test payment or M-Pesa payment, duplicate callback, order detail, payment history and stats.
 6. **Seller fulfilment** — refresh seller orders, dispatch the shipment and mark it delivered.
 7. **Messages** — start a conversation, send, read, list and check unread counts.
 8. **Seller inbox** — read and reply to the same conversation.
@@ -427,7 +468,7 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 - Role guards and ownership filters protect buyer, seller and admin endpoints. A missing record and another user's record both return `404` to avoid leaking existence.
 - All SQL uses parameterised queries; dynamic filters are built from fixed fragments. Search terms are escaped for `ILIKE`.
 - Checkout computes prices, shipping and commission on the server inside a transaction with row locks and guarded stock updates.
-- The database enforces one successful payment per order and one commission per order item; callback handling is idempotent.
+- The database enforces unique M-Pesa transaction receipts, one successful payment per order and one commission per order item; callback handling is idempotent.
 - Auth, registration, password reset and messaging endpoints are rate limited.
 - Database passwords, session secrets and Cloudinary secrets belong only in `backend/.env` or the hosting provider's secret store. Never place them in front-end JavaScript or commit them.
 
@@ -439,20 +480,20 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 
 The project includes [`render.yaml`](./render.yaml) for the Node web service. It builds from `backend/` and serves both the API and frontend from one origin. The blueprint uses Render's free web-service plan for a demo; choose a suitable paid plan in Render for production and review the current pricing and service limits before creating resources.
 
-1. Push the repository to GitHub. In Render, create a PostgreSQL database in the same region as the web service. Use a persistent database plan for any data you need to keep.
-2. Before deploying the app, apply `database/schema.sql` once to the new database using its **external** connection URL and `psql` from your computer. From the `stokana` project directory, run:
+1. Push the repository to GitHub. Use your existing PostgreSQL database; the web-service blueprint does not create a database.
+2. If the existing database does not already have the STOKANA schema, apply `database/schema.sql` once using a connection URL that can reach it and `psql` from your computer. From the `stokana` project directory, run:
 
    ```powershell
    psql "$env:DATABASE_URL" -v ON_ERROR_STOP=1 -f "database\schema.sql"
    ```
 
-   Set `$env:DATABASE_URL` in your PowerShell session to the database's external URL first. Do not load `database/seeds/dev_seed.sql` into a public production database.
-3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter the database's **internal** connection URL from Render. Keep this value and all credentials in Render's environment settings, not in Git.
+   Set `$env:DATABASE_URL` in your PowerShell session to the database connection URL first. Do not load `database/seeds/dev_seed.sql` into a public production database.
+3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter your existing database's connection URL. If the database is on Render, prefer its **internal** URL when the database and service share a region; otherwise use the connection URL and SSL requirements supplied by your database provider. Keep this value and all credentials in Render's environment settings, not in Git.
 4. After the first deploy, open the service URL and check `/api/health`. Render's `RENDER_EXTERNAL_URL` is used automatically for origin checks and generated reset links. If you attach a custom domain, set `APP_URL` to that exact HTTPS origin in the service's environment and redeploy.
 5. Create the first admin without using demo credentials. From a trusted machine with network access to the database, run `npm run admin:bootstrap` in `backend/` with the production `DATABASE_URL` and temporary `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables. Remove the temporary variables after the command succeeds; never seed the demo accounts into a public production database.
-6. Configure Cloudinary in the service environment before accepting image uploads. Local `backend/uploads` files are ephemeral on hosted instances. Keep `PAYMENT_PROVIDER=simulated` until Daraja sandbox tests are complete.
+6. Configure Cloudinary in the service environment before accepting product or chat image uploads. Local `backend/uploads` files are ephemeral on hosted instances. Set `PAYMENT_PROVIDER=mpesa` and complete Daraja sandbox tests before enabling production payment credentials.
 
-The web blueprint does not create a database or incur database charges. Check Render's current plans, free-service limits, backups and data-retention terms before choosing a database plan. The app expects the schema to exist before it is used.
+The app expects the schema to exist before it is used. Do not run the schema against a database containing unrelated data; verify the target database before applying it.
 
 ### Before deployment
 
@@ -485,13 +526,13 @@ Socket.IO currently runs in-process. If you run more than one Node instance, add
 
 ## Known limitations and next steps
 
-- **Payment readiness is unverified.** The default provider is `simulated`, and Daraja STK Push/callback support is implemented. An end-to-end sandbox payment and production configuration still need to be verified; do not assume credentials or callback reachability work just because Daraja mode is selected.
+- **Payment readiness is unverified.** M-PESA Daraja STK Push/callback support is implemented and is the only production payment method. An end-to-end sandbox payment and production configuration still need to be verified; do not assume credentials or callback reachability work just because M-PESA mode is selected. Card payments and automatic seller payouts/refunds are not supported.
 - **Password reset emails are not sent.** In development the reset link is logged to the server console and returned as `devResetToken`; production needs an email integration.
 - **Local image uploads are not durable.** Use Cloudinary or persistent storage in production.
 - **Single-instance realtime.** Add a Socket.IO adapter before horizontal scaling.
 - **Automated coverage is API-focused.** The smoke test covers the ten business rules; front-end flows were verified manually in a browser. A Playwright/Cypress suite would be the next quality step.
 - **No automated database migrations.** Apply `schema.sql` to a fresh database, or introduce a migration tool before evolving a production schema.
-- **No real delivery-provider integration.** Shipments are tracked manually by sellers with courier and tracking numbers.
+- **No real delivery-provider integration.** Sellers enter courier names, tracking numbers and HTTPS tracking links manually. Shipping fees use the platform-wide configured fee and free-shipping threshold; fees are not calculated by route or distance.
 
 ---
 

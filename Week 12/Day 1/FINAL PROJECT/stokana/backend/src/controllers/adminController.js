@@ -1,4 +1,5 @@
 const adminService = require('../services/adminService');
+const orderAdjustmentService = require('../services/orderAdjustmentService');
 
 async function overview(req, res) {
   const data = await adminService.getOverview();
@@ -33,9 +34,19 @@ async function reviewSeller(req, res) {
   res.json({ message: messages[req.body.action], seller });
 }
 
+async function setSellerFeatured(req, res) {
+  const seller = await adminService.setSellerFeatured(req.params.sellerId, req.body.isFeatured);
+  res.json({ message: 'Seller featured placement updated.', seller });
+}
+
 async function products(req, res) {
   const data = await adminService.listProducts(req.query);
   res.json(data);
+}
+
+async function setProductFeatured(req, res) {
+  const product = await adminService.setProductFeatured(req.params.productId, req.body.isFeatured);
+  res.json({ message: 'Product featured placement updated.', product });
 }
 
 async function reviewProduct(req, res) {
@@ -81,6 +92,20 @@ async function updateOrderStatus(req, res) {
   res.json({ message: 'Order status updated.', order });
 }
 
+async function orderRequests(req, res) {
+  const data = await orderAdjustmentService.listRequests(req.query);
+  res.json(data);
+}
+
+async function reviewOrderRequest(req, res) {
+  const request = await orderAdjustmentService.reviewRequest(
+    req.user.id,
+    req.params.requestId,
+    req.body
+  );
+  res.json({ message: 'Order request updated.', request });
+}
+
 async function reports(req, res) {
   const data = await adminService.getReports(req.query);
   res.json(data);
@@ -88,6 +113,11 @@ async function reports(req, res) {
 
 async function commissions(req, res) {
   const data = await adminService.getCommissions(req.query.status);
+  res.json(data);
+}
+
+async function paymentReconciliation(req, res) {
+  const data = await adminService.getPaymentReconciliation(req.query);
   res.json(data);
 }
 
@@ -120,7 +150,9 @@ module.exports = {
   setUserStatus,
   sellers,
   reviewSeller,
+  setSellerFeatured,
   products,
+  setProductFeatured,
   reviewProduct,
   categories,
   createCategory,
@@ -128,8 +160,11 @@ module.exports = {
   deleteCategory,
   orders,
   updateOrderStatus,
+  orderRequests,
+  reviewOrderRequest,
   reports,
   commissions,
+  paymentReconciliation,
   paySeller,
   settings,
   updateSettings

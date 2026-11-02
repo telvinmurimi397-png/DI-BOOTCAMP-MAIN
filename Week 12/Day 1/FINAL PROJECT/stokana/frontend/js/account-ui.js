@@ -8,6 +8,7 @@ import { escapeHtml } from './format.js';
 const ACCOUNT_NAV = [
   { href: '/account', label: 'Overview', icon: 'dashboard' },
   { href: '/account/orders', label: 'My orders', icon: 'package' },
+  { href: '/account/wishlist', label: 'Wishlist', icon: 'heart' },
   { href: '/account/messages', label: 'Messages', icon: 'message', badge: true },
   { href: '/account/reviews', label: 'My reviews', icon: 'star' }
 ];

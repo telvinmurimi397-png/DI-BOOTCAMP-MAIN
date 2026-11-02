@@ -45,4 +45,31 @@ async function uploadProductImage(file) {
   return { url: `/uploads/products/${filename}`, storage: 'local' };
 }
 
-module.exports = { uploadProductImage };
+async function uploadChatImage(file) {
+  if (!file || !file.buffer) throw new Error('No image data received.');
+
+  if (env.cloudinary.enabled) {
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: `${env.cloudinary.folder}/chat`,
+          resource_type: 'image',
+          transformation: [{ width: 1400, height: 1400, crop: 'limit', quality: 'auto', fetch_format: 'auto' }]
+        },
+        (error, uploadResult) => (error ? reject(error) : resolve(uploadResult))
+      );
+      stream.end(file.buffer);
+    });
+    return { url: result.secure_url, storage: 'cloudinary' };
+  }
+
+  const extension = EXTENSIONS[file.mimetype];
+  if (!extension) throw new Error('Unsupported chat image type.');
+  const filename = `${Date.now()}-${crypto.randomBytes(12).toString('hex')}${extension}`;
+  const directory = path.join(env.uploadDir, 'chat');
+  await fs.mkdir(directory, { recursive: true });
+  await fs.writeFile(path.join(directory, filename), file.buffer, { flag: 'wx' });
+  return { url: `/uploads/chat/${filename}`, storage: 'local' };
+}
+
+module.exports = { uploadProductImage, uploadChatImage };

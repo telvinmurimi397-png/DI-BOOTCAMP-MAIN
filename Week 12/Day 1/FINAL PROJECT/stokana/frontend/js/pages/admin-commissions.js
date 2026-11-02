@@ -1,7 +1,7 @@
 import { api, queryString } from '../api.js';
 import { initDashboard } from '../dashboard.js';
 import { icon } from '../icons.js';
-import { bindTabs, panel, statGrid, tableHtml, tabsHtml } from '../dashboard-ui.js';
+import { attachPagination, bindTabs, panel, statGrid, tableHtml, tabsHtml } from '../dashboard-ui.js';
 import {
   pageLoader,
   errorState,
@@ -18,9 +18,19 @@ const TABS = [
   { value: 'earned', label: 'Earned' },
   { value: 'paid', label: 'Paid' }
 ];
+const PAYMENT_TABS = [
+  { value: 'all', label: 'All' },
+  { value: 'success', label: 'Successful' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'failed', label: 'Failed' }
+];
 
 const params = new URLSearchParams(window.location.search);
 let status = TABS.some((tab) => tab.value === params.get('status')) ? params.get('status') : 'all';
+let paymentStatus = PAYMENT_TABS.some((tab) => tab.value === params.get('paymentStatus'))
+  ? params.get('paymentStatus')
+  : 'all';
+let paymentPage = Math.max(1, Number(params.get('paymentPage')) || 1);
 let dash = null;
 let loading = false;
 let sellersById = new Map();
@@ -29,11 +39,92 @@ function syncUrl() {
   const url = new URL(window.location.href);
   if (status === 'all') url.searchParams.delete('status');
   else url.searchParams.set('status', status);
+  if (paymentStatus === 'all') url.searchParams.delete('paymentStatus');
+  else url.searchParams.set('paymentStatus', paymentStatus);
+  if (paymentPage === 1) url.searchParams.delete('paymentPage');
+  else url.searchParams.set('paymentPage', String(paymentPage));
   window.history.replaceState({}, '', url);
+}
+
+function paymentRow(payment) {
+  const reference = payment.transactionRef || payment.providerRef;
+  const secondaryReference = payment.transactionRef && payment.providerRef !== payment.transactionRef
+    ? `<span class="cell-sub">Request: ${escapeHtml(payment.providerRef)}</span>`
+    : '';
+  return `<tr>
+    <td>
+      <a class="cell-main" href="/admin/orders?q=${encodeURIComponent(payment.orderNumber)}">${escapeHtml(payment.orderNumber)}</a>
+      <span class="cell-sub">${formatDate(payment.createdAt)}</span>
+    </td>
+    <td>
+      <span class="cell-main">${escapeHtml(payment.buyerName)}</span>
+      <span class="cell-sub">${escapeHtml(payment.buyerEmail)}</span>
+    </td>
+    <td>
+      <span class="cell-main">${payment.provider === 'mpesa' ? 'M-Pesa' : 'Test simulator'}</span>
+    </td>
+    <td>
+      <span class="cell-main">${escapeHtml(reference || 'No provider reference')}</span>
+      ${secondaryReference}
+    </td>
+    <td>${money(payment.amount)}</td>
+    <td>
+      ${money(payment.orderTotal)}
+      <span class="cell-sub">Commission lines: ${payment.commissionCount}/${payment.itemCount}</span>
+    </td>
+    <td>${statusBadge(payment.status)}</td>
+    <td>${statusBadge(payment.reconciliationStatus)}</td>
+    <td>${Number(payment.refundedAmount) > 0
+      ? `${money(payment.refundedAmount)}<span class="cell-sub">${escapeHtml(payment.refundReferences)}</span>`
+      : '<span class="tiny muted">—</span>'}</td>
+  </tr>`;
+}
+
+function renderPayments(data) {
+  const host = dash.content.querySelector('#payment-reconciliation-host');
+  const { summary, payments, pagination } = data;
+  const table = payments.length
+    ? tableHtml(
+        ['Order', 'Buyer', 'Provider', 'M-Pesa receipt / request', 'Paid', 'Order total', 'Payment', 'Reconciliation', 'Refunded'],
+        payments.map(paymentRow)
+      )
+    : '<div class="table-empty">No M-Pesa payment attempts match this filter.</div>';
+  host.innerHTML = `
+    ${statGrid([
+      { label: 'Successful payments', value: summary.successful, iconName: 'check-circle', tone: 'green' },
+      { label: 'Pending payments', value: summary.pending, iconName: 'clock', tone: 'amber' },
+      { label: 'Failed attempts', value: summary.failed, iconName: 'alert-circle', tone: 'red' },
+      { label: 'Reconciliation issues', value: summary.paymentMismatches, iconName: 'alert-circle', tone: 'red' },
+      { label: 'Paid orders missing payment', value: summary.paidOrdersWithoutPayment, iconName: 'alert-circle', tone: 'amber' },
+      { label: 'Refunded', value: money(summary.refundedAmount), iconName: 'wallet', tone: 'blue' }
+    ])}
+    <div style="margin-top:16px">
+      ${panel({
+        title: 'M-Pesa transaction reconciliation',
+        subtitle: 'Verified Daraja receipts are matched against paid order totals and commission records.',
+        action: `<div id="payment-tabs">${tabsHtml(PAYMENT_TABS, paymentStatus, {
+          ariaLabel: 'Filter M-Pesa payment attempts'
+        })}</div>`,
+        body: table,
+        footer: '<div id="payment-pagination" style="padding:0"></div>'
+      })}
+    </div>`;
+  bindTabs(host.querySelector('#payment-tabs'), (value) => {
+    paymentStatus = value;
+    paymentPage = 1;
+    syncUrl();
+    load();
+  });
+  attachPagination(host.querySelector('#payment-pagination'), pagination, (next) => {
+    paymentPage = next;
+    syncUrl();
+    load();
+  });
 }
 
 function renderShell() {
   dash.content.innerHTML = `
+    <div id="payment-reconciliation-host"></div>
     <div id="commission-summary"></div>
     <div id="balances-host" style="margin-top:16px">${pageLoader()}</div>
     <div id="ledger-host" style="margin-top:16px"></div>`;
@@ -197,7 +288,7 @@ function openPayout(seller) {
           <label class="form-label" for="payout-reference">Payout reference</label>
           <input class="input" id="payout-reference" maxlength="120" required
             placeholder="e.g. M-Pesa receipt QKJ4X8LM2P">
-          <span class="form-hint">M-Pesa receipt or bank transfer reference. Each reference can only be used once.</span>
+          <span class="form-hint">Enter the M-Pesa payout receipt. Each reference can only be used once.</span>
         </div>
       </form>`,
     footer: `<button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
@@ -258,15 +349,23 @@ async function load() {
   if (balancesHost) balancesHost.innerHTML = pageLoader();
 
   try {
-    const data = await api.get(
-      `/admin/commissions${queryString({ status: status === 'all' ? undefined : status })}`
-    );
+    const [data, payments] = await Promise.all([
+      api.get(`/admin/commissions${queryString({ status: status === 'all' ? undefined : status })}`),
+      api.get(`/admin/payments${queryString({
+        status: paymentStatus === 'all' ? undefined : paymentStatus,
+        page: paymentPage,
+        limit: 30
+      })}`)
+    ]);
     renderData(data);
+    renderPayments(payments);
   } catch (error) {
     if (balancesHost) {
       balancesHost.innerHTML = errorState(errorMessage(error));
       balancesHost.querySelector('[data-retry]')?.addEventListener('click', load);
     }
+    const paymentHost = dash.content.querySelector('#payment-reconciliation-host');
+    if (paymentHost) paymentHost.innerHTML = errorState(errorMessage(error));
   } finally {
     loading = false;
   }

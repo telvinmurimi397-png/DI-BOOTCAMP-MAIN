@@ -21,4 +21,4 @@ services:
       - key: TRUST_PROXY
         value: "true"
       - key: PAYMENT_PROVIDER
-        value: simulated
+        value: mpesa
