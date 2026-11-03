@@ -37,13 +37,11 @@ if (isProduction) {
     'SMTP_PORT',
     'SMTP_USER',
     'SMTP_PASSWORD',
-    'SMTP_FROM',
-    'AFRICASTALKING_USERNAME',
-    'AFRICASTALKING_API_KEY'
+    'SMTP_FROM'
   ].filter((key) => !process.env[key]);
   if (missingDelivery.length) {
     throw new Error(
-      `Missing required production verification delivery settings: ${missingDelivery.join(', ')}.`
+      `Missing required production email delivery settings: ${missingDelivery.join(', ')}.`
     );
   }
 }

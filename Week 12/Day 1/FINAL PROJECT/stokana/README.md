@@ -256,7 +256,7 @@ The convenience scripts `npm run db:schema` and `npm run db:seed` rely on a shel
 | `COOKIE_SECURE` | No | Send session cookie only over HTTPS. Defaults to on in production. |
 | `TRUST_PROXY` | No | Trust one reverse-proxy hop. Enable behind Nginx/Heroku/Render. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` | Production | SMTP credentials used for verification, password recovery and order lifecycle notifications. |
-| `AFRICASTALKING_USERNAME`, `AFRICASTALKING_API_KEY` | Production | Africa's Talking credentials used to deliver phone verification codes. |
+| `AFRICASTALKING_USERNAME`, `AFRICASTALKING_API_KEY` | No | Optional Africa's Talking credentials for phone verification codes. Phone verification is unavailable until configured. |
 | `AFRICASTALKING_ENVIRONMENT` | No | `sandbox` or `production` for SMS delivery. |
 | `PAYMENT_PROVIDER` | No | `mpesa` (default). `simulated` is limited to explicit non-production test runs; cards are not supported. |
 | `MPESA_ENVIRONMENT` | No | `sandbox` (default) or `production`. |
@@ -272,7 +272,7 @@ The convenience scripts `npm run db:schema` and `npm run db:seed` rely on a shel
 | `CLOUDINARY_FOLDER` | No | Upload folder, default `stokana/products`. |
 
 Never commit `backend/.env`. The repository ignores it and all other `.env.*` files except `.env.example`.
-In development, verification codes are returned to the browser instead of requiring external delivery credentials. In production, configure both email and SMS delivery before starting the service; verification codes expire after ten minutes and are rate-limited.
+In development, verification codes are returned to the browser instead of requiring external delivery credentials. Production requires email delivery settings; Africa's Talking SMS settings are optional. If SMS is not configured, phone verification requests fail with a clear configuration error. Verification codes expire after ten minutes and are rate-limited.
 
 ---
 
@@ -491,7 +491,7 @@ The project includes [`render.yaml`](./render.yaml) for the Node web service. It
 3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter your existing database's connection URL. If the database is on Render, prefer its **internal** URL when the database and service share a region; otherwise use the connection URL and SSL requirements supplied by your database provider. Keep this value and all credentials in Render's environment settings, not in Git.
 4. After the first deploy, open the service URL and check `/api/health`. Render's `RENDER_EXTERNAL_URL` is used automatically for origin checks and generated reset links. If you attach a custom domain, set `APP_URL` to that exact HTTPS origin in the service's environment and redeploy.
 5. Create the first admin without using demo credentials. From a trusted machine with network access to the database, run `npm run admin:bootstrap` in `backend/` with the production `DATABASE_URL` and temporary `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables. Remove the temporary variables after the command succeeds; never seed the demo accounts into a public production database.
-6. Configure Cloudinary in the service environment before accepting product or chat image uploads. Local `backend/uploads` files are ephemeral on hosted instances. Set `PAYMENT_PROVIDER=mpesa` and complete Daraja sandbox tests before enabling production payment credentials.
+6. Configure Cloudinary in the service environment before accepting product or chat image uploads. Local `backend/uploads` files are ephemeral on hosted instances. Set `PAYMENT_PROVIDER=mpesa` and complete Daraja sandbox tests before enabling production payment credentials. Africa's Talking credentials are optional; leave them unset until its account is activated, and phone verification will remain unavailable.
 
 The app expects the schema to exist before it is used. Do not run the schema against a database containing unrelated data; verify the target database before applying it.
 
@@ -504,6 +504,7 @@ The app expects the schema to exist before it is used. Do not run the schema aga
 - [ ] Configure a durable image store (Cloudinary or a persistent mounted volume for `backend/uploads`).
 - [ ] Complete Daraja sandbox testing for successful, declined, cancelled and timed-out prompts; verify callback reachability, retries, exact order totals and idempotency before enabling production credentials. Never expose payment secrets to the browser.
 - [ ] Integrate an email provider for password reset links; the development console log is not a production delivery mechanism.
+- [ ] Configure Africa's Talking credentials if phone verification is needed; otherwise leave SMS unset and use email verification.
 - [ ] Review the demo help, refunds, terms and privacy copy with the business/legal owner.
 - [ ] Configure the reverse proxy for HTTPS, request size limits, timeouts and WebSocket upgrades.
 - [ ] Run `npm ci --omit=dev`, start under a process manager (systemd, PM2 or the platform runner), and expose only the app port behind TLS.
