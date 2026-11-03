@@ -1,4 +1,4 @@
 User-agent: *
-Allow: /
+Disallow:
 
 Sitemap: https://stokana-marketplace.onrender.com/sitemap.xml
