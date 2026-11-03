@@ -7,6 +7,7 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "db:schema": "psql \"$DATABASE_URL\" -f ../database/schema.sql",
+    "db:schema:node": "node scripts/apply-schema.js",
     "db:seed": "psql \"$DATABASE_URL\" -f ../database/seeds/dev_seed.sql",
     "admin:bootstrap": "node scripts/bootstrap-admin.js",
     "test:smoke": "node tests/smoke.test.js",

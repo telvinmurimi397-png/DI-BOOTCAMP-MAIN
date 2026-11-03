@@ -481,13 +481,13 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 The project includes [`render.yaml`](./render.yaml) for the Node web service. It builds from `backend/` and serves both the API and frontend from one origin. The blueprint uses Render's free web-service plan for a demo; choose a suitable paid plan in Render for production and review the current pricing and service limits before creating resources.
 
 1. Push the repository to GitHub. Use your existing PostgreSQL database; the web-service blueprint does not create a database.
-2. If the existing database does not already have the STOKANA schema, apply `database/schema.sql` once using a connection URL that can reach it and `psql` from your computer. From the `stokana` project directory, run:
+2. If the existing database does not already have the STOKANA schema, apply `database/schema.sql` once using a connection URL that can reach it. From the `stokana` project directory, run:
 
    ```powershell
    psql "$env:DATABASE_URL" -v ON_ERROR_STOP=1 -f "database\schema.sql"
    ```
 
-   Set `$env:DATABASE_URL` in your PowerShell session to the database connection URL first. Do not load `database/seeds/dev_seed.sql` into a public production database.
+   If `psql` is unavailable, run `npm run db:schema:node` from `backend/`. It refuses to apply the schema if the target already has public tables. Set `DATABASE_URL` to the intended database URL and `PGSSL=true` for a TLS connection. Do not load `database/seeds/dev_seed.sql` into a public production database.
 3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter your existing database's connection URL. If the database is on Render, prefer its **internal** URL when the database and service share a region; otherwise use the connection URL and SSL requirements supplied by your database provider. Keep this value and all credentials in Render's environment settings, not in Git.
 4. After the first deploy, open the service URL and check `/api/health`. Render's `RENDER_EXTERNAL_URL` is used automatically for origin checks and generated reset links. If you attach a custom domain, set `APP_URL` to that exact HTTPS origin in the service's environment and redeploy.
 5. Create the first admin without using demo credentials. From a trusted machine with network access to the database, run `npm run admin:bootstrap` in `backend/` with the production `DATABASE_URL` and temporary `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables. Remove the temporary variables after the command succeeds; never seed the demo accounts into a public production database.
@@ -498,7 +498,7 @@ The app expects the schema to exist before it is used. Do not run the schema aga
 ### Before deployment
 
 - [ ] Provision PostgreSQL 14+ with TLS and automated backups.
-- [ ] Run `database/schema.sql` against the production database.
+- [ ] Run `database/schema.sql` against the production database (`npm run db:schema:node` is available when `psql` is not installed).
 - [ ] Do **not** load the demo seed into production. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` temporarily in the production environment and run `npm run admin:bootstrap` from `backend/` against the production database. Remove the temporary variables after it succeeds. This one-off command updates the sole existing admin or creates one if none exists; it is not run at app startup. Never put the password in source code or commit it.
 - [ ] Set `NODE_ENV=production`, a 32+ character `SESSION_SECRET`, the real `APP_URL`, `COOKIE_SECURE=true`, `PGSSL=true` and `TRUST_PROXY=true` when behind a proxy.
 - [ ] Configure a durable image store (Cloudinary or a persistent mounted volume for `backend/uploads`).
