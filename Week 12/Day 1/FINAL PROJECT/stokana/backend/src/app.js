@@ -170,6 +170,9 @@ app.use(
     extensions: ['html'],
     maxAge: env.isProduction ? '1h' : 0,
     setHeaders(res, filePath) {
+      if (filePath.endsWith('robots.txt')) {
+        res.setHeader('Cache-Control', 'no-store');
+      }
       if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
     }
   })
