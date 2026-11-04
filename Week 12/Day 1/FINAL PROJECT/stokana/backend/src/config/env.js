@@ -32,16 +32,14 @@ if (isProduction && (!process.env.TOTP_ENCRYPTION_KEY || totpEncryptionKey.lengt
   throw new Error('TOTP_ENCRYPTION_KEY must be set to at least 32 characters in production.');
 }
 if (isProduction) {
-  const missingDelivery = [
-    'SMTP_HOST',
-    'SMTP_PORT',
-    'SMTP_USER',
-    'SMTP_PASSWORD',
-    'SMTP_FROM'
-  ].filter((key) => !process.env[key]);
+  const missingDelivery = process.env.RESEND_API_KEY
+    ? ['RESEND_FROM'].filter((key) => !process.env[key])
+    : ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM']
+      .filter((key) => !process.env[key]);
   if (missingDelivery.length) {
     throw new Error(
-      `Missing required production email delivery settings: ${missingDelivery.join(', ')}.`
+      `Missing required production email delivery settings: ${missingDelivery.join(', ')}. ` +
+      'Configure RESEND_API_KEY and RESEND_FROM, or provide all SMTP settings.'
     );
   }
 }
@@ -84,6 +82,10 @@ const env = {
     user: process.env.SMTP_USER || '',
     password: process.env.SMTP_PASSWORD || '',
     from: process.env.SMTP_FROM || ''
+  },
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || '',
+    from: process.env.RESEND_FROM || ''
   },
   africaTalking: {
     username: process.env.AFRICASTALKING_USERNAME || '',

@@ -4,6 +4,24 @@ const env = require('../config/env');
 let transporter;
 
 async function sendEmail(to, subject, text, options = {}) {
+  if (env.resend.apiKey) {
+    if (!env.resend.from) {
+      throw new Error('RESEND_FROM is required when Resend email delivery is enabled.');
+    }
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.resend.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ from: env.resend.from, to, subject, text, ...options })
+    });
+    if (!response.ok) {
+      throw new Error(`Resend email delivery failed (HTTP ${response.status}).`);
+    }
+    return;
+  }
+
   if (!env.smtp.host) {
     if (!env.isProduction) return;
     throw new Error('Email verification is not configured.');

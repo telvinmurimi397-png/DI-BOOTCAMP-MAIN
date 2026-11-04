@@ -14,7 +14,7 @@
     "test:smoke": "node tests/smoke.test.js",
     "test:config": "node --test tests/paymentConfig.test.js",
     "test:mpesa": "node --test tests/mpesa.test.js",
-    "test:auth": "node --test tests/totp.test.js tests/authRegistration.test.js tests/checkoutAccess.test.js tests/googleAuth.test.js"
+    "test:auth": "node --test tests/totp.test.js tests/authRegistration.test.js tests/checkoutAccess.test.js tests/googleAuth.test.js tests/verificationDelivery.test.js"
   },
   "engines": {
     "node": ">=20"
