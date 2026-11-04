@@ -35,9 +35,22 @@
   color: var(--ink);
 }
 
+.brand-logo {
+  display: block;
+  width: 140px;
+  height: auto;
+  object-fit: contain;
+}
+
 .site-header .brand,
 .site-header .brand:hover {
   color: #fff;
+}
+
+.site-header .brand-logo {
+  padding: 4px;
+  background: #fff;
+  border-radius: 7px;
 }
 
 .brand-mark {

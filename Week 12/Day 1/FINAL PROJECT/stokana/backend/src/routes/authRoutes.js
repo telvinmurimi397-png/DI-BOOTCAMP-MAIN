@@ -1,5 +1,6 @@
 const express = require('express');
 const authController = require('../controllers/authController');
+const googleAuthController = require('../controllers/googleAuthController');
 const asyncHandler = require('../utils/asyncHandler');
 const validate = require('../middleware/validate');
 const { requireAuth } = require('../middleware/auth');
@@ -20,6 +21,8 @@ const {
 
 const router = express.Router();
 
+router.get('/google', asyncHandler(googleAuthController.start));
+router.get('/google/callback', asyncHandler(googleAuthController.callback));
 router.get('/me', asyncHandler(authController.me));
 router.post('/register', validate(registerSchema), asyncHandler(authController.register));
 router.post('/login', validate(loginSchema), asyncHandler(authController.login));

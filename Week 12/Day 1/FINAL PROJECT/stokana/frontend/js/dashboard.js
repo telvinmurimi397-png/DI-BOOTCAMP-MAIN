@@ -106,9 +106,8 @@ export async function initDashboard({ role, active, title, subtitle = '', action
     <div class="dash-shell">
       <aside class="dash-sidebar">
         <div class="dash-sidebar-head">
-          <a class="brand" href="/">
-            <span class="brand-mark">${icon('bag', { size: 18 })}</span>
-            STOKANA<span class="brand-dot">.</span>
+          <a class="brand" href="/" aria-label="STOKANA home">
+            <img class="brand-logo" src="/assets/platform-logo.png" alt="STOKANA — Shop, Sell, Grow">
           </a>
           <div class="tiny muted" style="margin-top:8px;padding-left:2px">${escapeHtml(roleLabel)}</div>
         </div>

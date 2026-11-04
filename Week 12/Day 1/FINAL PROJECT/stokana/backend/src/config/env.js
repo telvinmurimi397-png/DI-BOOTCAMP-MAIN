@@ -74,6 +74,10 @@ const env = {
   pgSsl: bool(process.env.PGSSL, isProduction),
   sessionSecret,
   totpEncryptionKey,
+  googleOAuth: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
+  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT) || 587,

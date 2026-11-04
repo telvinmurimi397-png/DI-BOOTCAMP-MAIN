@@ -31,8 +31,7 @@ function headerHtml(user, active) {
     <div class="container">
       <div class="header-main">
         <a class="brand" href="/" aria-label="STOKANA home">
-          <span class="brand-mark">${icon('bag', { size: 19 })}</span>
-          STOKANA<span class="brand-dot">.</span>
+          <img class="brand-logo" src="/assets/platform-logo.png" alt="STOKANA — Shop, Sell, Grow">
         </a>
         <nav class="header-nav" aria-label="Primary navigation">
           ${nav}
@@ -151,9 +150,8 @@ function footerHtml() {
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a class="brand" href="/">
-            <span class="brand-mark">${icon('bag', { size: 19 })}</span>
-            STOKANA<span class="brand-dot">.</span>
+          <a class="brand" href="/" aria-label="STOKANA home">
+            <img class="brand-logo" src="/assets/platform-logo.png" alt="STOKANA — Shop, Sell, Grow">
           </a>
           <p>A trusted multi-vendor marketplace connecting Kenyan buyers with independent shops, from Nairobi to the coast.</p>
           <div class="footer-payments">
@@ -228,7 +226,7 @@ function drawerHtml(user) {
     <div class="drawer-backdrop" data-close-drawer></div>
     <aside class="drawer-panel" aria-label="Mobile menu">
       <div class="drawer-head">
-        <a class="brand" href="/"><span class="brand-mark">${icon('bag', { size: 18 })}</span>STOKANA<span class="brand-dot">.</span></a>
+        <a class="brand" href="/" aria-label="STOKANA home"><img class="brand-logo" src="/assets/platform-logo.png" alt="STOKANA — Shop, Sell, Grow"></a>
         <button class="icon-btn" type="button" data-close-drawer aria-label="Close menu">${icon('x', { size: 20 })}</button>
       </div>
       <form class="header-search" action="/explore" method="get" role="search" style="max-width:none">
