@@ -45,6 +45,23 @@ test('migration runner initializes a completely empty database', async () => {
   assert.ok(queries.includes('COMMIT'));
 });
 
+test('migration runner initializes a database containing only its tracking table', async () => {
+  const queries = [];
+  const client = {
+    async query(sql) {
+      queries.push(sql);
+      if (sql.includes('information_schema.tables')) {
+        return { rows: [{ has_users: false, has_tables: false }] };
+      }
+      return { rows: [] };
+    }
+  };
+
+  assert.equal(await initializeSchemaIfEmpty(client), true);
+  assert.ok(queries.some((sql) => sql.includes("table_name <> 'stokana_schema_migrations'")));
+  assert.ok(queries.some((sql) => sql.includes('CREATE TABLE users')));
+});
+
 test('migration runner refuses to initialize a partial database', async () => {
   const client = {
     async query(sql) {
