@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const MIGRATIONS_DIR = path.join(__dirname, '../../database/migrations');
+const SCHEMA_PATH = path.join(__dirname, '../../database/schema.sql');
 const LOCK_KEY = 731904;
 
 function getMigrationFiles(directory = MIGRATIONS_DIR) {
@@ -18,6 +19,39 @@ function unwrapMigration(sql) {
     .replace(/\s*COMMIT\s*;\s*$/i, '');
 }
 
+async function initializeSchemaIfEmpty(client) {
+  const { rows } = await client.query(`
+    SELECT
+      EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'users'
+          AND table_type = 'BASE TABLE'
+      ) AS has_users,
+      EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+      ) AS has_tables
+  `);
+
+  if (rows[0].has_users) return false;
+  if (rows[0].has_tables) {
+    throw new Error(
+      'Public database tables exist but the required users table is missing; refusing to initialize a partial database.'
+    );
+  }
+
+  await client.query('BEGIN');
+  try {
+    await client.query(unwrapMigration(fs.readFileSync(SCHEMA_PATH, 'utf8')));
+    await client.query('COMMIT');
+    console.log('Initialized the empty database with the STOKANA schema.');
+    return true;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw new Error(`Initial database schema failed: ${error.message}`, { cause: error });
+  }
+}
+
 async function runMigrations() {
   const { Client } = require('pg');
   const env = require('../src/config/env');
@@ -29,6 +63,7 @@ async function runMigrations() {
   await client.connect();
   try {
     await client.query('SELECT pg_advisory_lock($1)', [LOCK_KEY]);
+    await initializeSchemaIfEmpty(client);
     await client.query(`
       CREATE TABLE IF NOT EXISTS stokana_schema_migrations (
         name TEXT PRIMARY KEY,
@@ -70,4 +105,9 @@ if (require.main === module) {
   });
 }
 
-module.exports = { getMigrationFiles, unwrapMigration, runMigrations };
+module.exports = {
+  getMigrationFiles,
+  initializeSchemaIfEmpty,
+  unwrapMigration,
+  runMigrations
+};

@@ -177,7 +177,7 @@ psql "postgresql://postgres:YOUR_PASSWORD@localhost:5432/stokana_db" -f database
 psql "postgresql://postgres:YOUR_PASSWORD@localhost:5432/stokana_db" -f database/seeds/dev_seed.sql
 ```
 
-The schema requires the `pgcrypto` extension (used by the seed passwords); `schema.sql` enables it automatically. On Render, the release command applies pending SQL files from `database/migrations/` before the updated server starts. For an existing installation outside Render, run `npm run db:migrate` from `backend/` with `DATABASE_URL` set to the intended database. The migration runner records completed files and serializes concurrent runs.
+The schema requires the `pgcrypto` extension (used by the seed passwords); `schema.sql` enables it automatically. On Render, the start command initializes the database from `schema.sql` only when it has no public tables, then applies pending SQL files from `database/migrations/` before starting the server. It refuses to initialize a partially populated database. For an existing installation outside Render, run `npm run db:migrate` from `backend/` with `DATABASE_URL` set to the intended database. The migration runner records completed files and serializes concurrent runs.
 
 Seller CSV imports require `name`, `categoryId`, `description`, `price`, `stock`, `condition` and `imageUrls` columns. Separate image URLs with `|`. Optional `specifications` and `variants` columns contain JSON; quote CSV cells containing commas or line breaks. The seller products page provides a header template.
 
@@ -475,14 +475,14 @@ Key requests save returned ids and slugs into collection variables (`productId`,
 The project includes [`render.yaml`](./render.yaml) for the Node web service. It builds from `backend/` and serves both the API and frontend from one origin. The blueprint uses Render's free web-service plan for a demo; choose a suitable paid plan in Render for production and review the current pricing and service limits before creating resources.
 
 1. Push the repository to GitHub. Use your existing PostgreSQL database; the web-service blueprint does not create a database.
-2. If the existing database does not already have the STOKANA schema, apply `database/schema.sql` once using a connection URL that can reach it. From the `stokana` project directory, run:
+2. The Render start command initializes an empty database from `database/schema.sql`. For non-Render deployments, if the database does not already have the STOKANA schema, apply `database/schema.sql` once using a connection URL that can reach it. From the `stokana` project directory, run:
 
    ```powershell
    psql "$env:DATABASE_URL" -v ON_ERROR_STOP=1 -f "database\schema.sql"
    ```
 
    If `psql` is unavailable, run `npm run db:schema:node` from `backend/`. It refuses to apply the schema if the target already has public tables. Set `DATABASE_URL` to the intended database URL and `PGSSL=true` for a TLS connection. Do not load `database/seeds/dev_seed.sql` into a public production database.
-3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter your existing database's connection URL. If the database is on Render, prefer its **internal** URL when the database and service share a region; otherwise use the connection URL and SSL requirements supplied by your database provider. Keep this value and all credentials in Render's environment settings, not in Git. The configured release command applies pending migrations before deploying the new server; it expects the base schema to have already been installed.
+3. In Render, create a Blueprint using this repository and set the Blueprint file path to `Week 12/Day 1/FINAL PROJECT/stokana/render.yaml`. When prompted for `DATABASE_URL`, enter your existing database's connection URL. If the database is on Render, prefer its **internal** URL when the database and service share a region; otherwise use the connection URL and SSL requirements supplied by your database provider. Keep this value and all credentials in Render's environment settings, not in Git. The configured start command initializes an empty database and applies pending migrations before starting the server.
 4. After the first deploy, open the service URL and check `/api/health`. Render's `RENDER_EXTERNAL_URL` is used automatically for origin checks and generated reset links. If you attach a custom domain, set `APP_URL` to that exact HTTPS origin in the service's environment and redeploy.
 5. Create the first admin without using demo credentials. From a trusted machine with network access to the database, run `npm run admin:bootstrap` in `backend/` with the production `DATABASE_URL` and temporary `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables. Remove the temporary variables after the command succeeds; never seed the demo accounts into a public production database.
 6. Configure Cloudinary in the service environment before accepting product or chat image uploads. Local `backend/uploads` files are ephemeral on hosted instances. Set `PAYMENT_PROVIDER=mpesa` and complete Daraja sandbox tests before enabling production payment credentials. Africa's Talking credentials are optional; leave them unset until its account is activated, and phone verification will remain unavailable.
@@ -526,7 +526,7 @@ Socket.IO currently runs in-process. If you run more than one Node instance, add
 - **Local image uploads are not durable.** Use Cloudinary or persistent storage in production.
 - **Single-instance realtime.** Add a Socket.IO adapter before horizontal scaling.
 - **Automated coverage is API-focused.** The smoke test covers the ten business rules; front-end flows were verified manually in a browser. A Playwright/Cypress suite would be the next quality step.
-- A fresh database still requires the initial `database/schema.sql`; subsequent SQL migrations run automatically during Render releases.
+- Fresh Render databases are initialized from `database/schema.sql`; subsequent SQL migrations run automatically before the server starts.
 - **No real delivery-provider integration.** Sellers enter courier names, tracking numbers and HTTPS tracking links manually. Shipping fees use the platform-wide configured fee and free-shipping threshold; fees are not calculated by route or distance.
 
 ---

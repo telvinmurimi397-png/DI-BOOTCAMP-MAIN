@@ -1,7 +1,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
-const { getMigrationFiles, unwrapMigration } = require('../scripts/migrate');
+const {
+  getMigrationFiles,
+  initializeSchemaIfEmpty,
+  unwrapMigration
+} = require('../scripts/migrate');
 
 test('migration runner removes file-level transaction wrappers', () => {
   assert.equal(
@@ -21,4 +25,38 @@ test('migration files are applied in sorted order', () => {
   assert.ok(names.includes('20261102_account_security_and_addresses.sql'));
   assert.ok(names.includes('20261102_growth_features.sql'));
   assert.ok(names.includes('20261103_order_lifecycle_workflows.sql'));
+});
+
+test('migration runner initializes a completely empty database', async () => {
+  const queries = [];
+  const client = {
+    async query(sql) {
+      queries.push(sql);
+      if (sql.includes('information_schema.tables')) {
+        return { rows: [{ has_users: false, has_tables: false }] };
+      }
+      return { rows: [] };
+    }
+  };
+
+  assert.equal(await initializeSchemaIfEmpty(client), true);
+  assert.ok(queries.includes('BEGIN'));
+  assert.ok(queries.some((sql) => sql.includes('CREATE TABLE users')));
+  assert.ok(queries.includes('COMMIT'));
+});
+
+test('migration runner refuses to initialize a partial database', async () => {
+  const client = {
+    async query(sql) {
+      if (sql.includes('information_schema.tables')) {
+        return { rows: [{ has_users: false, has_tables: true }] };
+      }
+      throw new Error('Unexpected database mutation.');
+    }
+  };
+
+  await assert.rejects(
+    initializeSchemaIfEmpty(client),
+    /partial database/
+  );
 });

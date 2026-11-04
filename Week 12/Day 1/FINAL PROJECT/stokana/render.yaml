@@ -5,8 +5,7 @@ services:
     plan: free
     rootDir: Week 12/Day 1/FINAL PROJECT/stokana/backend
     buildCommand: npm ci
-    releaseCommand: npm run db:migrate
-    startCommand: npm start
+    startCommand: npm run db:migrate && npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
