@@ -603,6 +603,11 @@ async function init() {
     const codes = JSON.parse(devVerification);
     toast(`Development verification codes — email: ${codes.devCode}${codes.phone ? `, phone: ${codes.phone}` : ''}`);
   }
+  const accountSetupWarning = sessionStorage.getItem('stokana.accountSetupWarning');
+  if (accountSetupWarning) {
+    sessionStorage.removeItem('stokana.accountSetupWarning');
+    toast(accountSetupWarning, 'error');
+  }
   await load();
 }
 

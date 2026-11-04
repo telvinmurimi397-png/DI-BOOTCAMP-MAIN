@@ -102,6 +102,9 @@ async function init() {
       if (data.devVerification) {
         sessionStorage.setItem('stokana.devVerification', JSON.stringify(data.devVerification));
       }
+      if (data.verificationDeliveryFailed) {
+        sessionStorage.setItem('stokana.accountSetupWarning', data.message);
+      }
       setUser(data.user);
       const fallback = data.user.role === 'seller' ? '/seller' : '/account';
       window.location.replace(nextPath(fallback));

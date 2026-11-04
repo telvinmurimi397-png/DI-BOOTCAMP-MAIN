@@ -3,7 +3,19 @@ const db = require('../config/db');
 const env = require('../config/env');
 const userService = require('./userService');
 const delivery = require('./verificationDelivery');
-const { badRequest, notFound } = require('../utils/errors');
+const { ApiError, badRequest, notFound } = require('../utils/errors');
+
+class VerificationDeliveryError extends ApiError {
+  constructor(channel, cause) {
+    super(503, 'We could not send your verification code. Please try again later.', {
+      code: 'VERIFICATION_DELIVERY_FAILED'
+    });
+    this.name = 'VerificationDeliveryError';
+    this.channel = channel;
+    this.cause = cause;
+  }
+}
+
 function hashCode(code) {
   return crypto.createHmac('sha256', env.sessionSecret).update(code).digest('hex');
 }
@@ -64,7 +76,8 @@ async function send(user, channel) {
        WHERE user_id = $1 AND channel = $2 AND token_hash = $3 AND used_at IS NULL`,
       [user.id, channel, hashCode(code)]
     );
-    throw error;
+    console.error('[verification] Delivery failed', { channel, error });
+    throw new VerificationDeliveryError(channel, error);
   }
   return !env.isProduction ? { devCode: code } : {};
 }
@@ -102,4 +115,4 @@ async function verify(userId, channel, code) {
   return userService.findById(userId);
 }
 
-module.exports = { send, verify };
+module.exports = { send, verify, VerificationDeliveryError };

@@ -34,14 +34,6 @@ function requireRole(...roles) {
   };
 }
 
-function requireVerifiedEmail(req, res, next) {
-  if (!req.user) return next(unauthorized());
-  if (!req.user.emailVerified) {
-    return next(forbidden('Verify your email address before checking out.', { code: 'EMAIL_UNVERIFIED' }));
-  }
-  next();
-}
-
 function requireApprovedSeller(req, res, next) {
   if (!req.user) return next(unauthorized());
   if (req.user.role !== 'seller') {
@@ -65,7 +57,6 @@ module.exports = {
   attachUser,
   requireAuth,
   requireRole,
-  requireVerifiedEmail,
   requireBuyer,
   requireSeller,
   requireAdmin,

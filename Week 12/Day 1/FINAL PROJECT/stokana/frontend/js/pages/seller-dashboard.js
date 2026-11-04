@@ -1,7 +1,7 @@
 import { api } from '../api.js';
 import { initDashboard } from '../dashboard.js';
 import { icon } from '../icons.js';
-import { barChart, errorState, pageLoader, stars, errorMessage } from '../ui.js';
+import { barChart, errorState, pageLoader, stars, errorMessage, toast } from '../ui.js';
 import { statGrid, panel, tableHtml } from '../dashboard-ui.js';
 import {
   money,
@@ -203,6 +203,12 @@ async function init() {
     actions: `<a class="btn btn-primary btn-sm" href="/seller/products/new">${icon('plus', { size: 15 })} Add a product</a>`
   });
   if (!dash) return;
+
+  const accountSetupWarning = sessionStorage.getItem('stokana.accountSetupWarning');
+  if (accountSetupWarning) {
+    sessionStorage.removeItem('stokana.accountSetupWarning');
+    toast(accountSetupWarning, 'error');
+  }
 
   dash.content.innerHTML = pageLoader();
   try {

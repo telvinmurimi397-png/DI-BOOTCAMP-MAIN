@@ -86,16 +86,30 @@ async function register(req, res) {
   await saveSession(req);
 
   const row = await userService.findById(userId);
-  const verification = await verificationService.send(row, 'email');
-  const phoneVerification = phone
-    ? await verificationService.send(row, 'phone')
-    : {};
-  res.status(201).json({
-    message: role === 'seller'
+  const verification = {};
+  const verificationFailures = [];
+  for (const channel of ['email', ...(phone ? ['phone'] : [])]) {
+    try {
+      const result = await verificationService.send(row, channel);
+      if (channel === 'email') Object.assign(verification, result);
+      else verification.phone = result.devCode;
+    } catch (error) {
+      if (!(error instanceof verificationService.VerificationDeliveryError)) throw error;
+      verificationFailures.push(channel);
+    }
+  }
+  const verificationDeliveryFailed = verificationFailures.length > 0;
+  const message = verificationDeliveryFailed
+    ? `Account created, but we could not send your ${verificationFailures.join(' and ')} verification code. Sign in and request a new code from Account settings.`
+    : role === 'seller'
       ? 'Shop created. An administrator will review it before your products go live.'
-      : 'Welcome to Stokana.',
+      : 'Welcome to Stokana.';
+
+  res.status(201).json({
+    message,
+    ...(verificationDeliveryFailed ? { verificationDeliveryFailed: true } : {}),
     user: toPublicUser(row),
-    ...(!env.isProduction ? { devVerification: { ...verification, phone: phoneVerification.devCode } } : {})
+    ...(!env.isProduction ? { devVerification: verification } : {})
   });
 }
 

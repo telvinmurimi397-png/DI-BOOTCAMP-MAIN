@@ -43,7 +43,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 - Discount codes, scheduled flash sales and featured product/shop placements
 - Loyalty points (1 per KSh 100; 100 points redeem for KSh 10) and KSh 200 referral credit for both users after a referred buyer's first paid, non-refunded order
 - Promotional email consent controls, one-click unsubscribe, admin email/in-app campaigns and opt-in abandoned-cart reminders
-- Checkout with delivery details, shipping fee and free-shipping threshold; email verification is not required
+- Checkout with delivery details, shipping fee and free-shipping threshold; email and phone verification are not required to place an order. A phone number is still needed for delivery and M-PESA payment.
 - One checkout and order number for items from multiple sellers, with separate seller shipments
 - M-PESA STK Push, verified payment receipts, retry handling and failed-payment history
 - Server-calculated per-item commissions and M-PESA seller payout records
@@ -261,7 +261,7 @@ The convenience scripts `npm run db:schema` and `npm run db:seed` rely on a shel
 | `CLOUDINARY_FOLDER` | No | Upload folder, default `stokana/products`. |
 
 Never commit `backend/.env`. The repository ignores it and all other `.env.*` files except `.env.example`.
-In development, verification codes are returned to the browser instead of requiring external delivery credentials. Production requires email delivery settings; Africa's Talking SMS settings are optional. If SMS is not configured, phone verification requests fail with a clear configuration error. Verification codes expire after ten minutes and are rate-limited.
+In development, verification codes are returned to the browser instead of requiring external delivery credentials. Production requires email delivery settings; Africa's Talking SMS settings are optional. If a verification delivery provider fails during account creation, the account is still created and the user is told to sign in and request another code from Account settings. Other registration errors still fail normally. If SMS is not configured, phone verification requests fail with a clear configuration error. Verification codes expire after ten minutes and are rate-limited.
 
 ---
 
