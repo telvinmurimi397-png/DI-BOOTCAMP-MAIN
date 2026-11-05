@@ -402,6 +402,10 @@
   justify-content: space-between;
 }
 
+.drawer-head .icon-btn::after {
+  display: none;
+}
+
 .drawer-nav {
   display: grid;
   gap: 4px;
@@ -748,6 +752,15 @@ body.dash-admin h6 {
 
   .mobile-toggle {
     display: inline-grid;
+    color: #fff;
+  }
+
+  .mobile-toggle::after {
+    display: none;
+  }
+
+  .header-actions > :not(.mobile-toggle) {
+    display: none;
   }
 
   .account-trigger .account-name,
@@ -767,6 +780,10 @@ body.dash-admin h6 {
 
   .header-actions {
     gap: 2px;
+  }
+
+  .header-main > .header-actions {
+    margin-left: auto;
   }
 
   .header-search-mobile .search-input {

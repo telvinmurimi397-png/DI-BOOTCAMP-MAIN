@@ -44,7 +44,7 @@ function headerHtml(user, active) {
         </form>
         <div class="header-actions">
           ${headerActions(user)}
-          <button class="icon-btn mobile-toggle" type="button" data-open-drawer aria-label="Open menu">
+          <button class="icon-btn mobile-toggle" type="button" data-open-drawer aria-label="Open menu" aria-controls="mobile-navigation-drawer" aria-expanded="false">
             ${icon('menu', { size: 21 })}
           </button>
         </div>
@@ -224,7 +224,7 @@ function drawerHtml(user) {
 
   return `
     <div class="drawer-backdrop" data-close-drawer></div>
-    <aside class="drawer-panel" aria-label="Mobile menu">
+    <aside class="drawer-panel" id="mobile-navigation-drawer" role="dialog" aria-modal="true" aria-label="Mobile menu">
       <div class="drawer-head">
         <a class="brand" href="/" aria-label="STOKANA home"><img class="brand-logo" src="/assets/platform-logo.png" alt="STOKANA — Shop, Sell, Grow"></a>
         <button class="icon-btn" type="button" data-close-drawer aria-label="Close menu">${icon('x', { size: 20 })}</button>
@@ -341,17 +341,43 @@ function bindDrawer(user) {
   }
   drawer.innerHTML = drawerHtml(user);
 
-  const open = () => {
+  let activeToggle = null;
+  const open = (event) => {
+    activeToggle = event.currentTarget;
+    activeToggle.setAttribute('aria-expanded', 'true');
     drawer.classList.add('open');
     document.body.classList.add('no-scroll');
+    drawer.querySelector('button[data-close-drawer]')?.focus();
   };
   const close = () => {
     drawer.classList.remove('open');
     document.body.classList.remove('no-scroll');
+    activeToggle?.setAttribute('aria-expanded', 'false');
+    activeToggle?.focus();
+    activeToggle = null;
   };
 
   document.querySelectorAll('[data-open-drawer]').forEach((button) => button.addEventListener('click', open));
   drawer.querySelectorAll('[data-close-drawer]').forEach((button) => button.addEventListener('click', close));
+  document.addEventListener('keydown', (event) => {
+    if (!drawer.classList.contains('open')) return;
+    if (event.key === 'Escape') {
+      close();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = [...drawer.querySelectorAll('a[href], button:not([disabled]), input:not([disabled])')];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  });
   drawer.querySelectorAll('[data-logout]').forEach((button) => {
     button.addEventListener('click', async () => {
       button.disabled = true;
