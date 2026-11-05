@@ -101,6 +101,7 @@ function summaryHtml() {
   const quote = checkoutQuote || {
     subtotal: cart.summary.subtotal,
     shippingFee: cart.summary.shippingFee,
+    shippingBreakdown: cart.summary.shippingBreakdown || [],
     discount: 0,
     couponDiscount: 0,
     pointsDiscount: 0,
@@ -127,9 +128,10 @@ function summaryHtml() {
           .join('')}
       </div>
       <div class="summary-line"><span>Subtotal</span><span>${money(quote.subtotal)}</span></div>
-      <div class="summary-line"><span>Delivery</span><span>${
-        Number(quote.shippingFee) === 0 ? 'Free' : money(quote.shippingFee)
-      }</span></div>
+      ${(quote.shippingBreakdown || []).map((fee) => `<div class="summary-line">
+        <span>Delivery · ${escapeHtml(fee.shopName || 'Shop')}</span>
+        <span>${Number(fee.shippingFee) === 0 ? 'Free' : money(fee.shippingFee)}</span>
+      </div>`).join('')}
       ${Number(quote.couponDiscount) > 0 ? `<div class="summary-line"><span>Discount code</span><span>−${money(quote.couponDiscount)}</span></div>` : ''}
       ${Number(quote.pointsDiscount) > 0 ? `<div class="summary-line"><span>Loyalty points</span><span>−${money(quote.pointsDiscount)}</span></div>` : ''}
       ${Number(quote.creditDiscount) > 0 ? `<div class="summary-line"><span>Referral credit</span><span>−${money(quote.creditDiscount)}</span></div>` : ''}

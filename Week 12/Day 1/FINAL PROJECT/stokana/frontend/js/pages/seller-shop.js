@@ -160,6 +160,12 @@ function formPanel() {
             placeholder="+254 700 000 000">
           <span class="form-hint">Shown to buyers on your public shop page.</span>
         </label>
+        <label class="form-group">
+          <span class="form-label">Delivery fee (KSh)</span>
+          <input class="input" name="deliveryFee" type="number" min="0" max="100000" step="0.01"
+            value="${Number(shop.deliveryFee ?? 250)}" required>
+          <span class="form-hint">Charged once per shop in the cart. Enter 0 to offer free delivery. The platform free-delivery threshold still applies.</span>
+        </label>
       </div>
       <div class="form-actions" style="margin-top:18px">
         <button class="btn btn-primary" type="submit" id="save-shop">Save shop profile</button>
@@ -447,7 +453,8 @@ function bindSave() {
         bannerUrl: String(values.bannerUrl || '').trim(),
         county: String(values.county || '').trim(),
         town: String(values.town || '').trim(),
-        phone: String(values.phone || '').trim()
+        phone: String(values.phone || '').trim(),
+        deliveryFee: Number(values.deliveryFee)
       });
       shop = result.shop;
       toast(result.message);

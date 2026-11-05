@@ -22,7 +22,7 @@ let busy = false;
 function freeShippingNote(summary) {
   const threshold = Number(summary.freeShippingThreshold) || 0;
   const subtotal = Number(summary.subtotal) || 0;
-  if (!threshold || subtotal >= threshold) return '';
+  if (!threshold || subtotal >= threshold || Number(summary.shippingFee) === 0) return '';
   return `<div class="cart-free-shipping" style="font-size:11.5px;color:var(--muted);background:var(--surface-soft);border-radius:8px;padding:9px 11px">
     Add <strong style="color:var(--ink)">${money(threshold - subtotal)}</strong> more for free delivery.
   </div>`;
@@ -101,9 +101,10 @@ function renderSummary(summary) {
       <div class="summary-line"><span>Subtotal (${pluralize(summary.itemCount, 'item')})</span><span>${money(
     summary.subtotal
   )}</span></div>
-      <div class="summary-line"><span>Delivery</span><span>${
-        Number(summary.shippingFee) === 0 ? '<span class="badge green">Free</span>' : money(summary.shippingFee)
-      }</span></div>
+      ${(summary.shippingBreakdown || []).map((fee) => `<div class="summary-line">
+        <span>Delivery · ${escapeHtml(fee.shopName || 'Shop')}</span>
+        <span>${Number(fee.shippingFee) === 0 ? '<span class="badge green">Free</span>' : money(fee.shippingFee)}</span>
+      </div>`).join('')}
       ${freeShippingNote(summary)}
       <div class="divider" style="margin:5px 0"></div>
       <div class="summary-line total"><span>Total</span><span>${money(summary.total)}</span></div>

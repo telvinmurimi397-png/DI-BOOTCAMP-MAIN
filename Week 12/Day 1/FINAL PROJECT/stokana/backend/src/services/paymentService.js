@@ -23,6 +23,15 @@ async function completeOrderPayment(client, orderId) {
     [orderId]
   );
   await client.query(
+    `INSERT INTO commissions
+       (order_id, order_item_id, seller_id, rate, gross_amount, commission_amount, seller_earnings)
+     SELECT order_id, NULL, seller_id, 0, delivery_fee, 0, delivery_fee
+     FROM order_seller_delivery_fees
+     WHERE order_id = $1 AND delivery_fee > 0
+     ON CONFLICT DO NOTHING`,
+    [orderId]
+  );
+  await client.query(
     `INSERT INTO shipments (order_id, seller_id, status)
      SELECT $1, seller_id, 'pending'
      FROM order_items

@@ -147,7 +147,10 @@ function shipmentForm(order, pickupLocations) {
 }
 
 function orderCard(order, pickupLocations) {
-  const commission = Math.max(0, Number(order.sellerSubtotal) - Number(order.sellerEarnings));
+  const commission = Math.max(
+    0,
+    Number(order.sellerSubtotal) - Number(order.sellerEarnings) + Number(order.deliveryFee || 0)
+  );
   const address = [order.shippingAddress, order.shippingTown, order.shippingCounty]
     .filter(Boolean)
     .map((part) => escapeHtml(part))
@@ -203,6 +206,7 @@ function orderCard(order, pickupLocations) {
             'unit'
           )}</span></div>
           <div><span>Order subtotal</span><span>${money(order.sellerSubtotal)}</span></div>
+          <div><span>Delivery fee</span><span>${money(order.deliveryFee || 0)}</span></div>
           <div><span>Platform commission</span><span>− ${money(commission)}</span></div>
           <div class="total"><span>Your earnings</span><span>${money(order.sellerEarnings)}</span></div>
         </div>

@@ -13,52 +13,17 @@
 <body class="page-home">
   <div data-site-header></div>
   <main>
-    <section class="hero">
-      <div class="container hero-inner">
-        <div class="hero-copy">
-          <div class="hero-badge"><span class="pill">Live in Kenya</span> Independent shops. One trusted checkout.</div>
-          <h1>Everything you need, from shops you can <span class="accent">trust.</span></h1>
-          <p>Discover electronics, fashion, beauty and home essentials from verified Kenyan sellers — with secure payments, live chat and delivery to your door.</p>
-          <form class="hero-search" action="/explore" method="get" role="search">
-            <span class="search-field">
-              <span class="sr-only">Search products</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              <input type="search" name="q" placeholder="What are you looking for today?" aria-label="Search products">
-            </span>
-            <button class="btn" type="submit">Search</button>
-          </form>
-          <div class="hero-tags">
-            <span>Popular:</span>
-            <a href="/explore?q=headphones">Headphones</a>
-            <a href="/explore?category=beauty-health">Skincare</a>
-            <a href="/explore?category=home-living">Home &amp; living</a>
-            <a href="/explore?category=groceries">Groceries</a>
-          </div>
-          <div class="hero-stats">
-            <div class="hero-stat"><strong id="stat-products">—</strong><span>Products listed</span></div>
-            <div class="hero-stat"><strong id="stat-shops">—</strong><span>Verified shops</span></div>
-            <div class="hero-stat"><strong id="stat-categories">—</strong><span>Categories</span></div>
-            <div class="hero-stat"><strong>M-PESA</strong><span>Payments ready</span></div>
-          </div>
-        </div>
-        <div class="hero-visual">
-          <div class="hero-photo-frame">
-            <img
-              class="hero-photo"
-              src="/assets/marketplace-hero.jpg"
-              alt="A shopper exploring a range of products from local marketplace sellers"
-              fetchpriority="high"
-            >
-          </div>
-          <div class="hero-float-card one">
-            <span class="float-icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-            <span><strong>Verified sellers</strong><span>Approved by STOKANA</span></span>
-          </div>
-          <div class="hero-float-card two">
-            <span class="float-icon"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M14 9h4l3 3v5a1 1 0 0 1-1 1h-1"/><circle cx="7.5" cy="18" r="2.5"/><circle cx="17.5" cy="18" r="2.5"/></svg></span>
-            <span><strong>Countrywide delivery</strong><span>Track every order</span></span>
-          </div>
-        </div>
+    <section class="hero hero-banner">
+      <img
+        class="hero-banner-image"
+        src="/assets/homepage-marketplace-banner.png"
+        alt="A shopper and a variety of products from electronics and fashion to home appliances"
+        fetchpriority="high"
+      >
+      <div class="hero-copy hero-banner-copy">
+        <h1>Everything You Need,<br>All in One <span class="accent">Marketplace.</span></h1>
+        <p>Discover great products from trusted sellers.</p>
+        <a class="btn hero-banner-cta" href="/explore">Start Shopping</a>
       </div>
     </section>
 

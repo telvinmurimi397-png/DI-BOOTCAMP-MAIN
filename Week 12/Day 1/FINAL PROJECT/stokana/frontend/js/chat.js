@@ -303,11 +303,11 @@ export function mountChat(container, { user, role = 'buyer' }) {
           <input type="file" accept="image/jpeg,image/png,image/webp" data-chat-image hidden>
           <button class="icon-btn" type="button" data-chat-attach aria-label="Attach image" title="Attach image">${icon('image', { size: 18 })}</button>
           <textarea rows="1" maxlength="4000" placeholder="Write a message…" aria-label="Message" data-chat-input></textarea>
-          <button class="btn btn-primary btn-icon" type="button" data-chat-send aria-label="Send message">${icon('send', { size: 18 })}</button>
+          <button class="btn btn-primary" type="button" data-chat-send>Send</button>
         </div>`;
     panel.innerHTML = `
       <div class="chat-panel-head">
-        <button class="icon-btn chat-back" type="button" data-chat-back aria-label="Back to conversations">
+        <button class="icon-btn chat-back" type="button" data-chat-back>
           Back
         </button>
         ${conversationAvatar(conversation)}
@@ -320,7 +320,7 @@ export function mountChat(container, { user, role = 'buyer' }) {
             ? '<button class="icon-btn" type="button" data-chat-notifications title="Enable browser notifications">Notify</button>'
             : ''
         }
-        <button class="icon-btn" type="button" data-chat-report aria-label="Report conversation" title="Report conversation">Report</button>
+        <button class="icon-btn" type="button" data-chat-report title="Report conversation">Report</button>
         <button class="icon-btn" type="button" data-chat-block>${conversation.blockedByMe ? 'Unblock' : 'Block'}</button>
         ${
           !isSeller && conversation.shopSlug

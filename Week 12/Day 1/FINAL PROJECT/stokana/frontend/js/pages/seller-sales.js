@@ -22,7 +22,7 @@ function commissionRow(row) {
     <td><span class="cell-sub" style="margin:0">${formatDate(row.createdAt)}</span></td>
     <td>
       <span class="cell-main">${escapeHtml(row.orderNumber)}</span>
-      <span class="cell-sub">${escapeHtml(row.productName)} × ${Number(row.quantity)}</span>
+      <span class="cell-sub">${escapeHtml(row.productName)}${row.quantity ? ` × ${Number(row.quantity)}` : ''}</span>
     </td>
     <td>${money(row.grossAmount)}</td>
     <td>− ${money(row.commissionAmount)}</td>
@@ -135,7 +135,7 @@ function render(data) {
         body: `<div class="card-body">
           <div class="status-list">
             <div class="status-row">
-              <div class="grow"><strong>1. Buyer pays</strong><span>Commission is calculated per item at checkout.</span></div>
+              <div class="grow"><strong>1. Buyer pays</strong><span>Commission applies to products; your delivery fee is credited separately.</span></div>
               ${icon('credit-card', { size: 17, className: 'muted' })}
             </div>
             <div class="status-row">

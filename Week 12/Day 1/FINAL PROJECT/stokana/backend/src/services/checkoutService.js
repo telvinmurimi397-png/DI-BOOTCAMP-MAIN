@@ -5,6 +5,7 @@ const mpesaService = require('./mpesaService');
 const settingsService = require('../services/settingsService');
 const { generateOrderNumber } = require('../utils/slug');
 const { toCents, fromCents } = require('../utils/money');
+const { calculateDeliveryFees } = require('../utils/deliveryFees');
 const { badRequest, conflict, notFound } = require('../utils/errors');
 const { notifyOrder } = require('./orderNotificationService');
 const promotionService = require('./promotionService');
@@ -46,6 +47,8 @@ async function placeOrder(buyer, shipping) {
          p.seller_id AS "sellerId",
          u.is_active AS "sellerActive",
          sp.status AS "sellerStatus",
+         sp.shop_name AS "shopName",
+         sp.delivery_fee AS "shopDeliveryFee",
          c.is_active AS "categoryActive",
          COALESCE((
            SELECT url FROM product_images pi
@@ -97,6 +100,11 @@ async function placeOrder(buyer, shipping) {
       subtotalCents += lineCents;
       return { ...item, unitCents, lineCents, commissionCents: 0, earningsCents: 0 };
     });
+    const { deliveryFees, totalCents: shippingCents } = calculateDeliveryFees(
+      lines,
+      subtotalCents,
+      toCents(settings.freeShippingThreshold)
+    );
 
     const promotion = shipping.promotionCode
       ? await promotionService.findCoupon(client, buyer.id, shipping.promotionCode, lines, subtotalCents, { lock: true })
@@ -132,9 +140,8 @@ async function placeOrder(buyer, shipping) {
     if (requestedPoints * 10 > pointsCap) {
       throw badRequest('Loyalty points can cover up to 50% of the merchandise subtotal.');
     }
-    const beforeCreditCents = subtotalCents + toCents(
-      subtotalCents >= toCents(settings.freeShippingThreshold) ? 0 : settings.shippingFee
-    ) - couponDiscountCents - pointsDiscountCents;
+    const beforeCreditCents = subtotalCents + shippingCents -
+      couponDiscountCents - pointsDiscountCents;
     const availableCreditCents = toCents(rewardResult.rows[0].credit);
     const creditDiscountCents = shipping.useReferralCredit
       ? Math.min(availableCreditCents, Math.max(0, beforeCreditCents))
@@ -147,8 +154,6 @@ async function placeOrder(buyer, shipping) {
       commissionCentsTotal += line.commissionCents;
     }
 
-    const thresholdCents = toCents(settings.freeShippingThreshold);
-    const shippingCents = subtotalCents >= thresholdCents ? 0 : toCents(settings.shippingFee);
     const totalCents = subtotalCents + shippingCents -
       couponDiscountCents - pointsDiscountCents - creditDiscountCents;
     if (totalCents <= 0) throw badRequest('The order total must be greater than zero after discounts.');
@@ -179,7 +184,7 @@ async function placeOrder(buyer, shipping) {
         fromCents(shippingCents),
         fromCents(totalCents),
         fromCents(commissionCentsTotal),
-        fromCents(earningsCentsTotal),
+        fromCents(earningsCentsTotal + shippingCents),
         fromCents(discountTotalCents),
         promotion?.code || null,
         requestedPoints,
@@ -194,6 +199,14 @@ async function placeOrder(buyer, shipping) {
       ]
     );
     const order = orderResult.rows[0];
+
+    for (const deliveryFee of deliveryFees) {
+      await client.query(
+        `INSERT INTO order_seller_delivery_fees (order_id, seller_id, delivery_fee)
+         VALUES ($1, $2, $3)`,
+        [order.id, deliveryFee.sellerId, deliveryFee.shippingFee]
+      );
+    }
 
     for (const line of lines) {
       await client.query(

@@ -537,7 +537,8 @@ async function getOrders(sellerId, page = 1, limit = 10) {
          o.shipping_address AS "shippingAddress", o.notes,
          o.created_at AS "createdAt", o.paid_at AS "paidAt",
          COALESCE(SUM(oi.line_total), 0) AS "sellerSubtotal",
-         COALESCE(SUM(oi.seller_earnings), 0) AS "sellerEarnings",
+         COALESCE(SUM(oi.seller_earnings), 0) + COALESCE(MAX(odf.delivery_fee), 0) AS "sellerEarnings",
+         COALESCE(MAX(odf.delivery_fee), 0) AS "deliveryFee",
          s.id AS "shipmentId", s.status AS "shipmentStatus", s.carrier,
          s.tracking_number AS "trackingNumber", s.tracking_url AS "trackingUrl",
          s.pickup_location_id AS "pickupLocationId",
@@ -555,6 +556,7 @@ async function getOrders(sellerId, page = 1, limit = 10) {
          ) ORDER BY oi.id) AS items
        FROM orders o
        JOIN order_items oi ON oi.order_id = o.id
+       LEFT JOIN order_seller_delivery_fees odf ON odf.order_id = o.id AND odf.seller_id = $1
        LEFT JOIN shipments s ON s.order_id = o.id AND s.seller_id = $1
        LEFT JOIN seller_pickup_locations pl ON pl.id = s.pickup_location_id
        WHERE oi.seller_id = $1 AND o.payment_status = 'paid'
@@ -805,8 +807,9 @@ async function removePickupLocation(sellerId, pickupLocationId) {
 async function getShopProfile(sellerId) {
   const { rows } = await db.query(
     `SELECT sp.id, sp.shop_name AS "shopName", sp.shop_slug AS "shopSlug",
-            sp.description, sp.logo_url AS "logoUrl", sp.banner_url AS "bannerUrl",
-            sp.county, sp.town, sp.phone, sp.status,
+          sp.description, sp.logo_url AS "logoUrl", sp.banner_url AS "bannerUrl",
+          sp.county, sp.town, sp.phone, sp.status,
+          sp.delivery_fee AS "deliveryFee",
             sp.rejection_reason AS "rejectionReason",
             sp.created_at AS "createdAt", sp.approved_at AS "approvedAt",
             (SELECT COUNT(*)::int FROM products p WHERE p.seller_id = sp.user_id) AS "productCount",
@@ -839,6 +842,7 @@ async function updateShopProfile(sellerId, input) {
   if (input.county !== undefined) set('county', input.county || null);
   if (input.town !== undefined) set('town', input.town || null);
   if (input.phone !== undefined) set('phone', input.phone || null);
+  if (input.deliveryFee !== undefined) set('delivery_fee', input.deliveryFee);
 
   params.push(sellerId);
   const { rows } = await db.query(
@@ -869,11 +873,11 @@ async function getSales(sellerId) {
       `SELECT c.id, c.created_at AS "createdAt", c.status, c.gross_amount AS "grossAmount",
               c.commission_amount AS "commissionAmount", c.seller_earnings AS "sellerEarnings",
               c.payout_reference AS "payoutReference", c.paid_at AS "paidAt",
-              o.order_number AS "orderNumber", oi.product_name AS "productName",
+              o.order_number AS "orderNumber", COALESCE(oi.product_name, 'Delivery fee') AS "productName",
               oi.quantity
        FROM commissions c
        JOIN orders o ON o.id = c.order_id
-       JOIN order_items oi ON oi.id = c.order_item_id
+       LEFT JOIN order_items oi ON oi.id = c.order_item_id
        WHERE c.seller_id = $1
        ORDER BY c.created_at DESC, c.id DESC
        LIMIT 100`,

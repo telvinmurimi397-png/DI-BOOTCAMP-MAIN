@@ -207,6 +207,15 @@ const updateShopSchema = z
         (value) => value === '' || /^\+?[0-9 ()-]{7,20}$/.test(value),
         'Enter a valid phone number.'
       )
+      .optional(),
+    deliveryFee: z.coerce
+      .number()
+      .min(0, 'Delivery fee cannot be negative.')
+      .max(100_000, 'Delivery fee is too high.')
+      .refine(
+        (value) => /^\d+(\.\d{1,2})?$/.test(String(value)),
+        'Delivery fee can have at most two decimal places.'
+      )
       .optional()
   })
   .refine((data) => Object.values(data).some((value) => value !== undefined), {

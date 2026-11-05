@@ -834,11 +834,11 @@ async function getCommissions(status = 'all') {
       `SELECT c.id, c.created_at AS "createdAt", c.status, c.gross_amount AS "grossAmount",
               c.commission_amount AS "commissionAmount", c.seller_earnings AS "sellerEarnings",
               c.payout_reference AS "payoutReference", c.paid_at AS "paidAt",
-              o.order_number AS "orderNumber", oi.product_name AS "productName",
+              o.order_number AS "orderNumber", COALESCE(oi.product_name, 'Delivery fee') AS "productName",
               sp.shop_name AS "shopName"
        FROM commissions c
        JOIN orders o ON o.id = c.order_id
-       JOIN order_items oi ON oi.id = c.order_item_id
+       LEFT JOIN order_items oi ON oi.id = c.order_item_id
        JOIN seller_profiles sp ON sp.user_id = c.seller_id
        WHERE ${where.join(' AND ')}
        ORDER BY c.created_at DESC, c.id DESC

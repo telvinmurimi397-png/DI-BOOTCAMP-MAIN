@@ -6,18 +6,6 @@ import { setButtonLoading, errorMessage } from '../ui.js';
 const form = document.getElementById('login-form');
 const alertHost = document.getElementById('login-alert');
 const submitButton = document.getElementById('login-submit');
-const googleButton = document.getElementById('google-login');
-
-const googleErrors = {
-  not_configured: 'Google sign-in is not configured yet. Please use your email and password.',
-  cancelled: 'Google sign-in was cancelled.',
-  invalid_state: 'Google sign-in could not be verified. Please try again.',
-  provider: 'Google could not sign you in. Please try again.',
-  unavailable: 'Google sign-in is temporarily unavailable. Please try again.',
-  unverified: 'Google did not provide a verified email address for this account.',
-  account_disabled: 'This account has been deactivated. Please contact support.',
-  two_factor: 'This account uses two-factor authentication. Sign in with your email and password to enter your authenticator code.'
-};
 
 function showTwoFactorForm(challengeToken) {
   form.hidden = true;
@@ -52,13 +40,6 @@ function showTwoFactorForm(challengeToken) {
 
 async function init() {
   bindPasswordToggles();
-
-  const requestedNext = nextPath('');
-  if (requestedNext) {
-    googleButton.href = `/api/auth/google?next=${encodeURIComponent(requestedNext)}`;
-  }
-  const googleError = new URLSearchParams(window.location.search).get('google_error');
-  if (googleErrors[googleError]) showAlert(alertHost, googleErrors[googleError], 'danger');
 
   const existing = await getUser();
   if (existing) {

@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { toCents, fromCents } = require('../utils/money');
+const { calculateDeliveryFees } = require('../utils/deliveryFees');
 const { badRequest, conflict, notFound } = require('../utils/errors');
 const settingsService = require('./settingsService');
 
@@ -79,10 +80,12 @@ async function quote(buyerId, { code, loyaltyPoints = 0, useReferralCredit = fal
   const { rows } = await db.query(
     `SELECT COALESCE(pv.price, p.price) AS "basePrice",
             ${activePriceExpression('p', 'COALESCE(pv.price, p.price)')} AS price,
-            p.seller_id AS "sellerId", ci.quantity
+            p.seller_id AS "sellerId", sp.shop_name AS "shopName",
+            sp.delivery_fee AS "shopDeliveryFee", ci.quantity
      FROM carts c
      JOIN cart_items ci ON ci.cart_id = c.id
      JOIN products p ON p.id = ci.product_id
+     JOIN seller_profiles sp ON sp.user_id = p.seller_id
      LEFT JOIN product_variants pv ON pv.product_id = ci.product_id AND pv.id = ci.variant_id
      WHERE c.buyer_id = $1
      ORDER BY p.id`,
@@ -115,9 +118,11 @@ async function quote(buyerId, { code, loyaltyPoints = 0, useReferralCredit = fal
   if (pointsDiscount > Math.floor(subtotalCents / 2)) {
     throw badRequest('Loyalty points can cover up to 50% of the merchandise subtotal.');
   }
-  const shipping = subtotalCents >= toCents(settings.freeShippingThreshold)
-    ? 0
-    : toCents(settings.shippingFee);
+  const { deliveryFees, totalCents: shipping } = calculateDeliveryFees(
+    lines,
+    subtotalCents,
+    toCents(settings.freeShippingThreshold)
+  );
   const couponDiscount = promotion?.discountCents || 0;
   const creditBalance = toCents(rewardsResult.rows[0].credit);
   const creditDiscount = useReferralCredit
@@ -126,6 +131,7 @@ async function quote(buyerId, { code, loyaltyPoints = 0, useReferralCredit = fal
   return {
     subtotal: fromCents(subtotalCents),
     shippingFee: fromCents(shipping),
+    shippingBreakdown: deliveryFees,
     discount: fromCents(couponDiscount + pointsDiscount + creditDiscount),
     couponDiscount: fromCents(couponDiscount),
     pointsDiscount: fromCents(pointsDiscount),

@@ -113,6 +113,7 @@ CREATE TABLE seller_profiles (
   county            VARCHAR(80),
   town              VARCHAR(80),
   phone             VARCHAR(30),
+  delivery_fee      NUMERIC(12, 2) NOT NULL DEFAULT 250 CHECK (delivery_fee >= 0),
   status            VARCHAR(12) NOT NULL DEFAULT 'pending'
                     CHECK (status IN ('pending', 'approved', 'rejected', 'suspended')),
   is_featured       BOOLEAN NOT NULL DEFAULT FALSE,
@@ -382,6 +383,13 @@ CREATE TABLE order_items (
 CREATE INDEX idx_order_items_order ON order_items (order_id);
 CREATE INDEX idx_order_items_seller ON order_items (seller_id);
 
+CREATE TABLE order_seller_delivery_fees (
+  order_id      BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  seller_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  delivery_fee  NUMERIC(12, 2) NOT NULL CHECK (delivery_fee >= 0),
+  PRIMARY KEY (order_id, seller_id)
+);
+
 CREATE TABLE payments (
   id              BIGSERIAL PRIMARY KEY,
   order_id        BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -591,7 +599,7 @@ CREATE TABLE refunds (
 CREATE TABLE commissions (
   id                BIGSERIAL PRIMARY KEY,
   order_id          BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  order_item_id     BIGINT NOT NULL UNIQUE REFERENCES order_items(id) ON DELETE CASCADE,
+  order_item_id     BIGINT UNIQUE REFERENCES order_items(id) ON DELETE CASCADE,
   seller_id         BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   rate              NUMERIC(5, 4) NOT NULL CHECK (rate >= 0 AND rate <= 1),
   gross_amount      NUMERIC(12, 2) NOT NULL CHECK (gross_amount > 0),
@@ -606,6 +614,8 @@ CREATE TABLE commissions (
 
 CREATE INDEX idx_commissions_seller ON commissions (seller_id, status);
 CREATE INDEX idx_commissions_order ON commissions (order_id);
+CREATE UNIQUE INDEX uq_commissions_delivery_order_seller
+  ON commissions (order_id, seller_id) WHERE order_item_id IS NULL;
 
 -- ------------------------------------------------------------
 -- Buyer–seller messaging

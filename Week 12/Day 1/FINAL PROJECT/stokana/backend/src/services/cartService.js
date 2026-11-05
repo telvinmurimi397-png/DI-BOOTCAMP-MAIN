@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const settingsService = require('./settingsService');
 const { toCents, fromCents } = require('../utils/money');
+const { calculateDeliveryFees } = require('../utils/deliveryFees');
 const { conflict, notFound, badRequest } = require('../utils/errors');
 const promotionService = require('./promotionService');
 
@@ -26,6 +27,7 @@ const CART_ITEMS_SQL = `
     sp.status AS "sellerStatus",
     sp.shop_name AS "shopName",
     sp.shop_slug AS "shopSlug",
+    sp.delivery_fee AS "shopDeliveryFee",
     c.is_active AS "categoryActive",
     c.name AS "categoryName",
     COALESCE((
@@ -122,8 +124,11 @@ async function getCart(buyerId) {
     (sum, item) => sum + toCents(item.price) * item.quantity,
     0
   );
-  const freeShipping = subtotalCents >= toCents(settings.freeShippingThreshold);
-  const shippingCents = available.length === 0 || freeShipping ? 0 : toCents(settings.shippingFee);
+  const { deliveryFees, totalCents: shippingCents } = calculateDeliveryFees(
+    available,
+    subtotalCents,
+    toCents(settings.freeShippingThreshold)
+  );
 
   return {
     items,
@@ -134,6 +139,7 @@ async function getCart(buyerId) {
       unavailableItemCount: items.length - available.length,
       subtotal: fromCents(subtotalCents),
       shippingFee: fromCents(shippingCents),
+      shippingBreakdown: deliveryFees,
       total: fromCents(subtotalCents + shippingCents),
       freeShippingThreshold: settings.freeShippingThreshold,
       shippingFeeStandard: settings.shippingFee,

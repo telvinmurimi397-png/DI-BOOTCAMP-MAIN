@@ -14,7 +14,7 @@ function percentValue(rate) {
 function summaryRows(settings) {
   const rows = [
     ['Commission rate', `${percentValue(settings.commissionRate)}%`],
-    ['Standard delivery fee', money(settings.shippingFee)],
+    ['New-shop delivery fee default', money(settings.shippingFee)],
     ['Free delivery over', money(settings.freeShippingThreshold)]
   ];
   return rows
@@ -32,7 +32,7 @@ function render(settings) {
     <div class="list-stack">
       ${panel({
         title: 'Commission & delivery',
-        subtitle: 'These values are applied at checkout on future orders.',
+        subtitle: 'Commission and the free-delivery threshold apply to future orders; the fee default applies only to new shops.',
         body: `<div class="card-body">
           <div id="settings-alert"></div>
           <form id="settings-form" style="display:grid;gap:16px">
@@ -44,16 +44,16 @@ function render(settings) {
             </div>
             <div class="form-grid">
               <div class="form-group">
-                <label class="form-label" for="settings-shipping">Standard delivery fee (KSh)</label>
+                <label class="form-label" for="settings-shipping">New-shop delivery fee default (KSh)</label>
                 <input class="input" id="settings-shipping" type="number" min="0" max="100000" step="1"
                   value="${Number(settings.shippingFee)}" required>
-                <span class="form-hint">Used when an order is below the free-delivery threshold.</span>
+                <span class="form-hint">Sellers can change their own fee. This default is only used for newly created shops.</span>
               </div>
               <div class="form-group">
                 <label class="form-label" for="settings-threshold">Free delivery threshold (KSh)</label>
                 <input class="input" id="settings-threshold" type="number" min="0" max="1000000" step="1"
                   value="${Number(settings.freeShippingThreshold)}" required>
-                <span class="form-hint">Buyers pay no delivery fee at or above this subtotal.</span>
+                <span class="form-hint">Sellers can set their own fee. Delivery is free for all shops at or above this cart subtotal.</span>
               </div>
             </div>
             <div class="settings-note">

@@ -73,8 +73,9 @@ async function register(req, res) {
     if (role === 'seller') {
       await client.query(
         `INSERT INTO seller_profiles
-           (user_id, shop_name, shop_slug, description, county, town, phone, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')`,
+           (user_id, shop_name, shop_slug, description, county, town, phone, status, delivery_fee)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending',
+                 COALESCE((SELECT value::numeric FROM settings WHERE key = 'shipping_fee'), 250))`,
         [id, shopName, shopSlug, shopDescription || null, shopCounty || null, shopTown || null, phone]
       );
     }

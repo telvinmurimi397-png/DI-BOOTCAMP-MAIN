@@ -27,6 +27,7 @@ test('migration files are applied in sorted order', () => {
   assert.ok(names.includes('20261102_growth_features.sql'));
   assert.ok(names.includes('20261103_order_lifecycle_workflows.sql'));
   assert.ok(names.includes('20261105_initial_categories.sql'));
+  assert.ok(names.includes('20261105_seller_delivery_fees.sql'));
 });
 
 test('production start applies migrations before starting the server', () => {

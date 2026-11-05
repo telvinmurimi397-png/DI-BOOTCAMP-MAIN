@@ -43,7 +43,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 - Discount codes, scheduled flash sales and featured product/shop placements
 - Loyalty points (1 per KSh 100; 100 points redeem for KSh 10) and KSh 200 referral credit for both users after a referred buyer's first paid, non-refunded order
 - Promotional email consent controls, one-click unsubscribe, admin email/in-app campaigns and opt-in abandoned-cart reminders
-- Checkout with delivery details, shipping fee and free-shipping threshold; email and phone verification are not required to place an order. A phone number is still needed for delivery and M-PESA payment.
+- Checkout with delivery details, per-shop seller delivery fees and a platform free-shipping threshold; email and phone verification are not required to place an order. A phone number is still needed for delivery and M-PESA payment.
 - One checkout and order number for items from multiple sellers, with separate seller shipments
 - M-PESA STK Push, verified payment receipts, retry handling and failed-payment history
 - Server-calculated per-item commissions and M-PESA seller payout records
@@ -56,7 +56,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 
 **Sellers**
 - Create a shop at registration; it stays pending until an admin approves it
-- Shop profile editor (description, logo, banner, county, town, phone)
+- Shop profile editor (description, logo, banner, county, town, phone and delivery fee)
 - Product creation/editing with subcategories, specifications, up to 100 SKU-backed variants with per-variant prices and inventory, and up to five images
 - CSV bulk product import (100 rows / 2 MB per upload); imported listings enter the moderation queue
 - Image uploads through the server or direct image URLs
@@ -75,7 +75,7 @@ Built with HTML5, CSS3 and vanilla JavaScript on the front end, Node.js + Expres
 - Order monitoring and manual status updates
 - Cancellation and return request review; record the payment provider reference after issuing a refund
 - Reports over a date range, commission ledger, seller payouts and payment reconciliation
-- Platform settings for commission rate, shipping fee and free-shipping threshold
+- Platform settings for commission rate, new-shop delivery-fee default and free-shipping threshold
 
 **Platform**
 - Server-side sessions stored in PostgreSQL with bcrypt password hashing
@@ -294,7 +294,7 @@ The seed also creates 15 approved products, two pending products, demo orders, r
 
 1. A buyer adds products from one or more sellers to the cart.
 2. Checkout locks the cart items and products, validates that products, shops and categories are still active, and checks product or selected-variant stock inside one transaction.
-3. The server calculates subtotal, shipping and commission from the current **server-side** settings; the browser never supplies prices or commission.
+3. The server calculates subtotal, each shop's delivery fee and commission from current **server-side** settings; the browser never supplies prices or commission. Each seller's delivery fee is charged once per shop in the cart and becomes that seller's earnings; the platform free-delivery threshold waives all shop fees.
 4. The order is created as `pending_payment` / `unpaid`, stock is decremented, a pending M-PESA payment is created, and the cart is cleared.
 5. The server sends an M-PESA STK Push to the buyer's phone and waits for the callback. A successful callback is checked against the Daraja STK Query API and exact order amount; the M-PESA receipt is stored and the order marked `processing` / `paid`. Commissions and shipments are then created once.
 6. Sellers see paid orders only, update shipments and can deliver the order.
@@ -531,7 +531,7 @@ Socket.IO currently runs in-process. If you run more than one Node instance, add
 - **Single-instance realtime.** Add a Socket.IO adapter before horizontal scaling.
 - **Automated coverage is API-focused.** The smoke test covers the ten business rules; front-end flows were verified manually in a browser. A Playwright/Cypress suite would be the next quality step.
 - Fresh Render databases are initialized from `database/schema.sql`; subsequent SQL migrations run automatically before the server starts.
-- **No real delivery-provider integration.** Sellers enter courier names, tracking numbers and HTTPS tracking links manually. Shipping fees use the platform-wide configured fee and free-shipping threshold; fees are not calculated by route or distance.
+- **No real delivery-provider integration.** Sellers enter courier names, tracking numbers and HTTPS tracking links manually. Sellers set a delivery fee for each shop; delivery fees are not calculated by route or distance. The platform free-delivery threshold applies to the combined cart subtotal.
 
 ---
 
