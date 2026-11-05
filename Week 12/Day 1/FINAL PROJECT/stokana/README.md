@@ -216,6 +216,8 @@ npm install
 npm start
 ```
 
+`npm start` applies pending database migrations before starting the server.
+
 Open <http://localhost:4000>. Verify the API and database connection at <http://localhost:4000/api/health>.
 
 For development with automatic restarts:

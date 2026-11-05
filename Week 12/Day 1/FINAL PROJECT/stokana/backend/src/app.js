@@ -223,7 +223,8 @@ async function start() {
     const info = await db.ping();
     console.log(`[db] connected to "${info.database}"`);
   } catch (error) {
-    console.error('[db] could not connect:', error.message);
+    console.error('[db] could not connect:', error.message || String(error));
+    if (error.code) console.error(`[db] error code: ${error.code}`);
     console.error('     Check DATABASE_URL in backend/.env, then run the schema and seed.');
     process.exit(1);
   }

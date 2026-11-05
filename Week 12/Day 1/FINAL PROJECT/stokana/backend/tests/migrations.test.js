@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
 const {
   getMigrationFiles,
@@ -26,6 +27,13 @@ test('migration files are applied in sorted order', () => {
   assert.ok(names.includes('20261102_growth_features.sql'));
   assert.ok(names.includes('20261103_order_lifecycle_workflows.sql'));
   assert.ok(names.includes('20261105_initial_categories.sql'));
+});
+
+test('production start applies migrations before starting the server', () => {
+  const packageJson = JSON.parse(
+    fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')
+  );
+  assert.match(packageJson.scripts.start, /db:migrate.*src\/app\.js/);
 });
 
 test('migration runner initializes a completely empty database', async () => {
