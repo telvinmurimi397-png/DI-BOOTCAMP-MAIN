@@ -81,9 +81,9 @@ body.page-home .hero-banner::after {
 body.page-home .hero-banner-copy {
   position: absolute;
   top: 7%;
-  right: clamp(28px, 5vw, 82px);
+  right: clamp(24px, 3vw, 58px);
   z-index: 1;
-  width: min(43%, 640px);
+  width: min(40%, 640px);
   max-width: 640px;
   color: var(--navy-brand);
 }
@@ -4338,7 +4338,7 @@ checkout,
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   body.page-home .hero-banner-copy {
     top: 5%;
     right: 3%;
@@ -4349,20 +4349,20 @@ checkout,
 
   body.page-home .hero-banner .hero-banner-copy h1 {
     margin-bottom: 8px;
-    font-size: clamp(15px, 4.7vw, 25px);
+    font-size: clamp(17px, 4.7vw, 30px);
     line-height: 1.08;
     letter-spacing: -0.04em;
   }
 
   body.page-home .hero-banner .hero-banner-copy > p {
     margin-bottom: 10px;
-    font-size: clamp(10px, 2.8vw, 15px);
+    font-size: clamp(12px, 2.8vw, 18px);
     line-height: 1.3;
   }
 
   body.page-home .hero-banner-cta {
     min-height: 0;
     padding: 8px 10px;
-    font-size: clamp(11px, 3vw, 16px);
+    font-size: clamp(12px, 3vw, 18px);
   }
 }
