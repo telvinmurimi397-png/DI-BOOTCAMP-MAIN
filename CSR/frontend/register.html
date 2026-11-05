@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183d32">
+  <title>Join GreenFuture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+</head>
+<body class="auth-page">
+  <header class="site-header auth-header"><a class="brand" href="index.html"><span class="brand-mark">G</span>greenfuture</a><a class="text-link" href="index.html">Back to home</a></header>
+  <main class="auth-layout register-layout">
+    <section class="auth-aside">
+      <p class="eyebrow"><span class="eyebrow-dot"></span> There is a place for you here</p>
+      <h1>Make good things <em>happen.</em></h1>
+      <p>Join as a company, an environmental organization, or a volunteer. The best work starts with showing up.</p>
+      <div class="aside-rule"><span></span><span>GreenFuture network</span></div>
+    </section>
+    <section class="auth-panel" aria-labelledby="form-title">
+      <p class="section-label">Start here</p>
+      <h2 id="form-title">Create your account</h2>
+      <p class="form-intro">Tell us a little about how you want to contribute.</p>
+      <form data-auth-form="register" novalidate>
+        <label for="name">Your name</label>
+        <input id="name" name="name" type="text" autocomplete="name" maxlength="150" placeholder="Name or organization" required>
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="150" placeholder="you@example.org" required>
+        <label for="role">I am joining as</label>
+        <select id="role" name="role" required>
+          <option value="" disabled selected>Select your role</option>
+          <option value="company">A company</option>
+          <option value="organization">An environmental organization</option>
+          <option value="volunteer">A volunteer</option>
+        </select>
+        <label for="password">Create a password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" placeholder="At least 8 characters" required>
+        <p class="form-message" data-form-message role="alert" aria-live="polite"></p>
+        <button class="button button-full" type="submit">Create account</button>
+      </form>
+      <p class="form-switch">Already part of the network? <a href="login.html">Sign in</a></p>
+    </section>
+  </main>
+</body>
+</html>

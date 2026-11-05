@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183d32">
+  <meta name="description" content="Bring companies, environmental organizations, and volunteers together to make local environmental projects happen.">
+  <title>GreenFuture | Collective action, visible impact</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/main.js" defer></script>
+</head>
+<body>
+  <header class="site-header" data-site-header>
+    <a class="brand" href="#home" aria-label="GreenFuture home"><span class="brand-mark">G</span>greenfuture</a>
+    <button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-controls="site-navigation" aria-expanded="false" data-menu-toggle>
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="site-nav" id="site-navigation" aria-label="Main navigation" data-site-nav>
+      <a href="#home" data-scroll-link aria-current="location">Home</a>
+      <a href="#projects" data-scroll-link>Projects</a>
+      <a href="#impact" data-scroll-link>Our impact</a>
+      <a href="#about" data-scroll-link>About</a>
+      <a href="#news" data-scroll-link>News</a>
+      <a href="#contact" data-scroll-link>Contact</a>
+      <a class="nav-auth-link" href="login.html">Sign in</a>
+      <a class="button button-small nav-join-link" href="register.html">Join the network</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero page-section" id="home" aria-label="Home">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> A network for environmental action</p>
+        <h1>Good work grows when we <em>grow it together.</em></h1>
+        <p class="hero-description">Bring companies, environmental organizations, and volunteers into one place to make local projects happen.</p>
+        <div class="hero-actions">
+          <a class="button" href="#projects">Explore projects</a>
+          <a class="text-link" href="#how-it-works">See how it works</a>
+        </div>
+        <div class="hero-note"><span class="note-line"></span><span>From first idea to shared effort</span></div>
+      </div>
+      <div class="hero-visual">
+        <img src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&amp;fit=crop&amp;w=1400&amp;q=85" alt="Sunlight falling through a healthy green forest">
+        <div class="image-caption"><span class="caption-index">01 / 03</span><span>Make room for a greener future</span></div>
+        <div class="visual-stamp" aria-hidden="true"><span>ACT</span><span>WITH</span><span>CARE</span></div>
+      </div>
+    </section>
+
+    <section class="mission-section page-section" id="mission">
+      <div class="section-label"><span>01</span> The idea</div>
+      <div class="mission-content">
+        <h2>Impact is a team effort.</h2>
+        <p>Companies can bring resources. Organizations bring on-the-ground knowledge. Volunteers bring time and energy. GreenFuture is a shared starting point for turning those strengths into environmental projects.</p>
+        <div class="role-list">
+          <div><span class="role-number">A</span><span><strong>Companies</strong><small>Support and lead initiatives</small></span></div>
+          <div><span class="role-number">B</span><span><strong>Organizations</strong><small>Shape community-led work</small></span></div>
+          <div><span class="role-number">C</span><span><strong>Volunteers</strong><small>Join projects and contribute</small></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="featured-section page-section" id="projects" aria-labelledby="project-list-title">
+      <div class="page-section-inner">
+        <div class="section-heading">
+          <p class="section-label">02 / Find your next step</p>
+          <h2 id="project-list-title">Good work starts <em>somewhere.</em></h2>
+          <p>Explore environmental initiatives, see what they are working toward, and find a place to contribute.</p>
+        </div>
+        <p class="sample-banner sample-banner-light">Project listings are examples for this platform preview.</p>
+        <div class="project-toolbar">
+          <h3>Find your next step</h3>
+          <form class="project-filters" data-project-filters role="search">
+            <label class="sr-only" for="project-search">Search projects</label>
+            <input id="project-search" type="search" placeholder="Search projects" data-project-search>
+            <label class="sr-only" for="project-category">Filter by category</label>
+            <select id="project-category" data-project-category>
+              <option value="">All categories</option><option value="reforestation">Reforestation</option><option value="waste">Waste reduction</option><option value="water">Water</option><option value="community">Community</option>
+            </select>
+            <label class="sr-only" for="project-location">Filter by location</label>
+            <select id="project-location" data-project-location>
+              <option value="">All locations</option><option value="nairobi">Nairobi</option><option value="mombasa">Mombasa</option><option value="kisumu">Kisumu</option><option value="online">Online</option>
+            </select>
+          </form>
+        </div>
+        <p class="filter-count" data-project-count aria-live="polite"></p>
+        <div class="project-grid">
+          <article class="project-card" id="native-roots" data-project-card data-category="reforestation" data-location="nairobi" data-search="native roots thriving streets trees urban shade reforestation nairobi">
+            <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Young green plants growing in sunlight" loading="lazy">
+            <div class="project-card-body"><div class="project-meta"><span>Reforestation</span><span>Nairobi</span></div><p class="card-kicker">Sample project</p><h3>Native roots, thriving streets</h3><p>Plant native trees and nurture neighborhood green spaces for the long term.</p>
+              <div class="project-progress"><div class="progress-label"><span>Example goal: 10,000 trees</span><span>42%</span></div><progress value="42" max="100" aria-label="Example project progress: 42 percent"></progress></div>
+              <details class="project-details"><summary>Project details</summary><p><strong>Target:</strong> Plant 10,000 native seedlings. <strong>Looking for:</strong> Community volunteers, local planting partners, and project support. These are illustrative details for the preview.</p></details>
+              <a class="text-link" href="register.html">Get involved</a></div>
+          </article>
+          <article class="project-card" id="clean-shoreline" data-project-card data-category="waste" data-location="mombasa" data-search="cleaner shoreline waste collection cleanup ocean coast mombasa">
+            <img src="https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Reusable materials arranged for a community cleanup" loading="lazy">
+            <div class="project-card-body"><div class="project-meta"><span>Waste reduction</span><span>Mombasa</span></div><p class="card-kicker">Sample project</p><h3>A cleaner shoreline, together</h3><p>Bring neighbors together to reduce litter and care for a shared stretch of coast.</p>
+              <div class="project-progress"><div class="progress-label"><span>Example goal: 2,500 kg</span><span>28%</span></div><progress value="28" max="100" aria-label="Example project progress: 28 percent"></progress></div>
+              <details class="project-details"><summary>Project details</summary><p><strong>Target:</strong> Collect and sort 2,500 kg of shoreline waste. <strong>Looking for:</strong> Volunteer teams, reusable supplies, and local waste partners. These are illustrative details for the preview.</p></details>
+              <a class="text-link" href="register.html">Get involved</a></div>
+          </article>
+          <article class="project-card" id="green-neighborhoods" data-project-card data-category="community" data-location="online" data-search="greener neighborhoods community workshops climate learning online">
+            <img src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Wind turbines generating renewable energy across a green landscape" loading="lazy">
+            <div class="project-card-body"><div class="project-meta"><span>Community</span><span>Online</span></div><p class="card-kicker">Sample project</p><h3>Growing greener neighborhoods</h3><p>Share practical ideas for making local spaces healthier, cooler, and more welcoming.</p>
+              <div class="project-progress"><div class="progress-label"><span>Example goal: 12 sessions</span><span>58%</span></div><progress value="58" max="100" aria-label="Example project progress: 58 percent"></progress></div>
+              <details class="project-details"><summary>Project details</summary><p><strong>Target:</strong> Host 12 community learning sessions. <strong>Looking for:</strong> Local organizers, speakers, and volunteers to share practical experience. These are illustrative details for the preview.</p></details>
+              <a class="text-link" href="register.html">Get involved</a></div>
+          </article>
+          <article class="project-card" id="lake-care" data-project-card data-category="water" data-location="kisumu" data-search="lake water care clean water shoreline kisumu">
+            <img src="https://images.unsplash.com/photo-1437482078695-73f5ca6c96e2?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="A calm freshwater shoreline bordered by trees" loading="lazy">
+            <div class="project-card-body"><div class="project-meta"><span>Water</span><span>Kisumu</span></div><p class="card-kicker">Sample project</p><h3>Lake care, neighborhood led</h3><p>Bring local knowledge and practical care together around a shared freshwater environment.</p>
+              <div class="project-progress"><div class="progress-label"><span>Example goal: 6 work days</span><span>35%</span></div><progress value="35" max="100" aria-label="Example project progress: 35 percent"></progress></div>
+              <details class="project-details"><summary>Project details</summary><p><strong>Target:</strong> Organize six community care days. <strong>Looking for:</strong> Local environmental groups, volunteers, and outreach support. These are illustrative details for the preview.</p></details>
+              <a class="text-link" href="register.html">Get involved</a></div>
+          </article>
+        </div>
+        <p class="empty-state" data-project-empty hidden>No projects match those filters yet. Try another search or choose a different category.</p>
+      </div>
+    </section>
+
+    <section class="impact-overview page-section" id="impact">
+      <div class="page-section-inner">
+        <div class="section-heading">
+          <p class="section-label">03 / A transparent scorecard</p>
+          <h2>Measure what matters. <em>Grow what works.</em></h2>
+          <p>Clear goals help communities understand what a project is aiming for, what has been done, and where a helping hand can make a difference.</p>
+        </div>
+        <p class="sample-banner sample-banner-light">Sample figures are for demonstration only. Live project reporting and verified platform-wide totals are not available in this preview.</p>
+        <div class="impact-metrics impact-metrics-page" aria-label="Illustrative sample project targets and progress">
+          <div class="impact-metric"><span class="metric-value">4,200 / 10,000</span><span class="metric-label">native trees planted</span><span class="metric-note">Illustrative progress · 42%</span><progress value="42" max="100" aria-label="Illustrative tree project progress: 42 percent"></progress></div>
+          <div class="impact-metric"><span class="metric-value">700 / 2,500 kg</span><span class="metric-label">waste collected</span><span class="metric-note">Illustrative progress · 28%</span><progress value="28" max="100" aria-label="Illustrative waste project progress: 28 percent"></progress></div>
+          <div class="impact-metric"><span class="metric-value">3</span><span class="metric-label">example projects completed</span><span class="metric-note">Illustrative demo figure</span></div>
+          <div class="impact-metric"><span class="metric-value">86</span><span class="metric-label">example volunteers involved</span><span class="metric-note">Illustrative demo figure</span></div>
+          <div class="impact-metric"><span class="metric-value">9</span><span class="metric-label">example communities reached</span><span class="metric-note">Illustrative demo figure</span></div>
+          <div class="impact-metric"><span class="metric-value">7 / 12</span><span class="metric-label">community sessions held</span><span class="metric-note">Illustrative progress · 58%</span><progress value="58" max="100" aria-label="Illustrative community project progress: 58 percent"></progress></div>
+        </div>
+        <div class="impact-method" id="how-it-works">
+          <div class="section-heading"><p class="section-label">From promise to progress</p><h2>Impact is more than <em>a number.</em></h2></div>
+          <div class="steps-grid">
+            <article class="step-card"><span class="step-number">01</span><h3>Set a clear goal</h3><p>Projects describe what they want to achieve, how it will be measured, and who the work will serve.</p></article>
+            <article class="step-card"><span class="step-number">02</span><h3>Record the work</h3><p>Project teams can share updates on activities, participation, and progress toward each target.</p></article>
+            <article class="step-card"><span class="step-number">03</span><h3>Learn and improve</h3><p>Consistent reporting helps communities recognize what is working and decide what to do next.</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-story page-section" id="about">
+      <div class="about-image"><img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&amp;fit=crop&amp;w=1200&amp;q=85" alt="Green mountains and a forest beneath a clear sky" loading="lazy"></div>
+      <div class="about-copy"><p class="section-label">04 / About GreenFuture</p><h2>A healthier future is <em>shared work.</em></h2><p>GreenFuture brings companies, environmental organizations, and volunteers together around practical local action.</p><p>Environmental work is stronger when the people closest to a challenge can connect with the people and resources ready to help. We believe lasting change grows from local knowledge, thoughtful partnerships, and steady care for the places we share.</p>
+        <div class="values-grid">
+          <article class="value-card"><span class="step-number">Our mission</span><h3>Connect good intentions to real projects</h3><p>Give communities and partners a common place to find ways to contribute.</p></article>
+          <article class="value-card"><span class="step-number">Our commitment</span><h3>Keep the work grounded</h3><p>Respect local leadership and share progress without overstating results.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="news-section page-section" id="news">
+      <div class="page-section-inner">
+        <div class="section-heading">
+          <p class="section-label">05 / News &amp; updates</p>
+          <h2>Stories that keep <em>good work growing.</em></h2>
+          <p>Ideas, conservation perspectives, and simple ways to care for the places we share.</p>
+        </div>
+        <article class="news-feature">
+          <img src="https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&amp;fit=crop&amp;w=1400&amp;q=85" alt="Deer standing in a sunlit woodland" loading="lazy">
+          <div class="news-feature-copy"><p class="card-kicker">Conservation perspective · Field note</p><h2>Healthy landscapes begin with local care.</h2><p>From restoring native plants to looking after shared waterways, environmental projects are strongest when plans grow from the experience of people who know a place best.</p><a class="text-link" href="#about">Learn about our approach</a></div>
+        </article>
+        <div class="news-grid">
+          <article class="news-card"><img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Hands holding a small green plant" loading="lazy"><div class="news-card-body"><p class="card-kicker">Community guide</p><h3>Planning a neighborhood planting day</h3><p>Choose locally appropriate plants, invite community partners, and make a plan for long-term care.</p><a class="text-link" href="#projects">See reforestation projects</a></div></article>
+          <article class="news-card"><img src="https://images.unsplash.com/photo-1605600659873-d808a13e4d9a?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Volunteers working together outdoors" loading="lazy"><div class="news-card-body"><p class="card-kicker">Activity idea</p><h3>Make a community cleanup count</h3><p>Pair a cleanup with waste sorting, local safety guidance, and a plan for collected materials.</p><a class="text-link" href="#projects">Explore sample projects</a></div></article>
+          <article class="news-card"><img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&amp;fit=crop&amp;w=900&amp;q=80" alt="Green fields stretching toward a tree-lined horizon" loading="lazy"><div class="news-card-body"><p class="card-kicker">Project practice</p><h3>Set goals people can understand</h3><p>Clear targets and regular updates help participants see what is planned, what has changed, and where help is needed.</p><a class="text-link" href="#impact">How impact is measured</a></div></article>
+        </div>
+        <div class="activity-callout"><div><p class="section-label">Community activity calendar</p><h2>Looking for a way to take part?</h2><p>This preview does not have a live events calendar yet. Browse example project activities and check with local organizers for confirmed dates.</p></div><a class="button" href="#projects">Explore project ideas</a></div>
+      </div>
+    </section>
+
+    <section class="contact-layout page-section" id="contact">
+      <div class="contact-intro">
+        <p class="section-label">06 / Contact us</p>
+        <h2>Good things start with <em>a hello.</em></h2>
+        <p>Questions about joining, sharing a project, or working together? Send a note and tell us what you have in mind.</p>
+        <div class="contact-note"><span class="note-line"></span><span>For volunteers, organizations, and companies</span></div>
+        <div class="contact-info"><span class="section-label">Support &amp; organization enquiries</span><p>Official email and phone contacts are not configured in this preview. Connect the form to a verified organization inbox before publishing; this demo does not send or store messages.</p></div>
+      </div>
+      <form class="contact-form" data-contact-form>
+        <label for="contact-name">Your name</label><input id="contact-name" name="name" type="text" autocomplete="name" maxlength="150" placeholder="Name" required>
+        <label for="contact-email">Email address</label><input id="contact-email" name="email" type="email" autocomplete="email" maxlength="150" placeholder="you@example.org" required>
+        <label for="contact-topic">What can we help with?</label><select id="contact-topic" name="topic" required><option value="" disabled selected>Select a topic</option><option>Joining the network</option><option>Sharing a project</option><option>Company partnership</option><option>Organization enquiry</option><option>Something else</option></select>
+        <label for="contact-message">Your message</label><textarea id="contact-message" name="message" rows="5" maxlength="2000" placeholder="Tell us a little about your question or idea." required></textarea>
+        <p class="form-message" data-contact-message role="status" aria-live="polite"></p>
+        <button class="button button-full" type="submit">Preview message</button>
+      </form>
+    </section>
+
+    <section class="closing-cta">
+      <p class="eyebrow"><span class="eyebrow-dot"></span> Better work starts together</p>
+      <h2>There is a place for you in this work.</h2>
+      <p>Join the network or find a project to support in your community.</p>
+      <div class="hero-actions"><a class="button" href="register.html">Join GreenFuture</a><a class="text-link" href="#projects">Browse projects</a></div>
+    </section>
+  </main>
+  <footer class="site-footer"><a class="brand brand-footer" href="#home"><span class="brand-mark">G</span>greenfuture</a><span>Shared effort. Living impact.</span><a href="#contact">Get in touch</a></footer>
+</body>
+</html>

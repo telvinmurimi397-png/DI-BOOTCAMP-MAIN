@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183d32">
+  <title>Admin workspace | GreenFuture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/main.js" defer></script>
+</head>
+<body class="dashboard-page" data-dashboard-role="admin">
+  <aside class="dashboard-sidebar">
+    <a class="brand" href="/"><span class="brand-mark">G</span>greenfuture</a>
+    <div><p class="dashboard-sidebar-label">Admin workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#account">Your account</a></nav></div>
+    <button class="button button-outline button-small" type="button" data-logout>Sign out</button>
+  </aside>
+  <main class="dashboard-main" id="overview">
+    <p class="eyebrow"><span class="eyebrow-dot"></span> Platform administration</p>
+    <h1>Welcome, <em data-user-name>there</em>.</h1>
+    <p class="dashboard-lead">The foundation is in place. Admin tools will grow with the platform.</p>
+    <section class="workspace-panel"><div class="workspace-number">04</div><div><p class="section-label">Your next step</p><h2>Prepare the network</h2><p>Admin accounts are created by promoting a trusted account directly in PostgreSQL. Project moderation and user management are not yet connected.</p></div><span class="status-mark">In preparation</span></section>
+    <p class="account-line" id="account">Signed in as <span data-user-email></span></p>
+  </main>
+</body>
+</html>
