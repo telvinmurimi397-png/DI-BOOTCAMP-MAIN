@@ -207,7 +207,10 @@ function formPanel() {
                   <span class="form-label">Category</span>
                   <select class="select" name="categoryId" required>
                     <option value="">Choose a category</option>
-                    ${categoryOptions(product?.categoryId)}
+                    ${
+                      categoryOptions(product?.categoryId) ||
+                      '<option value="" disabled>No categories available. Ask an administrator to add one.</option>'
+                    }
                   </select>
                 </label>
                 <label class="form-group">

@@ -25,6 +25,7 @@ test('migration files are applied in sorted order', () => {
   assert.ok(names.includes('20261102_account_security_and_addresses.sql'));
   assert.ok(names.includes('20261102_growth_features.sql'));
   assert.ok(names.includes('20261103_order_lifecycle_workflows.sql'));
+  assert.ok(names.includes('20261105_initial_categories.sql'));
 });
 
 test('migration runner initializes a completely empty database', async () => {
