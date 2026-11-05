@@ -173,7 +173,9 @@ app.use(
       if (filePath.endsWith('robots.txt')) {
         res.setHeader('Cache-Control', 'no-store');
       }
-      if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+      if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
     }
   })
 );
