@@ -14,14 +14,54 @@
 <body class="dashboard-page" data-dashboard-role="volunteer">
   <aside class="dashboard-sidebar">
     <a class="brand" href="/"><span class="brand-mark">G</span>greenfuture</a>
-    <div><p class="dashboard-sidebar-label">Volunteer workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#account">Your account</a></nav></div>
+    <div><p class="dashboard-sidebar-label">Volunteer workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#activity">My activity</a><a href="#account">Your account</a></nav></div>
     <button class="button button-outline button-small" type="button" data-logout>Sign out</button>
   </aside>
   <main class="dashboard-main" id="overview">
     <p class="eyebrow"><span class="eyebrow-dot"></span> Volunteer workspace</p>
     <h1>Welcome, <em data-user-name>there</em>.</h1>
     <p class="dashboard-lead">Your time and care can help a local project take root.</p>
-    <section class="workspace-panel"><div class="workspace-number">03</div><div><p class="section-label">Your next step</p><h2>Find a project to join</h2><p>Project listings and volunteer sign-up are planned for the next feature. Your account is ready; project listings are not yet connected.</p></div><span class="status-mark">In preparation</span></section>
+    <section class="profile-progress-panel" aria-labelledby="profile-progress-title">
+      <div class="profile-progress-copy">
+        <p class="section-label" id="profile-progress-title">Profile completion</p>
+        <p>Basic account details <strong data-profile-progress-label>0%</strong></p>
+      </div>
+      <progress data-profile-progress-bar max="100" value="0" aria-label="Profile completion"></progress>
+      <p class="profile-progress-note" data-profile-progress-note>Your profile details are loading.</p>
+    </section>
+    <section class="volunteer-stats" aria-label="Your volunteer activity">
+      <article class="volunteer-stat-card">
+        <p class="section-label">Total activities joined</p>
+        <strong data-volunteer-stat="activitiesJoined">—</strong>
+        <p>Projects you have joined</p>
+      </article>
+      <article class="volunteer-stat-card">
+        <p class="section-label">Completed activities</p>
+        <strong data-volunteer-stat="completedActivities">—</strong>
+        <p>Joined projects marked completed</p>
+      </article>
+      <article class="volunteer-stat-card">
+        <p class="section-label">Upcoming activities</p>
+        <strong data-volunteer-stat="upcomingActivities">—</strong>
+        <p>Project dates are not tracked yet</p>
+      </article>
+      <article class="volunteer-stat-card">
+        <p class="section-label">Volunteer hours</p>
+        <strong data-volunteer-stat="volunteerHours">—</strong>
+        <p>Hours are not recorded yet</p>
+      </article>
+      <article class="volunteer-stat-card">
+        <p class="section-label">Environmental impact</p>
+        <strong data-volunteer-stat="environmentalImpact">—</strong>
+        <p>Impact measurements are not recorded yet</p>
+      </article>
+    </section>
+    <p class="volunteer-summary-message" data-volunteer-summary-message role="status" aria-live="polite"></p>
+    <section class="workspace-panel" id="activity">
+      <div class="workspace-number">03</div>
+      <div><p class="section-label">Your next step</p><h2>Find a project to join</h2><p>Project listings and volunteer sign-up are not connected yet. Your activity totals will update here as you join projects.</p></div>
+      <span class="status-mark">In preparation</span>
+    </section>
     <p class="account-line" id="account">Signed in as <span data-user-email></span></p>
   </main>
 </body>

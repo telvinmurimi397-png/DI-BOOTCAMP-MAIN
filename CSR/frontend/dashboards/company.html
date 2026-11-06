@@ -14,13 +14,55 @@
 <body class="dashboard-page" data-dashboard-role="company">
   <aside class="dashboard-sidebar">
     <a class="brand" href="/"><span class="brand-mark">G</span>greenfuture</a>
-    <div><p class="dashboard-sidebar-label">Company workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#account">Your account</a></nav></div>
+    <div><p class="dashboard-sidebar-label">Company workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#projects">Projects</a><a href="#account">Your account</a></nav></div>
     <button class="button button-outline button-small" type="button" data-logout>Sign out</button>
   </aside>
   <main class="dashboard-main" id="overview">
-    <p class="eyebrow"><span class="eyebrow-dot"></span> Company workspace</p>
-    <h1>Welcome, <em data-user-name>there</em>.</h1>
+    <div class="company-welcome">
+      <div class="company-logo" data-company-logo role="img" aria-label="Company logo">G</div>
+      <div>
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Company workspace</p>
+        <h1>Welcome, <em data-user-name>there</em>.</h1>
+      </div>
+    </div>
     <p class="dashboard-lead">A good place to turn your CSR goals into shared environmental action.</p>
+    <section class="company-verification" aria-label="Company verification status">
+      <span class="section-label">Company verification</span>
+      <strong data-company-verification-status>Checking status…</strong>
+    </section>
+    <section class="company-stats" id="projects" aria-label="Company CSR project summary">
+      <article class="company-stat-card">
+        <p class="section-label">Total CSR projects</p>
+        <strong data-company-stat="totalProjects">—</strong>
+        <p>Projects linked to your company</p>
+      </article>
+      <article class="company-stat-card">
+        <p class="section-label">Active projects</p>
+        <strong data-company-stat="activeProjects">—</strong>
+        <p>Approved projects in progress</p>
+      </article>
+      <article class="company-stat-card">
+        <p class="section-label">Total amount sponsored</p>
+        <strong data-company-stat="totalAmountSponsored">—</strong>
+        <p>Approved commitment amount; currency unspecified</p>
+      </article>
+      <article class="company-stat-card">
+        <p class="section-label">Pending proposals</p>
+        <strong data-company-stat="pendingProposals">—</strong>
+        <p>Projects awaiting approval</p>
+      </article>
+      <article class="company-stat-card">
+        <p class="section-label">Environmental impact</p>
+        <strong data-company-stat="environmentalImpact">—</strong>
+        <p>Measured project outcomes are not tracked yet</p>
+      </article>
+      <article class="company-stat-card">
+        <p class="section-label">Project completion rate</p>
+        <strong><span data-company-stat="projectCompletionRate">—</span><span class="company-stat-suffix">%</span></strong>
+        <p>Completed projects out of all projects</p>
+      </article>
+    </section>
+    <p class="company-summary-message" data-company-summary-message role="status" aria-live="polite"></p>
     <section class="workspace-panel"><div class="workspace-number">01</div><div><p class="section-label">Your next step</p><h2>Build your first project</h2><p>Project publishing is the next feature in this starter. Your account is ready; project creation tools are not yet connected.</p></div><span class="status-mark">In preparation</span></section>
     <p class="account-line" id="account">Signed in as <span data-user-email></span></p>
   </main>

@@ -20,7 +20,7 @@ async function create({ name, email, passwordHash, role }) {
 
 async function findById(id) {
   const result = await pool.query(
-    'SELECT id, name, email, role FROM users WHERE id = $1',
+    'SELECT id, name, email, role, is_verified FROM users WHERE id = $1',
     [id]
   );
   return result.rows[0] || null;

@@ -14,14 +14,51 @@
 <body class="dashboard-page" data-dashboard-role="organization">
   <aside class="dashboard-sidebar">
     <a class="brand" href="/"><span class="brand-mark">G</span>greenfuture</a>
-    <div><p class="dashboard-sidebar-label">Organization workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#account">Your account</a></nav></div>
+    <div><p class="dashboard-sidebar-label">Organization workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#projects">Projects</a><a href="#account">Your account</a></nav></div>
     <button class="button button-outline button-small" type="button" data-logout>Sign out</button>
   </aside>
   <main class="dashboard-main" id="overview">
     <p class="eyebrow"><span class="eyebrow-dot"></span> Organization workspace</p>
     <h1>Welcome, <em data-user-name>there</em>.</h1>
     <p class="dashboard-lead">Bring your community knowledge to the projects that need it.</p>
-    <section class="workspace-panel"><div class="workspace-number">02</div><div><p class="section-label">Your next step</p><h2>Shape a community project</h2><p>Project proposals are planned for the next feature. Your account is ready; proposal tools are not yet connected.</p></div><span class="status-mark">In preparation</span></section>
+    <section class="organization-verification" aria-label="Organization verification status">
+      <span class="section-label">Organization verification</span>
+      <strong data-organization-verification-status>Checking status…</strong>
+    </section>
+    <section class="organization-stats" id="projects" aria-label="Organization project and community summary">
+      <article class="organization-stat-card">
+        <p class="section-label">Total projects</p>
+        <strong data-organization-stat="totalProjects">—</strong>
+        <p>Projects linked to your organization</p>
+      </article>
+      <article class="organization-stat-card">
+        <p class="section-label">Active projects</p>
+        <strong data-organization-stat="activeProjects">—</strong>
+        <p>Approved projects in progress</p>
+      </article>
+      <article class="organization-stat-card">
+        <p class="section-label">Pending proposals</p>
+        <strong data-organization-stat="pendingProposals">—</strong>
+        <p>Projects awaiting approval</p>
+      </article>
+      <article class="organization-stat-card">
+        <p class="section-label">Approved sponsorships</p>
+        <strong data-organization-stat="approvedSponsorships">—</strong>
+        <p>Approved commitments linked to your projects</p>
+      </article>
+      <article class="organization-stat-card">
+        <p class="section-label">Volunteers recruited</p>
+        <strong data-organization-stat="totalVolunteersRecruited">—</strong>
+        <p>Unique volunteers across your projects</p>
+      </article>
+      <article class="organization-stat-card">
+        <p class="section-label">Project completion rate</p>
+        <strong><span data-organization-stat="projectCompletionRate">—</span><span class="organization-stat-suffix">%</span></strong>
+        <p>Completed projects out of all projects</p>
+      </article>
+    </section>
+    <p class="organization-summary-message" data-organization-summary-message role="status" aria-live="polite"></p>
+    <section class="workspace-panel"><div class="workspace-number">02</div><div><p class="section-label">Your next step</p><h2>Shape a community project</h2><p>Project proposals can be tracked here. Project creation and review tools are not connected yet.</p></div><span class="status-mark">In preparation</span></section>
     <p class="account-line" id="account">Signed in as <span data-user-email></span></p>
   </main>
 </body>

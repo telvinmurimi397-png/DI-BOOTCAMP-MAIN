@@ -11,17 +11,106 @@
   <link rel="stylesheet" href="../css/style.css">
   <script src="../js/main.js" defer></script>
 </head>
-<body class="dashboard-page" data-dashboard-role="admin">
+<body class="dashboard-page admin-page" data-dashboard-role="admin">
   <aside class="dashboard-sidebar">
     <a class="brand" href="/"><span class="brand-mark">G</span>greenfuture</a>
-    <div><p class="dashboard-sidebar-label">Admin workspace</p><nav class="dashboard-sidebar-nav" aria-label="Workspace navigation"><a href="#overview" aria-current="page">Overview</a><a href="#account">Your account</a></nav></div>
+    <div>
+      <p class="dashboard-sidebar-label">Admin workspace</p>
+      <nav class="dashboard-sidebar-nav" aria-label="Admin navigation">
+        <a href="#overview" aria-current="page">Overview</a>
+        <a href="#users">User Management</a>
+        <a href="#company-verification">Company Verification</a>
+        <a href="#organization-verification">Organization Verification</a>
+        <a href="#projects">Project Management</a>
+        <a href="#sponsorships">Sponsorship Management</a>
+        <a href="#proposals">Proposal Approvals</a>
+        <a href="#impact">Impact &amp; Reports</a>
+        <a href="#support">Complaints &amp; Support</a>
+        <a href="#account">Your account</a>
+      </nav>
+    </div>
     <button class="button button-outline button-small" type="button" data-logout>Sign out</button>
   </aside>
-  <main class="dashboard-main" id="overview">
+  <main class="dashboard-main admin-main" id="overview">
     <p class="eyebrow"><span class="eyebrow-dot"></span> Platform administration</p>
     <h1>Welcome, <em data-user-name>there</em>.</h1>
-    <p class="dashboard-lead">The foundation is in place. Admin tools will grow with the platform.</p>
-    <section class="workspace-panel"><div class="workspace-number">04</div><div><p class="section-label">Your next step</p><h2>Prepare the network</h2><p>Admin accounts are created by promoting a trusted account directly in PostgreSQL. Project moderation and user management are not yet connected.</p></div><span class="status-mark">In preparation</span></section>
+    <p class="dashboard-lead">Review registrations, projects, sponsorships, impact reports, and support requests.</p>
+    <p class="admin-message" data-admin-message role="status" aria-live="polite"></p>
+
+    <section class="admin-overview-grid" aria-label="Platform overview">
+      <article class="admin-overview-card"><span>Users</span><strong data-admin-overview="total_users">—</strong></article>
+      <article class="admin-overview-card"><span>Companies</span><strong data-admin-overview="companies">—</strong></article>
+      <article class="admin-overview-card"><span>Organizations</span><strong data-admin-overview="organizations">—</strong></article>
+      <article class="admin-overview-card"><span>Volunteers</span><strong data-admin-overview="volunteers">—</strong></article>
+      <article class="admin-overview-card"><span>CSR projects</span><strong data-admin-overview="total_projects">—</strong></article>
+      <article class="admin-overview-card"><span>Approved sponsorship commitments (currency unspecified)</span><strong data-admin-overview="approved_sponsorship_amount">—</strong></article>
+      <article class="admin-overview-card"><span>Open support issues</span><strong data-admin-overview="open_tickets">—</strong></article>
+    </section>
+
+    <section class="admin-section" id="users" aria-labelledby="users-title">
+      <div class="admin-section-heading"><div><p class="section-label">Accounts</p><h2 id="users-title">User Management</h2></div>
+        <label class="admin-filter-label" for="admin-user-filter">Show
+          <select id="admin-user-filter" data-admin-user-filter>
+            <option value="">All users</option><option value="company">Companies</option><option value="organization">Organizations</option><option value="volunteer">Volunteers</option>
+          </select>
+        </label>
+      </div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Verification</th><th>Joined</th></tr></thead><tbody data-admin-users></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="company-verification" aria-labelledby="company-verification-title">
+      <div class="admin-section-heading"><div><p class="section-label">Review registrations</p><h2 id="company-verification-title">Company Verification</h2></div></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Company</th><th>Email</th><th>Status</th><th>Action</th></tr></thead><tbody data-admin-companies></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="organization-verification" aria-labelledby="organization-verification-title">
+      <div class="admin-section-heading"><div><p class="section-label">Approve legitimate organizations</p><h2 id="organization-verification-title">Organization Verification</h2></div></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Organization</th><th>Email</th><th>Status</th><th>Action</th></tr></thead><tbody data-admin-organizations></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="projects" aria-labelledby="projects-title">
+      <div class="admin-section-heading"><div><p class="section-label">Monitor all CSR projects</p><h2 id="projects-title">Project Management</h2></div></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Project</th><th>Owner</th><th>Status</th><th>Volunteers</th><th>Update</th></tr></thead><tbody data-admin-projects></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="sponsorships" aria-labelledby="sponsorships-title">
+      <div class="admin-section-heading"><div><p class="section-label">Oversee sponsorship commitments</p><h2 id="sponsorships-title">Sponsorship Management</h2></div></div>
+      <form class="admin-inline-form" data-admin-sponsorship-form>
+        <label>Company<select name="companyId" required data-sponsorship-company><option value="">Select a company</option></select></label>
+        <label>Project<select name="projectId" required data-sponsorship-project><option value="">Select a project</option></select></label>
+        <label>Commitment amount<input name="amount" type="number" min="0.01" step="0.01" required></label>
+        <button class="button button-small" type="submit">Add commitment</button>
+      </form>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Company</th><th>Project</th><th>Amount</th><th>Status</th><th>Update</th></tr></thead><tbody data-admin-sponsorships></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="proposals" aria-labelledby="proposals-title">
+      <div class="admin-section-heading"><div><p class="section-label">Review submitted project proposals</p><h2 id="proposals-title">Proposal Approvals</h2></div></div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Proposal</th><th>Submitted by</th><th>Category</th><th>Decision</th></tr></thead><tbody data-admin-proposals></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="impact" aria-labelledby="impact-title">
+      <div class="admin-section-heading"><div><p class="section-label">Monitor environmental achievements</p><h2 id="impact-title">Impact &amp; Reports</h2></div></div>
+      <p class="admin-note">These are project target units attached to completed projects, not independently measured environmental outcomes.</p>
+      <div class="admin-report-grid">
+        <article class="admin-overview-card"><span>Completed projects</span><strong data-admin-overview="completed_projects">—</strong></article>
+        <article class="admin-overview-card"><span>Target units on completed projects</span><strong data-admin-overview="completed_project_target_units">—</strong></article>
+        <article class="admin-overview-card"><span>Active projects</span><strong data-admin-overview="active_projects">—</strong></article>
+      </div>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Completed project</th><th>Owner</th><th>Category</th><th>Recorded target units</th></tr></thead><tbody data-admin-impact-projects></tbody></table></div>
+    </section>
+
+    <section class="admin-section" id="support" aria-labelledby="support-title">
+      <div class="admin-section-heading"><div><p class="section-label">Handle platform issues</p><h2 id="support-title">Complaints &amp; Support</h2></div></div>
+      <form class="admin-support-form" data-admin-support-form>
+        <h3>Log a reported issue</h3>
+        <label>Subject<input name="subject" maxlength="200" required></label>
+        <label>Issue details<textarea name="message" rows="3" maxlength="5000" required></textarea></label>
+        <button class="button button-small" type="submit">Create support ticket</button>
+      </form>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Issue</th><th>Submitted by</th><th>Status</th><th>Resolution note</th><th>Update</th></tr></thead><tbody data-admin-support></tbody></table></div>
+    </section>
+
     <p class="account-line" id="account">Signed in as <span data-user-email></span></p>
   </main>
 </body>
