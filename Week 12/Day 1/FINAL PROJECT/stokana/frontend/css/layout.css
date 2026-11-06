@@ -761,6 +761,10 @@ body.dash-admin h6 {
     stroke: #fff;
   }
 
+  .site-header .mobile-toggle svg {
+    display: block !important;
+  }
+
   .mobile-toggle::after {
     display: none;
   }
