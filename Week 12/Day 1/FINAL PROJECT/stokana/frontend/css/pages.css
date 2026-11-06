@@ -249,15 +249,6 @@ body.page-home .product-name {
   transition: transform 450ms ease;
 }
 
-.home-photo-card:hover img {
-  transform: scale(1.045);
-}
-
-.home-photo-card:focus-visible {
-  outline: 3px solid var(--blue-600);
-  outline-offset: 3px;
-}
-
 .home-photo-copy {
   position: relative;
   z-index: 2;
@@ -286,16 +277,6 @@ body.page-home .product-name {
 .home-photo-copy > span:last-child {
   font-size: 15px;
   font-weight: 600;
-}
-
-.home-photo-copy > span:last-child span {
-  display: inline-block;
-  margin-left: 4px;
-  transition: transform 180ms ease;
-}
-
-.home-photo-card:hover .home-photo-copy > span:last-child span {
-  transform: translateX(4px);
 }
 
 body.page-categories .page-bg,
