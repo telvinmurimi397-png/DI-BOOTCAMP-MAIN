@@ -755,6 +755,12 @@ body.dash-admin h6 {
     color: #fff;
   }
 
+  .site-header .mobile-toggle,
+  .site-header .mobile-toggle svg {
+    color: #fff;
+    stroke: #fff;
+  }
+
   .mobile-toggle::after {
     display: none;
   }
